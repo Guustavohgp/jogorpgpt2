@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚔ Echoes of the Fallen — Action RPG v2</title>
+<title>⚔ Echoes of the Fallen — Action RPG v3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=VT323&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
@@ -34,9 +34,7 @@
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Crimson Text',serif; overflow:hidden; user-select:none; }
 
-/* ══════════════════════════════════════════
-   TELA DE SELEÇÃO DE CLASSE
-══════════════════════════════════════════ */
+/* CLASS SELECT */
 #screen-select {
   position:fixed; inset:0; display:flex; flex-direction:column;
   align-items:center; justify-content:center;
@@ -86,9 +84,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .sp-key { font-family:'VT323',monospace; font-size:16px; color:var(--amber); display:block; }
 .sp-name { font-size:9px; color:var(--text-dim); line-height:1.2; }
 
-/* ══════════════════════════════════════════
-   TELA DE SUBCLASSE
-══════════════════════════════════════════ */
+/* SUBCLASS */
 #screen-subclass {
   display:none; position:fixed; inset:0; z-index:400;
   background:rgba(0,0,0,.92); align-items:center; justify-content:center; flex-direction:column; gap:24px;
@@ -108,16 +104,12 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .sub-desc { font-size:12px; color:var(--text-dim); line-height:1.5; font-style:italic; }
 .sub-bonuses { margin-top:10px; font-size:11px; color:#5dade2; }
 
-/* ══════════════════════════════════════════
-   TELA DE JOGO
-══════════════════════════════════════════ */
+/* GAME SCREEN */
 #screen-game { display:none; position:fixed; inset:0; }
 #screen-game.active { display:block; }
 #game-canvas { position:absolute; inset:0; image-rendering:pixelated; display:block; }
 
-/* ══════════════════════════════════════════
-   HUD
-══════════════════════════════════════════ */
+/* HUD */
 #hud { position:absolute; inset:0; pointer-events:none; z-index:10; }
 #hud-stats {
   position:absolute; top:12px; left:12px;
@@ -217,9 +209,120 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   box-shadow:0 0 20px rgba(232,160,32,.2);
 }
 
-/* ══════════════════════════════════════════
-   INVENTÁRIO — LAYOUT MELHORADO
-══════════════════════════════════════════ */
+/* ═══ MUSIC PANEL ═══ */
+#music-btn {
+  position:absolute; top:12px; left:50%; transform:translateX(-50%); margin-top:36px;
+  background:rgba(8,10,13,.9); border:1px solid var(--border); border-radius:6px;
+  padding:3px 10px; font-family:'VT323',monospace; font-size:14px; color:var(--text-dim);
+  pointer-events:all; cursor:pointer; display:flex; align-items:center; gap:6px; z-index:15;
+  white-space:nowrap;
+}
+#music-btn:hover { border-color:var(--amber-dim); color:var(--amber); }
+
+#music-panel {
+  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  z-index:500; width:440px; max-width:96vw;
+  background:linear-gradient(160deg,#0f1218,#080a0d);
+  border:2px solid #3a3020; border-radius:14px;
+  padding:20px 22px 18px;
+  box-shadow:0 0 60px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.05);
+  pointer-events:all; font-family:'Crimson Text',serif;
+}
+#music-panel.open { display:block; }
+.mp-title { font-family:'Cinzel',serif; font-size:18px; color:var(--amber); margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }
+.mp-close { cursor:pointer; color:var(--text-dim); font-size:18px; }
+.mp-close:hover { color:var(--red-glow); }
+.mp-track { background:#0d1018; border:1px solid #2a2010; border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+.mp-track-label { font-family:'Cinzel',serif; font-size:12px; color:var(--amber-dim); margin-bottom:8px; letter-spacing:.08em; }
+.mp-track-row { display:flex; align-items:center; gap:10px; }
+.mp-status { font-size:12px; color:var(--text-dim); flex:1; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mp-status.loaded { color:var(--green-glow); }
+.mp-status.playing { color:var(--amber); }
+.mp-btn {
+  font-family:'VT323',monospace; font-size:14px;
+  background:#1a1208; border:1px solid #3a2010; border-radius:4px;
+  color:var(--amber-dim); padding:4px 10px; cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.mp-btn:hover { border-color:var(--amber); color:var(--amber); background:#2a1a08; }
+.mp-vol-row { display:flex; align-items:center; gap:10px; margin-top:14px; border-top:1px solid #2a2010; padding-top:12px; }
+.mp-vol-label { font-size:12px; color:var(--text-dim); width:60px; }
+#music-volume { flex:1; accent-color:var(--amber); cursor:pointer; }
+.mp-now-playing { margin-top:12px; padding:8px 12px; background:rgba(232,160,32,.06); border:1px solid rgba(232,160,32,.15); border-radius:6px; font-size:12px; color:var(--amber); font-style:italic; text-align:center; min-height:28px; }
+.mp-hint { margin-top:10px; font-size:10px; color:#444; line-height:1.6; text-align:center; font-style:italic; }
+
+/* ═══ NPC PANEL ═══ */
+#npc-panel {
+  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  z-index:500; width:520px; max-width:96vw;
+  background:linear-gradient(160deg,#0f1218,#080a0d);
+  border:2px solid #3a3020; border-radius:14px;
+  box-shadow:0 0 80px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.05);
+  pointer-events:all; font-family:'Crimson Text',serif; overflow:hidden;
+}
+#npc-panel.open { display:block; }
+.npc-header {
+  background:linear-gradient(160deg,#1a1208,#0f0e08);
+  border-bottom:1px solid #3a2a10; padding:18px 20px 14px;
+  display:flex; align-items:center; gap:14px;
+}
+.npc-avatar { font-size:46px; line-height:1; }
+.npc-header-text {}
+.npc-name { font-family:'Cinzel',serif; font-size:20px; color:var(--amber); }
+.npc-role { font-size:12px; color:var(--text-dim); font-style:italic; margin-top:2px; }
+.npc-close { margin-left:auto; cursor:pointer; color:var(--text-dim); font-family:'VT323',monospace; font-size:22px; }
+.npc-close:hover { color:var(--red-glow); }
+.npc-dialogue {
+  padding:14px 20px; font-size:14px; color:var(--text); line-height:1.7;
+  background:rgba(0,0,0,.2); border-bottom:1px solid #2a2010;
+  font-style:italic; min-height:54px;
+}
+.npc-body { padding:16px 20px 18px; }
+.npc-section-title { font-family:'Cinzel',serif; font-size:13px; color:var(--amber-dim); letter-spacing:.1em; margin-bottom:12px; }
+.npc-gold-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:13px; color:var(--text-dim); }
+.npc-gold-val { font-family:'VT323',monospace; font-size:20px; color:var(--amber); }
+/* Class cards inside NPC */
+.npc-class-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+.npc-class-card {
+  background:#0d1018; border:1px solid #2a2010; border-radius:8px; padding:12px 8px;
+  text-align:center; cursor:pointer; transition:all .2s; position:relative;
+}
+.npc-class-card:hover { border-color:var(--amber-dim); background:#1a1208; transform:translateY(-2px); }
+.npc-class-card.selected { border-color:var(--amber); background:#1a1408; box-shadow:0 0 14px rgba(232,160,32,.2); }
+.npc-class-card.current { border-color:#2a4a2a; background:#0a120a; cursor:default; }
+.npc-class-card.current:hover { transform:none; }
+.ncc-icon { font-size:28px; display:block; margin-bottom:6px; }
+.ncc-name { font-family:'Cinzel',serif; font-size:11px; margin-bottom:4px; }
+.ncc-cost { font-family:'VT323',monospace; font-size:14px; color:var(--amber); }
+.ncc-badge { position:absolute; top:4px; right:6px; font-size:9px; font-family:'VT323',monospace; padding:1px 5px; border-radius:3px; }
+.ncc-badge.curr-badge { background:rgba(39,174,96,.2); color:#2ecc71; border:1px solid #27ae60; }
+/* Subclass section */
+.npc-sub-section { margin-top:4px; }
+.npc-sub-title { font-family:'Cinzel',serif; font-size:12px; color:var(--amber-dim); letter-spacing:.08em; margin-bottom:10px; }
+.npc-sub-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.npc-sub-card {
+  background:#0a0d12; border:1px solid #2a2010; border-radius:6px; padding:10px 7px;
+  text-align:center; cursor:pointer; transition:all .18s;
+}
+.npc-sub-card:hover { border-color:var(--amber-dim); background:#14110a; }
+.npc-sub-card.selected { border-color:var(--amber); background:#1a1408; }
+.nsc-icon { font-size:22px; display:block; margin-bottom:4px; }
+.nsc-name { font-family:'Cinzel',serif; font-size:10px; color:var(--amber); margin-bottom:3px; line-height:1.3; }
+.nsc-desc { font-size:10px; color:var(--text-dim); font-style:italic; line-height:1.3; }
+.nsc-bonus { font-size:9px; color:#5dade2; margin-top:3px; }
+/* Confirm row */
+.npc-confirm-row { display:flex; gap:10px; align-items:center; margin-top:14px; border-top:1px solid #2a2010; padding-top:14px; }
+.npc-confirm-btn {
+  font-family:'VT323',monospace; font-size:18px;
+  background:linear-gradient(160deg,#2a1a08,#1a1006); border:1px solid var(--amber-dim);
+  color:var(--amber); padding:9px 22px; border-radius:6px; cursor:pointer; transition:all .2s; flex:1;
+}
+.npc-confirm-btn:hover:not(:disabled) { border-color:var(--amber); box-shadow:0 0 14px rgba(232,160,32,.2); }
+.npc-confirm-btn:disabled { opacity:.35; cursor:not-allowed; }
+.npc-msg { font-size:12px; flex:1; min-height:16px; font-style:italic; }
+.npc-msg.ok  { color:#2ecc71; }
+.npc-msg.err { color:#e74c3c; }
+
+/* INVENTORY */
 #inv-panel {
   display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
   z-index:300; width:920px; max-width:98vw;
@@ -231,8 +334,6 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 }
 #inv-panel.open { display:flex; }
 .inv-panel-inner { display:flex; width:100%; height:100%; min-height:0; }
-
-/* ── Coluna status ── */
 .inv-status {
   width:155px; min-width:155px; background:rgba(0,0,0,.35);
   border-right:1px solid #2a2010; padding:14px 12px;
@@ -243,8 +344,6 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .stat-val { color:var(--text); font-family:'VT323',monospace; font-size:17px; }
 .stat-bar-mini { height:4px; background:#1a1a1a; border-radius:2px; overflow:hidden; margin-top:2px; }
 .stat-bar-fill { height:100%; border-radius:2px; }
-
-/* ── Coluna equipamentos (corpo + slots) ── */
 .inv-equip-col {
   width:210px; min-width:210px; background:rgba(0,0,0,.2);
   border-right:1px solid #2a2010; padding:14px 12px;
@@ -270,13 +369,9 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .equip-slot .slot-icon { font-size:22px; pointer-events:none; }
 .equip-slot .slot-name { position:absolute; bottom:1px; left:0; right:0; text-align:center; font-family:'VT323',monospace; font-size:9px; color:var(--amber-dim); pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
 .equip-slot-empty { width:54px; height:54px; flex-shrink:0; }
-
-/* Bônus totais */
 .equip-bonuses { margin-top:8px; padding-top:8px; border-top:1px solid #2a2010; display:flex; flex-direction:column; gap:4px; }
 .equip-bonus-row { display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); }
 .equip-bonus-row span:last-child { font-family:'VT323',monospace; font-size:15px; color:#2ecc71; }
-
-/* Equipados em destaque abaixo dos slots */
 .equipped-items-list { margin-top:8px; padding-top:8px; border-top:1px solid #2a2010; display:flex; flex-direction:column; gap:5px; }
 .equipped-item-row {
   display:flex; align-items:center; gap:7px; padding:5px 6px;
@@ -290,8 +385,6 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .equipped-item-row .ei-unequip { font-family:'VT323',monospace; font-size:11px; color:#e74c3c; flex-shrink:0; opacity:.6; }
 .equipped-item-row:hover .ei-unequip { opacity:1; }
 .no-equip-msg { font-size:11px; color:#444; font-style:italic; text-align:center; padding:4px 0; }
-
-/* ── Coluna inventário (mochila) ── */
 .inv-main { flex:1; padding:14px; overflow-y:auto; min-width:0; }
 .inv-main-title { font-family:'Cinzel',serif; font-size:12px; color:var(--amber); letter-spacing:.1em; margin-bottom:10px; border-bottom:1px solid #2a2010; padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
 .inv-close-btn { cursor:pointer; color:var(--text-dim); font-size:16px; font-family:'VT323',monospace; transition:color .2s; }
@@ -316,24 +409,19 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .inv-cell.is-equipped.rarity-rare { border-color:#5dade2; }
 .inv-cell.is-equipped.rarity-epic { border-color:#bb8fce; }
 
-/* ══════════════════════════════════════════
-   ITEM POPUP — TOOLTIP + BOTÕES UNIFICADOS
-   pointer-events:all para não sumir
-══════════════════════════════════════════ */
+/* ITEM POPUP */
 #item-popup {
   position:fixed; z-index:9999;
   background:linear-gradient(160deg,#0f1218,#080a0d);
   border:1px solid #4a3820; border-radius:10px;
   padding:0; min-width:200px; max-width:220px;
-  pointer-events:all;   /* CRUCIAL: permite hover sobre o popup */
+  pointer-events:all;
   display:none;
   box-shadow:0 8px 32px rgba(0,0,0,.95), 0 0 0 1px rgba(232,160,32,.08);
   font-family:'Crimson Text',serif;
   overflow:hidden;
 }
-.popup-info {
-  padding:12px 14px 10px;
-}
+.popup-info { padding:12px 14px 10px; }
 .tt-name { font-family:'Cinzel',serif; font-size:14px; margin-bottom:4px; }
 .tt-desc { color:var(--text-dim); font-style:italic; margin-bottom:5px; font-size:12px; }
 .tt-rarity { font-size:10px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:2px; }
@@ -346,10 +434,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   border-radius:3px; padding:1px 5px; margin-bottom:4px;
 }
 .popup-divider { height:1px; background:#2a2010; }
-.popup-actions {
-  display:flex; gap:0;
-  border-top:1px solid #2a2010;
-}
+.popup-actions { display:flex; gap:0; border-top:1px solid #2a2010; }
 .popup-btn {
   flex:1; font-family:'VT323',monospace; font-size:16px; padding:8px 4px;
   text-align:center; cursor:pointer; border:none; background:transparent;
@@ -364,13 +449,13 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .popup-btn.equip-btn { color:#5dade2; }
 .popup-btn.equip-btn:hover { background:rgba(93,173,226,.12); }
 .popup-btn.unequip-btn { color:#e8a020; }
-.popup-btn.unequip-btn:hover { background:rgba(232,160,32,.1); }
+.popup-btn.unequip-btn:hover { background:rgba(232,160,20,.1); }
 .popup-btn.sell-btn  { color:#e8a020; }
 .popup-btn.sell-btn:hover { background:rgba(232,160,32,.12); }
 .popup-btn.disabled  { opacity:.3; cursor:not-allowed; }
 .popup-btn.disabled:hover { background:transparent; }
 
-/* Drag ghost */
+/* DRAG */
 #drag-ghost {
   position:fixed; z-index:700; pointer-events:none; display:none;
   font-size:28px; opacity:.85; transform:translate(-50%,-50%);
@@ -379,9 +464,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .inv-cell.drag-over { border-color:var(--amber)!important; background:#2a1a08!important; box-shadow:inset 0 0 12px rgba(232,160,32,.3)!important; }
 .inv-cell.dragging  { opacity:.35; }
 
-/* ══════════════════════════════════════════
-   LOJA
-══════════════════════════════════════════ */
+/* SHOP */
 #shop-panel {
   display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
   z-index:400; width:760px; max-width:96vw; max-height:90vh;
@@ -453,9 +536,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .shop-msg.ok   { color:#2ecc71; }
 .shop-msg.err  { color:#e74c3c; }
 
-/* ══════════════════════════════════════════
-   GAME OVER
-══════════════════════════════════════════ */
+/* GAME OVER */
 #screen-gameover {
   display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:500;
   align-items:center; justify-content:center; flex-direction:column; gap:20px;
@@ -465,26 +546,11 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .go-stats { font-size:16px; color:var(--text-dim); text-align:center; line-height:2.2; font-style:italic; }
 .btn-restart { font-family:'Cinzel',serif; font-size:18px; background:linear-gradient(160deg,#2a1a0a,#1a1008); border:2px solid var(--amber); color:var(--amber); padding:12px 36px; cursor:pointer; border-radius:6px; letter-spacing:.1em; transition:all .2s; }
 .btn-restart:hover { background:linear-gradient(160deg,#3a2a12,#2a1c0e); box-shadow:0 0 20px rgba(232,160,32,.3); }
-
-/* ══════════════════════════════════════════
-   MÚSICA
-══════════════════════════════════════════ */
-#music-btn {
-  position:absolute; top:12px; left:50%; transform:translateX(-50%); margin-top:36px;
-  background:rgba(8,10,13,.9); border:1px solid var(--border); border-radius:6px;
-  padding:3px 10px; font-family:'VT323',monospace; font-size:14px; color:var(--text-dim);
-  pointer-events:all; cursor:pointer; display:flex; align-items:center; gap:6px; z-index:15;
-  white-space:nowrap;
-}
-#music-btn:hover { border-color:var(--amber-dim); color:var(--amber); }
-#music-file-input { display:none; }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     TELA 1 — SELEÇÃO DE CLASSE
-═══════════════════════════════════════ -->
+<!-- CLASS SELECT -->
 <div id="screen-select">
   <div class="title-wrap">
     <div class="game-logo">⚔ ECHOES OF THE FALLEN</div>
@@ -542,14 +608,14 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   </div>
 </div>
 
-<!-- SUBCLASSE -->
+<!-- SUBCLASS -->
 <div id="screen-subclass">
   <div class="sub-title">✦ EVOLUÇÃO DE CLASSE ✦</div>
   <div class="sub-subtitle">Você atingiu o Nível 6. Escolha seu caminho.</div>
   <div class="sub-row" id="sub-options"></div>
 </div>
 
-<!-- JOGO -->
+<!-- GAME -->
 <div id="screen-game">
   <canvas id="game-canvas"></canvas>
   <div id="hud">
@@ -580,10 +646,10 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
       ⚡ DASH <kbd>SHIFT</kbd>
       <div class="dash-bar"><div class="dash-fill" id="dash-fill"></div></div>
     </div>
+    <!-- Music button now opens panel -->
     <div id="music-btn" onclick="toggleMusicPanel()" style="margin-top:50px;">
       🎵 Música: <span id="music-status">OFF</span>
     </div>
-    <input type="file" id="music-file-input" accept="audio/*" onchange="loadMusicFile(event)">
     <div id="hud-skills">
       <div class="skill-slot ready" id="sk0">
         <span class="skill-key">Q</span>
@@ -608,17 +674,16 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
       <div class="hud-info-row">🪙 Ouro: <span class="hud-info-val" id="hud-gold">0</span></div>
       <div class="hud-info-row">💀 Mortos: <span class="hud-info-val" id="hud-kills">0</span></div>
       <div class="hud-info-row">⚔ ATK: <span class="hud-info-val" id="hud-atk">10</span> &nbsp;🛡 DEF: <span class="hud-info-val" id="hud-def">5</span></div>
-      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú</div>
+      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música</div>
     </div>
     <div id="minimap"><canvas id="mm-canvas" width="120" height="90"></canvas></div>
     <div id="lvl-banner">⬆ LEVEL UP!</div>
     <div id="chest-prompt">[F] Abrir Baú</div>
   </div>
 
-  <!-- Inventário -->
+  <!-- Inventory -->
   <div id="inv-panel">
     <div class="inv-panel-inner">
-      <!-- Status -->
       <div class="inv-status">
         <div class="inv-status-title">📊 Status</div>
         <div class="stat-row"><span>Classe</span><span class="stat-val" id="stat-class">—</span></div>
@@ -640,8 +705,6 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
         <div class="stat-row"><span>🪙 Ouro</span><span class="stat-val" id="stat-gold">0</span></div>
         <div class="stat-row"><span>💀 Kills</span><span class="stat-val" id="stat-kills">0</span></div>
       </div>
-
-      <!-- Equipamentos -->
       <div class="inv-equip-col">
         <div class="inv-equip-title">🧍 Equipamentos</div>
         <div class="inv-equip-body">
@@ -665,9 +728,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
             <div class="equip-slot" id="eslot-amulet" data-slot="amulet" title="Amuleto"><span class="equip-slot-label">📿</span></div>
             <div class="equip-slot" id="eslot-ring2" data-slot="ring2" title="Anel 2"><span class="equip-slot-label">💍</span></div>
           </div>
-          <!-- Lista de equipados em destaque -->
           <div class="equipped-items-list" id="equipped-items-list"></div>
-          <!-- Bônus totais -->
           <div class="equip-bonuses">
             <div class="equip-bonus-row"><span>⚔ ATK Bônus</span><span id="eb-atk">+0</span></div>
             <div class="equip-bonus-row"><span>🛡 DEF Bônus</span><span id="eb-def">+0</span></div>
@@ -675,8 +736,6 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
           </div>
         </div>
       </div>
-
-      <!-- Mochila -->
       <div class="inv-main">
         <div class="inv-main-title">
           🎒 Mochila <span style="color:var(--text-dim);font-family:VT323,monospace;font-size:14px;" id="inv-count">0/20</span>
@@ -690,18 +749,17 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
     </div>
   </div>
 
-  <!-- POPUP UNIFICADO (tooltip + botões) -->
+  <!-- Item popup -->
   <div id="item-popup">
     <div class="popup-info" id="popup-info-content"></div>
     <div class="popup-actions" id="popup-actions"></div>
   </div>
-
-</div><!-- /screen-game -->
+</div>
 
 <!-- Drag ghost -->
 <div id="drag-ghost"></div>
 
-<!-- LOJA -->
+<!-- SHOP -->
 <div id="shop-panel">
   <div class="shop-header">
     <div class="shop-title">🏪 Mercador das Sombras</div>
@@ -740,6 +798,77 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   </div>
 </div>
 
+<!-- ═══ MUSIC PANEL ═══ -->
+<div id="music-panel">
+  <div class="mp-title">
+    🎵 Sistema de Música
+    <span class="mp-close" onclick="closeMusicPanel()">✕</span>
+  </div>
+  <div class="mp-track">
+    <div class="mp-track-label">🌿 EXPLORAÇÃO 1</div>
+    <div class="mp-track-row">
+      <span class="mp-status" id="mp-status-0">Nenhum arquivo</span>
+      <button class="mp-btn" onclick="document.getElementById('mp-file-0').click()">📂 Carregar</button>
+      <input type="file" id="mp-file-0" accept="audio/*" style="display:none" onchange="loadMusicTrack(0,this)">
+    </div>
+  </div>
+  <div class="mp-track">
+    <div class="mp-track-label">🌙 EXPLORAÇÃO 2</div>
+    <div class="mp-track-row">
+      <span class="mp-status" id="mp-status-1">Nenhum arquivo</span>
+      <button class="mp-btn" onclick="document.getElementById('mp-file-1').click()">📂 Carregar</button>
+      <input type="file" id="mp-file-1" accept="audio/*" style="display:none" onchange="loadMusicTrack(1,this)">
+    </div>
+  </div>
+  <div class="mp-track">
+    <div class="mp-track-label">🔥 BOSS</div>
+    <div class="mp-track-row">
+      <span class="mp-status" id="mp-status-2">Nenhum arquivo</span>
+      <button class="mp-btn" onclick="document.getElementById('mp-file-2').click()">📂 Carregar</button>
+      <input type="file" id="mp-file-2" accept="audio/*" style="display:none" onchange="loadMusicTrack(2,this)">
+    </div>
+  </div>
+  <div class="mp-vol-row">
+    <span class="mp-vol-label">🔊 Volume</span>
+    <input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.5" oninput="setMusicVolume(this.value)">
+    <span id="music-vol-pct" style="font-family:VT323,monospace;font-size:16px;color:var(--amber);width:36px;">50%</span>
+  </div>
+  <div class="mp-now-playing" id="mp-now-playing">Nenhuma música tocando</div>
+  <div class="mp-hint">[M] abre/fecha este painel • Música toca automaticamente durante batalha contra boss</div>
+</div>
+
+<!-- ═══ NPC PANEL ═══ -->
+<div id="npc-panel">
+  <div class="npc-header">
+    <span class="npc-avatar">🧙</span>
+    <div class="npc-header-text">
+      <div class="npc-name">Archimedes, o Sábio</div>
+      <div class="npc-role">Mestre das Transformações</div>
+    </div>
+    <span class="npc-close" onclick="closeNpcPanel()">✕</span>
+  </div>
+  <div class="npc-dialogue" id="npc-dialogue">
+    "Ah, viajante! Posso sentir o poder dentro de você... Deseja explorar um caminho diferente? Posso reforjar sua essência — por um preço, é claro."
+  </div>
+  <div class="npc-body">
+    <div class="npc-gold-row">
+      Seu ouro: <span class="npc-gold-val" id="npc-gold-display">0</span> 🪙
+    </div>
+    <div class="npc-section-title">⚔ TROCAR CLASSE BASE</div>
+    <div class="npc-class-grid" id="npc-class-grid"></div>
+    <div class="npc-sub-section" id="npc-sub-section">
+      <div class="npc-sub-title" id="npc-sub-title">✦ SUBCLASSES DISPONÍVEIS</div>
+      <div class="npc-sub-grid" id="npc-sub-grid"></div>
+    </div>
+    <div class="npc-confirm-row">
+      <button class="npc-confirm-btn" id="npc-confirm-btn" onclick="confirmClassChange()" disabled>
+        Confirmar Transformação
+      </button>
+      <span class="npc-msg" id="npc-msg"></span>
+    </div>
+  </div>
+</div>
+
 <!-- GAME OVER -->
 <div id="screen-gameover">
   <div class="go-title">☠ GAME OVER</div>
@@ -749,7 +878,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-//   ECHOES OF THE FALLEN v2 — Motor do Jogo Expandido
+//   ECHOES OF THE FALLEN v3 — Motor do Jogo + Música + NPC de Classe
 // ═══════════════════════════════════════════════════════════════════
 
 const T      = 40;
@@ -801,6 +930,10 @@ const CLASS_DEF = {
     ]
   }
 };
+
+// Cost to change class (gold)
+const CLASS_CHANGE_COST = { warrior:150, mage:150, archer:150 };
+const SUBCLASS_CHANGE_COST = 200;
 
 const SUBCLASS_DEF = {
   warrior:[
@@ -875,12 +1008,156 @@ let projectiles = [];
 let particles   = [];
 let lootItems   = [];
 let chests      = [];
-let audioElement = null;
-let musicPlaying = false;
 
-// ─────────────────────────────────────────────────────────
-// MAPA
-// ─────────────────────────────────────────────────────────
+// NPC data
+let npcObj = null; // {x, y}
+let npcPanelOpen = false;
+let npcSelectedClass = null;   // which base class to switch to
+let npcSelectedSubclass = null; // which subclass to pick (if base already chosen)
+
+// ═══════════════════════════════════════════════════════
+//  SISTEMA DE MÚSICA
+// ═══════════════════════════════════════════════════════
+const musicTracks = [null, null, null]; // [explore1, explore2, boss]
+const musicNames  = ['', '', ''];
+let currentTrackIdx = -1; // which track index is active
+let musicVolume = 0.5;
+let bossActive = false; // true when a boss is alive on screen
+
+function loadMusicTrack(trackIdx, inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  if (musicTracks[trackIdx]) {
+    musicTracks[trackIdx].pause();
+    musicTracks[trackIdx].src = '';
+  }
+  const audio = new Audio(url);
+  audio.loop = true;
+  audio.volume = musicVolume;
+  audio.addEventListener('ended', () => {
+    if (trackIdx < 2) { // exploration tracks auto-switch
+      switchExploreTrack();
+    }
+  });
+  musicTracks[trackIdx] = audio;
+  musicNames[trackIdx] = file.name.length > 20 ? file.name.substring(0,18)+'…' : file.name;
+  const statusEl = document.getElementById('mp-status-' + trackIdx);
+  if (statusEl) { statusEl.textContent = musicNames[trackIdx]; statusEl.className = 'mp-status loaded'; }
+  addLog('🎵 Faixa ' + (trackIdx===2?'Boss':('Exploração '+(trackIdx+1))) + ': ' + musicNames[trackIdx], '');
+  // If this track type is currently needed, start playing it
+  if (trackIdx === 2 && bossActive) {
+    playTrack(2);
+  } else if (trackIdx < 2 && !bossActive && currentTrackIdx < 0) {
+    playTrack(trackIdx);
+  }
+  updateMusicPanel();
+}
+
+function playTrack(idx) {
+  // Stop current
+  if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
+    musicTracks[currentTrackIdx].pause();
+    musicTracks[currentTrackIdx].currentTime = 0;
+  }
+  if (!musicTracks[idx]) { currentTrackIdx = -1; return; }
+  currentTrackIdx = idx;
+  musicTracks[idx].volume = musicVolume;
+  musicTracks[idx].play().catch(()=>{});
+  updateMusicStatus();
+}
+
+function switchExploreTrack() {
+  if (bossActive) return;
+  // Pick a different explore track if available
+  const available = [0, 1].filter(i => musicTracks[i] && i !== currentTrackIdx);
+  if (available.length > 0) {
+    playTrack(available[Math.floor(Math.random() * available.length)]);
+  } else if (musicTracks[currentTrackIdx < 0 ? 0 : currentTrackIdx]) {
+    playTrack(currentTrackIdx < 0 ? 0 : currentTrackIdx);
+  }
+}
+
+function onBossSpawned() {
+  if (bossActive) return;
+  bossActive = true;
+  if (musicTracks[2]) playTrack(2);
+  updateMusicStatus();
+}
+
+function onBossDied() {
+  bossActive = false;
+  // Back to explore music
+  const available = [0, 1].filter(i => musicTracks[i]);
+  if (available.length > 0) {
+    const pick = available[Math.floor(Math.random() * available.length)];
+    playTrack(pick);
+  } else {
+    if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
+      musicTracks[currentTrackIdx].pause();
+    }
+    currentTrackIdx = -1;
+  }
+  updateMusicStatus();
+}
+
+function setMusicVolume(val) {
+  musicVolume = parseFloat(val);
+  musicTracks.forEach(t => { if (t) t.volume = musicVolume; });
+  const pct = Math.round(musicVolume * 100);
+  const el = document.getElementById('music-vol-pct');
+  if (el) el.textContent = pct + '%';
+}
+
+function updateMusicStatus() {
+  const names = ['Exploração 1', 'Exploração 2', 'Boss'];
+  const statusEl = document.getElementById('music-status');
+  if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
+    if (statusEl) statusEl.textContent = '▶ ' + names[currentTrackIdx];
+  } else {
+    if (statusEl) statusEl.textContent = 'OFF';
+  }
+  updateMusicPanel();
+}
+
+function updateMusicPanel() {
+  const names = ['Exploração 1', 'Exploração 2', 'Boss'];
+  const nowEl = document.getElementById('mp-now-playing');
+  if (!nowEl) return;
+  if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
+    nowEl.textContent = '▶ Tocando: ' + names[currentTrackIdx] + ' — ' + (musicNames[currentTrackIdx] || '?');
+  } else {
+    nowEl.textContent = 'Nenhuma música tocando';
+  }
+  for (let i = 0; i < 3; i++) {
+    const s = document.getElementById('mp-status-' + i);
+    if (!s) continue;
+    if (musicTracks[i]) {
+      if (currentTrackIdx === i) { s.className = 'mp-status playing'; s.textContent = '▶ ' + musicNames[i]; }
+      else { s.className = 'mp-status loaded'; s.textContent = musicNames[i]; }
+    }
+  }
+}
+
+function toggleMusicPanel() {
+  const panel = document.getElementById('music-panel');
+  if (panel.classList.contains('open')) closeMusicPanel();
+  else openMusicPanel();
+}
+
+function openMusicPanel() {
+  closeAllPanels();
+  document.getElementById('music-panel').classList.add('open');
+  updateMusicPanel();
+}
+
+function closeMusicPanel() {
+  document.getElementById('music-panel').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAPA
+// ═══════════════════════════════════════════════════════
 function generateMap() {
   mapTiles=[]; mapDecor=[]; chests=[];
   for(let y=0;y<MAP_H;y++){mapTiles[y]=[];for(let x=0;x<MAP_W;x++)mapTiles[y][x]=TILE.DEEP_GRASS;}
@@ -898,6 +1175,8 @@ function generateMap() {
   for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const tx=4+dx,ty=4+dy;if(tx>0&&tx<MAP_W-1&&ty>0&&ty<MAP_H-1)mapTiles[ty][tx]=TILE.STONE;}
   for(let y=1;y<MAP_H-1;y++){for(let x=1;x<MAP_W-1;x++){const t=mapTiles[y][x];const wx=x*T,wy=y*T;if((t===TILE.GRASS||t===TILE.DEEP_GRASS)&&Math.random()<0.08)mapDecor.push({x:wx+T/2,y:wy+T/2,type:'tree',sz:8+Math.random()*6});else if(t===TILE.GRASS&&Math.random()<0.05)mapDecor.push({x:wx+Math.random()*T,y:wy+Math.random()*T,type:'bush'});else if((t===TILE.STONE||t===TILE.PATH)&&Math.random()<0.03)mapDecor.push({x:wx+Math.random()*T,y:wy+Math.random()*T,type:'stone'});else if(t===TILE.STONE&&Math.random()<0.015)mapDecor.push({x:wx+T/2,y:wy+T*0.55,type:'torch',flicker:Math.random()*Math.PI*2});else if(t===TILE.GRASS&&Math.random()<0.04)mapDecor.push({x:wx+Math.random()*T,y:wy+Math.random()*T,type:'flower',clr:['#e74c3c','#f39c12','#9b59b6','#fff'][Math.floor(Math.random()*4)]});}}
   placeChests();
+  // Place NPC at a fixed stone area near center
+  npcObj = { x: 28*T + T/2, y: 19*T + T/2 };
 }
 
 function placeChests(){
@@ -922,6 +1201,81 @@ function createPlayer(classId){
 }
 
 // ─────────────────────────────────────────────────────────
+// CLASS CHANGE (NPC)
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Recalculate player stats when changing class.
+ * Keeps: level, xp, gold, inventory, position, kills
+ * Resets: all combat stats based on new class + level scaling
+ */
+function recalcPlayerForClass(p, newClassId) {
+  const def = CLASS_DEF[newClassId];
+  const lvl = p.level;
+
+  // Level scaling gains (same as checkLevelUp)
+  const levelsGained = lvl - 1;
+  const hpPerLvl   = newClassId==='warrior'?22:newClassId==='archer'?13:9;
+  const atkPerLvl  = newClassId==='mage'?5:3;
+  const defPerLvl  = newClassId==='warrior'?3:1;
+  const mpPerLvl   = newClassId==='mage'?12:5;
+
+  p.classId   = newClassId;
+  p.name      = def.name;
+  p.icon      = def.icon;
+  p.color     = def.color;
+  p.secondColor = def.secondColor;
+  p.atkRange  = def.atkRange;
+  p.atkSpeed  = def.atkSpeed;
+  p.critChance = def.critChance;
+  p.critMult  = def.critMult;
+  p.skills    = def.skills;
+  p.spd       = def.spd;
+
+  // Base stats scaled to current level
+  p.maxHp   = def.hp  + hpPerLvl  * levelsGained;
+  p.maxMp   = def.mp  + mpPerLvl  * levelsGained;
+  p.baseAtk = def.atk + atkPerLvl * levelsGained;
+  p.baseDef = def.def + defPerLvl * levelsGained;
+
+  // Reset passives / subclass bonuses
+  p.subclass       = null;
+  p.subSkill       = null;
+  p.subclassChosen = false;
+  p.skillDmgMult   = 1;
+  p.arrowAoe       = 0;
+  p.holyRegen      = false;
+  p.fireAura       = false;
+  p.rageBonus      = 0;
+  p.poisonProc     = 0.25;
+
+  // Remove equipped items that don't fit new class
+  if (p.equippedWeapon) {
+    const wdb = ITEM_DB[p.equippedWeapon];
+    if (wdb && wdb.forClass && !wdb.forClass.includes(newClassId)) {
+      p.equippedWeapon = null;
+    }
+  }
+  if (p.equippedArmor) {
+    const adb = ITEM_DB[p.equippedArmor];
+    if (adb && adb.forClass && !adb.forClass.includes(newClassId)) {
+      p.equippedArmor = null;
+    }
+  }
+
+  // Apply equipped bonuses
+  p.atk = p.baseAtk + (p.equippedWeapon ? (ITEM_DB[p.equippedWeapon]?.effect?.atk||0) : 0);
+  p.def = p.baseDef + (p.equippedArmor  ? (ITEM_DB[p.equippedArmor]?.effect?.def||0) : 0);
+
+  // Restore HP/MP to new max (don't kill the player just for changing class)
+  p.hp = p.maxHp;
+  p.mp = p.maxMp;
+
+  // Reset skill CDs
+  p.skillCds = [0, 0, 0];
+}
+
+// ─────────────────────────────────────────────────────────
 // INIMIGOS
 // ─────────────────────────────────────────────────────────
 function spawnEnemy(forceBossId=null){
@@ -929,7 +1283,9 @@ function spawnEnemy(forceBossId=null){
   const def=available[Math.floor(Math.random()*available.length)];
   const scale=1+(player.level-1)*0.08;
   const pos=findFreePos(T*8,player.x,player.y);
-  return{...def,uid:def.id+'_'+Date.now()+Math.random(),defId:def.id,x:pos.x,y:pos.y,maxHp:Math.floor(def.hp*scale),hp:Math.floor(def.hp*scale),atk:Math.floor(def.atk*scale),vx:0,vy:0,atkTimer:0,aggroRange:180,isAlive:true,hitFlash:0,deathTimer:0,roamTimer:0,roamDX:0,roamDY:0,spawnX:pos.x,spawnY:pos.y,guardingChest:null,poisonTimer:0,poisonStacks:0,frozenTimer:0};
+  const enemy = {...def,uid:def.id+'_'+Date.now()+Math.random(),defId:def.id,x:pos.x,y:pos.y,maxHp:Math.floor(def.hp*scale),hp:Math.floor(def.hp*scale),atk:Math.floor(def.atk*scale),vx:0,vy:0,atkTimer:0,aggroRange:180,isAlive:true,hitFlash:0,deathTimer:0,roamTimer:0,roamDX:0,roamDY:0,spawnX:pos.x,spawnY:pos.y,guardingChest:null,poisonTimer:0,poisonStacks:0,frozenTimer:0};
+  if (def.isBoss) onBossSpawned();
+  return enemy;
 }
 
 function spawnInitialEnemies(){enemies=[];const count=12+player.level*2;for(let i=0;i<count;i++)enemies.push(spawnEnemy());}
@@ -944,7 +1300,7 @@ function spawnBossChestGuards(){
 }
 
 // ─────────────────────────────────────────────────────────
-// INÍCIO DO JOGO
+// INÍCIO
 // ─────────────────────────────────────────────────────────
 function startGame(classId){
   document.getElementById('screen-select').style.display='none';
@@ -969,7 +1325,8 @@ function startGame(classId){
   lastTime=performance.now();
   requestAnimationFrame(gameLoop);
   addLog(`⚔ ${CLASS_DEF[classId].name} desperta!`,'llvl');
-  addLog('WASD=mover | SHIFT=dash | Q/E/R=skills | I=inv','');
+  addLog('WASD=mover | SHIFT=dash | Q/E/R=skills | I=inv | M=música','');
+  addLog('🧙 Archimedes aguarda a W/NW do centro do mapa','lchest');
 }
 
 function resizeCanvas(){if(!canvas)return;W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;}
@@ -979,7 +1336,22 @@ function resizeCanvas(){if(!canvas)return;W=window.innerWidth;H=window.innerHeig
 // ─────────────────────────────────────────────────────────
 function gameLoop(ts){const dt=Math.min(ts-lastTime,50);lastTime=ts;if(gameState==='playing'){update(dt);render();}requestAnimationFrame(gameLoop);}
 
-function update(dt){updatePlayer(dt);updateEnemies(dt);updateProjectiles(dt);updateParticles(dt);updateLoot(dt);updateSkillCDs(dt);updateRespawn(dt);updateCamera();updateMinimapCanvas();updateChests();updateHUD();}
+function update(dt){updatePlayer(dt);updateEnemies(dt);updateProjectiles(dt);updateParticles(dt);updateLoot(dt);updateSkillCDs(dt);updateRespawn(dt);updateCamera();updateMinimapCanvas();updateChests();updateHUD();updateNpcProximity();}
+
+// ─────────────────────────────────────────────────────────
+// NPC PROXIMITY
+// ─────────────────────────────────────────────────────────
+function updateNpcProximity() {
+  if (!npcObj || !player) return;
+  const dist = Math.hypot(player.x - npcObj.x, player.y - npcObj.y);
+  const prompt = document.getElementById('chest-prompt');
+  const nearChest = chests.find(c=>!c.open&&Math.hypot(c.x-player.x,c.y-player.y)<55);
+  if (!nearChest && dist < 60) {
+    prompt.style.display = 'block';
+    prompt.textContent = '[F] Falar com Archimedes';
+    prompt.style.color = 'var(--amber)';
+  }
+}
 
 function updatePlayer(dt){
   const p=player;if(!p.isAlive)return;
@@ -999,7 +1371,9 @@ function updatePlayer(dt){
   for(let i=lootItems.length-1;i>=0;i--){if(Math.hypot(lootItems[i].x-p.x,lootItems[i].y-p.y)<28){collectLoot(lootItems[i]);lootItems.splice(i,1);}}
   const nearChest=chests.find(c=>!c.open&&Math.hypot(c.x-p.x,c.y-p.y)<55);
   const prompt=document.getElementById('chest-prompt');
-  if(nearChest){const guardOk=!nearChest.isBossChest||nearChest.guard==null||!nearChest.guard.isAlive;prompt.style.display='block';prompt.textContent=guardOk?'[F] Abrir Baú':'⚠ Derrote o boss primeiro!';prompt.style.color=guardOk?'var(--amber)':'#e74c3c';}else prompt.style.display='none';
+  if(nearChest){const guardOk=!nearChest.isBossChest||nearChest.guard==null||!nearChest.guard.isAlive;prompt.style.display='block';prompt.textContent=guardOk?'[F] Abrir Baú':'⚠ Derrote o boss primeiro!';prompt.style.color=guardOk?'var(--amber)':'#e74c3c';}
+  else if(npcObj && Math.hypot(player.x-npcObj.x,player.y-npcObj.y)<60){prompt.style.display='block';prompt.textContent='[F] Falar com Archimedes';prompt.style.color='var(--amber)';}
+  else prompt.style.display='none';
 }
 
 function moveEntity(e,dx,dy){const r=e.size||12;const nx=e.x+dx;if(!isSolid(nx-r,e.y)&&!isSolid(nx+r,e.y))e.x=nx;const ny=e.y+dy;if(!isSolid(e.x-r,ny)&&!isSolid(e.x+r,ny))e.y=ny;e.x=Math.max(r,Math.min(WORLD_W-r,e.x));e.y=Math.max(r,Math.min(WORLD_H-r,e.y));}
@@ -1020,8 +1394,10 @@ function autoAttack(p){
 }
 
 function updateEnemies(dt){
+  let anyBossAlive = false;
   for(const e of enemies){
     if(!e.isAlive){e.deathTimer-=dt;continue;}
+    if(e.isBoss && e.isAlive) anyBossAlive = true;
     if(e.hitFlash>0)e.hitFlash-=dt;
     if(e.poisonStacks>0){e.poisonTimer-=dt;if(e.poisonTimer<=0){e.poisonTimer=800;const pdmg=Math.floor(e.poisonStacks*3);e.hp-=pdmg;spawnDmgNumber(e.x,e.y-e.size,'☠'+pdmg,'#8e44ad');e.poisonStacks=Math.max(0,e.poisonStacks-1);if(e.hp<=0)killEnemy(e);}}
     if(e.frozenTimer>0){e.frozenTimer-=dt;continue;}
@@ -1031,6 +1407,10 @@ function updateEnemies(dt){
       e.atkTimer=Math.max(0,e.atkTimer-dt);
       if(e.atkTimer<=0&&dist<e.atkRange+10){e.atkTimer=e.atkSpeed;let dmg=Math.floor(e.atk*(0.8+Math.random()*.4));dmg=Math.max(1,dmg-Math.floor(p.def*.5));if(p.subSkill==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}if(p.isAlive){p.hp-=dmg;p.hitFlash=200;spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}}
     }else{e.roamTimer-=dt;if(e.roamTimer<=0){e.roamTimer=1200+Math.random()*2000;const ang=Math.random()*Math.PI*2;e.roamDX=Math.cos(ang);e.roamDY=Math.sin(ang);}if(Math.random()<.5)moveEntity(e,e.roamDX*e.spd*.4*dt/1000,e.roamDY*e.spd*.4*dt/1000);}
+  }
+  // Check boss music state
+  if (!anyBossAlive && bossActive) {
+    onBossDied();
   }
 }
 
@@ -1132,17 +1512,24 @@ function getShopBuyPrice(itemId){const db=ITEM_DB[itemId];if(!db)return 10;const
 function updateChests(){for(const c of chests)c.bob+=0.02;}
 
 function tryOpenChest(){
-  const nearChest=chests.find(c=>!c.open&&Math.hypot(c.x-player.x,c.y-player.y)<55);if(!nearChest)return;
-  const guardOk=!nearChest.isBossChest||nearChest.guard==null||!nearChest.guard.isAlive;
-  if(!guardOk){addLog('⚠ Derrote o boss para abrir!','ldmg');return;}
-  nearChest.open=true;
-  const pool=nearChest.rarity==='epic'?CHEST_LOOT.epic:nearChest.rarity==='rare'?[...CHEST_LOOT.rare,...CHEST_LOOT.epic]:CHEST_LOOT.common;
-  const item=pool[Math.floor(Math.random()*pool.length)];
-  const gold=nearChest.rarity==='epic'?60+Math.floor(Math.random()*80):nearChest.rarity==='rare'?20+Math.floor(Math.random()*30):5+Math.floor(Math.random()*15);
-  spawnLoot(nearChest.x,nearChest.y-20,item);
-  player.gold+=gold;
-  addLog(`🎁 Baú [${nearChest.rarity}]: ${ITEM_DB[item]?.icon||'?'} ${ITEM_DB[item]?.name||item} + ${gold}🪙`,'lchest');
-  for(let i=0;i<20;i++){const ang=Math.random()*Math.PI*2;const spd=60+Math.random()*100;particles.push({type:'hit',x:nearChest.x,y:nearChest.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-50,life:600,maxLife:600,r:3+Math.random()*4,color:nearChest.rarity==='epic'?'#bb8fce':nearChest.rarity==='rare'?'#5dade2':'#e8a020',gravity:80});}
+  const nearChest=chests.find(c=>!c.open&&Math.hypot(c.x-player.x,c.y-player.y)<55);
+  if(nearChest){
+    const guardOk=!nearChest.isBossChest||nearChest.guard==null||!nearChest.guard.isAlive;
+    if(!guardOk){addLog('⚠ Derrote o boss para abrir!','ldmg');return;}
+    nearChest.open=true;
+    const pool=nearChest.rarity==='epic'?CHEST_LOOT.epic:nearChest.rarity==='rare'?[...CHEST_LOOT.rare,...CHEST_LOOT.epic]:CHEST_LOOT.common;
+    const item=pool[Math.floor(Math.random()*pool.length)];
+    const gold=nearChest.rarity==='epic'?60+Math.floor(Math.random()*80):nearChest.rarity==='rare'?20+Math.floor(Math.random()*30):5+Math.floor(Math.random()*15);
+    spawnLoot(nearChest.x,nearChest.y-20,item);
+    player.gold+=gold;
+    addLog(`🎁 Baú [${nearChest.rarity}]: ${ITEM_DB[item]?.icon||'?'} ${ITEM_DB[item]?.name||item} + ${gold}🪙`,'lchest');
+    for(let i=0;i<20;i++){const ang=Math.random()*Math.PI*2;const spd=60+Math.random()*100;particles.push({type:'hit',x:nearChest.x,y:nearChest.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-50,life:600,maxLife:600,r:3+Math.random()*4,color:nearChest.rarity==='epic'?'#bb8fce':nearChest.rarity==='rare'?'#5dade2':'#e8a020',gravity:80});}
+    return;
+  }
+  // Try NPC
+  if(npcObj && Math.hypot(player.x-npcObj.x,player.y-npcObj.y)<60){
+    openNpcPanel();
+  }
 }
 
 function checkLevelUp(){
@@ -1191,8 +1578,10 @@ function skillSwiftArrow(p){const target=getNearestEnemy(p,300);const tx=target?
 function skillMultishot(p){const count=5,spread=0.45,baseAngle=Math.atan2(p.facing.y,p.facing.x),dmg=Math.floor(p.atk*1.2*getSkillDmgMult());for(let i=0;i<count;i++){const ang=baseAngle+(i-(count-1)/2)*spread;projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*420,vy:Math.sin(ang)*420,dmg,color:'#27ae60',isCrit:false,radius:5,life:1200,aoeRadius:p.arrowAoe||0,piercing:false,targetEnemy:null,poisonProc:p.subSkill==='poison'?.3:0,freezeProc:0});}addLog('🎯 Multi-Disparo!','lskill');}
 function skillBombArrow(p){const target=getNearestEnemy(p,250);const tx=target?target.x:p.x+p.facing.x*200,ty=target?target.y:p.y+p.facing.y*200;const dmg=Math.floor(p.atk*1.8*getSkillDmgMult());const dx=tx-p.x,dy=ty-p.y,len=Math.hypot(dx,dy);projectiles.push({x:p.x,y:p.y,vx:(dx/len)*360,vy:(dy/len)*360,dmg,color:'#e67e22',isCrit:false,radius:10,life:2000,aoeRadius:85,piercing:false,targetEnemy:target,poisonProc:p.subSkill==='poison'?.5:0,freezeProc:0});addLog('💣 Flecha Explosiva!','lskill');}
 
+// ─────────────────────────────────────────────────────────
 // RENDER
-function render(){ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(-cam.x,-cam.y);renderTiles();renderDecor();renderChests();renderLoot();renderEnemies();renderProjectiles();renderPlayer();renderParticles();ctx.restore();}
+// ─────────────────────────────────────────────────────────
+function render(){ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(-cam.x,-cam.y);renderTiles();renderDecor();renderNpc();renderChests();renderLoot();renderEnemies();renderProjectiles();renderPlayer();renderParticles();ctx.restore();}
 
 function renderTiles(){
   const sx=Math.max(0,Math.floor(cam.x/T)),sy=Math.max(0,Math.floor(cam.y/T));
@@ -1218,6 +1607,53 @@ function renderDecor(){
     else if(d.type==='stone'){ctx.fillStyle='#2a2830';ctx.beginPath();ctx.ellipse(d.x,d.y,6,4,0,0,Math.PI*2);ctx.fill();}
     else if(d.type==='flower'){ctx.strokeStyle='#1a3a10';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(d.x,d.y-7);ctx.stroke();ctx.fillStyle=d.clr;for(let p=0;p<5;p++){const a=(p/5)*Math.PI*2;ctx.beginPath();ctx.ellipse(d.x+Math.cos(a)*3,d.y-7+Math.sin(a)*3,2.5,2,.5,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#f0e040';ctx.beginPath();ctx.arc(d.x,d.y-7,2,0,Math.PI*2);ctx.fill();}
     else if(d.type==='torch'){const flicker=Math.sin(now/80+d.flicker)*.3+.7;ctx.fillStyle='#4a3820';ctx.fillRect(d.x-2.5,d.y-6,5,9);ctx.fillStyle='#3a2810';ctx.fillRect(d.x-4,d.y-7,8,3);const grad=ctx.createRadialGradient(d.x,d.y-12,1,d.x,d.y-12,12*flicker);grad.addColorStop(0,'rgba(255,210,60,.95)');grad.addColorStop(.4,'rgba(255,110,20,.6)');grad.addColorStop(1,'rgba(255,40,0,0)');ctx.fillStyle=grad;ctx.beginPath();ctx.ellipse(d.x,d.y-12,9*flicker,11*flicker,0,0,Math.PI*2);ctx.fill();}
+  }
+}
+
+// Render NPC on map
+function renderNpc() {
+  if (!npcObj) return;
+  const nx = npcObj.x, ny = npcObj.y;
+  if(nx<cam.x-60||nx>cam.x+W+60||ny<cam.y-60||ny>cam.y+H+60) return;
+  const now = Date.now();
+  // Glow aura
+  const aura = ctx.createRadialGradient(nx, ny, 8, nx, ny, 36);
+  aura.addColorStop(0, 'rgba(232,160,32,.25)');
+  aura.addColorStop(1, 'rgba(232,160,32,0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath(); ctx.arc(nx, ny, 36, 0, Math.PI*2); ctx.fill();
+  // Body
+  ctx.fillStyle = '#3a2870';
+  ctx.beginPath(); ctx.roundRect(nx-10, ny-12, 20, 24, [4,4,2,2]); ctx.fill();
+  // Robe detail
+  ctx.fillStyle = '#5a3a9a';
+  ctx.beginPath(); ctx.roundRect(nx-8, ny-10, 16, 20, [3]); ctx.fill();
+  // Head
+  ctx.fillStyle = '#d4a87a';
+  ctx.beginPath(); ctx.arc(nx, ny-22, 9, 0, Math.PI*2); ctx.fill();
+  // Hat
+  ctx.fillStyle = '#2a1850';
+  ctx.beginPath(); ctx.moveTo(nx, ny-42); ctx.lineTo(nx-12, ny-30); ctx.lineTo(nx+12, ny-30); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(nx, ny-30, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+  // Staff
+  ctx.strokeStyle = '#6a4820';
+  ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(nx+14, ny-40); ctx.lineTo(nx+12, ny+12); ctx.stroke();
+  const orbPulse = Math.sin(now/400) * 0.3 + 0.7;
+  ctx.fillStyle = `rgba(155,89,182,${orbPulse})`;
+  ctx.beginPath(); ctx.arc(nx+14, ny-40, 5, 0, Math.PI*2); ctx.fill();
+  // Name tag
+  const nearDist = player ? Math.hypot(player.x-nx, player.y-ny) : 9999;
+  const alpha = nearDist < 120 ? Math.min(1, (120-nearDist)/60) : 0;
+  if (alpha > 0) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(8,10,13,.85)';
+    ctx.beginPath(); ctx.roundRect(nx-44, ny-58, 88, 16, [4]); ctx.fill();
+    ctx.fillStyle = '#e8a020';
+    ctx.font = 'bold 10px Cinzel, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🧙 Archimedes', nx, ny-50);
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -1252,7 +1688,6 @@ function renderEnemies(){
   }
 }
 
-// Enemy draw functions (condensed)
 function drawSlime(ctx,e){const pulse=Math.sin(Date.now()/300)*2;ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.ellipse(e.x,e.y+pulse*.3,e.size+pulse*.5,e.size*.8-pulse*.2,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(e.x-4,e.y-2+pulse*.3,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e.x+4,e.y-2+pulse*.3,2.5,0,Math.PI*2);ctx.fill();}
 function drawGoblin(ctx,e){const t=e.size;ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.roundRect(e.x-t*.55,e.y-t*.4,t*1.1,t,[4,4,2,2]);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#c8963c';ctx.beginPath();ctx.ellipse(e.x,e.y-t*.7,t*.65,t*.6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(e.x-t*.22,e.y-t*.75,t*.14,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e.x+t*.22,e.y-t*.75,t*.14,0,Math.PI*2);ctx.fill();}
 function drawSkeleton(ctx,e){const t=e.size,bc=e.hitFlash>0?'#fff':'#ddd';ctx.strokeStyle=bc;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(e.x,e.y-t*.4);ctx.lineTo(e.x,e.y+t*.2);ctx.stroke();ctx.fillStyle=bc;ctx.beginPath();ctx.arc(e.x,e.y-t*.7,t*.55,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.ellipse(e.x-t*.18,e.y-t*.72,t*.14,t*.16,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(e.x+t*.18,e.y-t*.72,t*.14,t*.16,0,0,Math.PI*2);ctx.fill();}
@@ -1275,9 +1710,7 @@ function renderPlayer(){
 }
 
 function drawWarriorPlayer(ctx,p){const t=p.size||14;const angle=Math.atan2(p.facing.y,p.facing.x);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(angle-Math.PI/2);ctx.fillStyle='rgba(160,30,20,.7)';ctx.beginPath();ctx.moveTo(0,t*.2);ctx.lineTo(-t*.8,t*.8);ctx.lineTo(t*.8,t*.8);ctx.fill();ctx.fillStyle='#888';ctx.beginPath();ctx.roundRect(-t*.65,-t*.5,t*1.3,t,[4,4,2,2]);ctx.fill();ctx.fillStyle='#aaa';ctx.beginPath();ctx.roundRect(-t*.5,-t*.45,t,t*.7,[3]);ctx.fill();ctx.fillStyle='#e8a020';ctx.fillRect(-t*.06,-t*.35,t*.12,t*.5);ctx.fillRect(-t*.25,-t*.15,t*.5,t*.12);ctx.fillStyle='#3a1060';ctx.beginPath();ctx.ellipse(0,-t*.55,t*.38,t*.36,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ddd';ctx.lineWidth=3.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(t*.9,-t*.8);ctx.lineTo(t*.9,t*.9);ctx.stroke();ctx.restore();}
-
 function drawMagePlayer(ctx,p){const t=p.size||14;const angle=Math.atan2(p.facing.y,p.facing.x);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(angle-Math.PI/2);ctx.fillStyle='rgba(80,20,120,.75)';ctx.beginPath();ctx.moveTo(0,t*.3);ctx.lineTo(-t*.9,t*1.1);ctx.lineTo(0,t*.7);ctx.lineTo(t*.9,t*1.1);ctx.fill();ctx.fillStyle='#4a1a70';ctx.beginPath();ctx.roundRect(-t*.55,-t*.4,t*1.1,t,[8,8,4,4]);ctx.fill();ctx.fillStyle='#c8a080';ctx.beginPath();ctx.ellipse(0,-t*.55,t*.38,t*.36,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(-t*.15,-t*.58,t*.12,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(t*.15,-t*.58,t*.12,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#6a3a10';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-t*.8,-t*.8);ctx.lineTo(-t*.8,t);ctx.stroke();const orbPulse=Math.sin(Date.now()/250)*.3+.7;ctx.fillStyle=`rgba(155,89,182,${orbPulse})`;ctx.beginPath();ctx.arc(-t*.8,-t*1.0,t*.3,0,Math.PI*2);ctx.fill();ctx.restore();}
-
 function drawArcherPlayer(ctx,p){
   const t=p.size||14;const angle=Math.atan2(p.facing.y,p.facing.x);const now=Date.now();
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate(angle-Math.PI/2);
@@ -1318,15 +1751,15 @@ function updateMinimapCanvas(){
   const sx=mw/WORLD_W,sy=mh/WORLD_H;
   for(let y=0;y<MAP_H;y++){for(let x=0;x<MAP_W;x++){const t=mapTiles[y][x];if(t===TILE.DEEP_GRASS||t===TILE.WATER)continue;mmCtx.fillStyle=t===TILE.GRASS?'#1a2a10':t===TILE.STONE||t===TILE.PATH?'#2a2a3a':'#2a2010';mmCtx.fillRect(x*T*sx,y*T*sy,T*sx+.5,T*sy+.5);}}
   for(const c of chests){if(c.open)continue;mmCtx.fillStyle=c.rarity==='epic'?'#bb8fce':c.rarity==='rare'?'#5dade2':'#e8a020';mmCtx.fillRect(c.x*sx-2,c.y*sy-2,4,4);}
+  // NPC on minimap
+  if(npcObj){mmCtx.fillStyle='#e8a020';mmCtx.fillRect(npcObj.x*sx-3,npcObj.y*sy-3,6,6);}
   for(const e of enemies){if(!e.isAlive)continue;mmCtx.fillStyle=e.isBoss?'#e74c3c':'#c0392b';mmCtx.fillRect(e.x*sx-1,e.y*sy-1,2,2);}
   for(const l of lootItems){mmCtx.fillStyle='#e8a020';mmCtx.fillRect(l.x*sx-1,l.y*sy-1,2,2);}
   mmCtx.fillStyle='#fff';mmCtx.fillRect(player.x*sx-2,player.y*sy-2,4,4);
   mmCtx.strokeStyle='rgba(255,255,255,.2)';mmCtx.lineWidth=1;mmCtx.strokeRect(cam.x*sx,cam.y*sy,W*sx,H*sy);
 }
 
-// ─────────────────────────────────────────────────────────
 // HUD
-// ─────────────────────────────────────────────────────────
 function updateHUD(){
   const p=player;
   const sb=(id,val,max)=>document.getElementById(id).style.width=Math.max(0,val/max*100)+'%';
@@ -1343,34 +1776,25 @@ function renderSkillsHUD(){
 }
 
 // ─────────────────────────────────────────────────────────
-// INVENTÁRIO — POPUP UNIFICADO (CORREÇÃO PRINCIPAL)
+// ITEM POPUP
 // ─────────────────────────────────────────────────────────
 let popupState = { active:false, idx:-1, hideTimer:null };
 
-/**
- * Mostra o popup unificado (tooltip + botões) para o item no índice idx.
- * O popup tem pointer-events:all, então o mouse pode entrar nele
- * sem disparar o mouseleave da célula — resolvendo o bug de sumir.
- */
 function showItemPopup(idx, anchorEl) {
   const invItem = player.inventory[idx];
   if (!invItem) return;
   const db = ITEM_DB[invItem.id];
   if (!db) return;
-
   clearTimeout(popupState.hideTimer);
   popupState.active = true;
   popupState.idx = idx;
-
   const popup = document.getElementById('item-popup');
   const info  = document.getElementById('popup-info-content');
   const acts  = document.getElementById('popup-actions');
-
   const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]||'#aaa';
-  const canEquip    = !db.forClass || db.forClass.includes(player.classId);
-  const isEq        = (db.type==='weapon'&&player.equippedWeapon===invItem.id)||(db.type==='armor'&&player.equippedArmor===invItem.id);
-  const sellPrice   = getSellPrice(invItem.id);
-
+  const canEquip = !db.forClass || db.forClass.includes(player.classId);
+  const isEq = (db.type==='weapon'&&player.equippedWeapon===invItem.id)||(db.type==='armor'&&player.equippedArmor===invItem.id);
+  const sellPrice = getSellPrice(invItem.id);
   info.innerHTML =
     (isEq ? '<div class="tt-equipped-badge">✦ Equipado</div>' : '') +
     `<div class="tt-name" style="color:${rarityColor}">${db.icon} ${db.name}</div>`+
@@ -1379,91 +1803,46 @@ function showItemPopup(idx, anchorEl) {
     (db.forClass ? `<div class="tt-class">Para: ${db.forClass.join('/')}</div>` : '')+
     (!canEquip ? '<div class="tt-warn">❌ Classe errada</div>' : '')+
     `<div class="tt-sell-price">Venda: ${sellPrice} 🪙</div>`;
-
-  // Botões de ação
   acts.innerHTML = '';
   if (db.type === 'consumable') {
-    const b = makePopupBtn('Usar', 'use-btn', ()=>{ doUseItem(idx); });
-    acts.appendChild(b);
+    acts.appendChild(makePopupBtn('Usar', 'use-btn', ()=>{ doUseItem(idx); }));
   } else if (canEquip) {
-    if (isEq) {
-      const b = makePopupBtn('Desequipar', 'unequip-btn', ()=>{ doUseItem(idx); });
-      acts.appendChild(b);
-    } else {
-      const b = makePopupBtn('Equipar', 'equip-btn', ()=>{ doUseItem(idx); });
-      acts.appendChild(b);
-    }
+    if (isEq) acts.appendChild(makePopupBtn('Desequipar', 'unequip-btn', ()=>{ doUseItem(idx); }));
+    else acts.appendChild(makePopupBtn('Equipar', 'equip-btn', ()=>{ doUseItem(idx); }));
   }
-  const sellBtn = makePopupBtn(`Vender ${sellPrice}🪙`, 'sell-btn', ()=>{ doSellItem(idx); });
-  acts.appendChild(sellBtn);
-
+  acts.appendChild(makePopupBtn(`Vender ${sellPrice}🪙`, 'sell-btn', ()=>{ doSellItem(idx); }));
   popup.style.display = 'block';
-
-  // Posicionar o popup perto da célula
   const rect = anchorEl.getBoundingClientRect();
   const pw = 220, ph = 160;
-  let x = rect.right + 6;
-  let y = rect.top;
+  let x = rect.right + 6, y = rect.top;
   if (x + pw > window.innerWidth - 8) x = rect.left - pw - 6;
   if (y + ph > window.innerHeight - 8) y = window.innerHeight - ph - 8;
   if (y < 4) y = 4;
-  popup.style.left = x + 'px';
-  popup.style.top  = y + 'px';
+  popup.style.left = x + 'px'; popup.style.top = y + 'px';
 }
 
 function makePopupBtn(label, cls, onClick) {
   const b = document.createElement('button');
-  b.className = 'popup-btn ' + cls;
-  b.textContent = label;
+  b.className = 'popup-btn ' + cls; b.textContent = label;
   b.addEventListener('mousedown', ev => { ev.stopPropagation(); });
-  b.addEventListener('click', ev => {
-    ev.stopPropagation();
-    onClick();
-  });
+  b.addEventListener('click', ev => { ev.stopPropagation(); onClick(); });
   return b;
 }
-
-function doUseItem(idx) {
-  useInventoryItem(idx);
-  hideItemPopup(true);
-}
-
-function doSellItem(idx) {
-  sellInventoryItem(idx);
-  hideItemPopup(true);
-}
-
+function doUseItem(idx) { useInventoryItem(idx); hideItemPopup(true); }
+function doSellItem(idx) { sellInventoryItem(idx); hideItemPopup(true); }
 function hideItemPopup(immediate = false) {
   clearTimeout(popupState.hideTimer);
-  if (immediate) {
-    _doHidePopup();
-  } else {
-    // Delay pequeno permite que o mouse vá do cell ao popup sem sumir
-    popupState.hideTimer = setTimeout(_doHidePopup, 120);
-  }
+  if (immediate) _doHidePopup();
+  else popupState.hideTimer = setTimeout(_doHidePopup, 120);
 }
-
 function _doHidePopup() {
   const popup = document.getElementById('item-popup');
   if (popup) popup.style.display = 'none';
-  popupState.active = false;
-  popupState.idx = -1;
+  popupState.active = false; popupState.idx = -1;
 }
 
-// O popup fica visível quando o mouse está nele
-document.addEventListener('DOMContentLoaded', () => {
-  const popup = document.getElementById('item-popup');
-  if (popup) {
-    popup.addEventListener('mouseenter', () => clearTimeout(popupState.hideTimer));
-    popup.addEventListener('mouseleave', () => hideItemPopup(false));
-  }
-});
-
-// ─────────────────────────────────────────────────────────
 // DRAG & DROP
-// ─────────────────────────────────────────────────────────
 let dragState = { active:false, fromIdx:-1, justDragged:false };
-
 function startDrag(idx, icon, ev) {
   dragState.active=true; dragState.fromIdx=idx; dragState.justDragged=false;
   hideItemPopup(true);
@@ -1475,9 +1854,7 @@ function startDrag(idx, icon, ev) {
   document.addEventListener('mousemove',onDragMove);
   document.addEventListener('mouseup',onDragUp);
 }
-
 function onDragMove(ev){if(!dragState.active)return;const g=document.getElementById('drag-ghost');g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px';}
-
 function onDragUp(ev){
   if(!dragState.active)return;
   document.removeEventListener('mousemove',onDragMove);document.removeEventListener('mouseup',onDragUp);
@@ -1488,7 +1865,6 @@ function onDragUp(ev){
   else cancelDrag();
   dragState.active=false;dragState.justDragged=true;setTimeout(()=>{dragState.justDragged=false;},80);
 }
-
 function endDrag(toIdx){
   const from=dragState.fromIdx;if(from===toIdx){cancelDrag();return;}
   while(player.inventory.length<=Math.max(from,toIdx))player.inventory.push(null);
@@ -1496,58 +1872,40 @@ function endDrag(toIdx){
   while(player.inventory.length&&player.inventory[player.inventory.length-1]===null)player.inventory.pop();
   cancelDrag();renderInventory();updateInventoryPanel();
 }
-
 function cancelDrag(){
   document.getElementById('inv-grid').querySelectorAll('.inv-cell').forEach(c=>c.classList.remove('dragging','drag-over'));
   dragState.active=false;
 }
 
-// ─────────────────────────────────────────────────────────
-// RENDER INVENTÁRIO
-// ─────────────────────────────────────────────────────────
+// INVENTORY RENDER
 function renderInventory() {
   const grid = document.getElementById('inv-grid');
   grid.innerHTML = '';
   const max = 20;
-
   for (let i = 0; i < max; i++) {
     const cell = document.createElement('div');
     cell.dataset.idx = i;
     const invItem = player.inventory[i];
-
     if (invItem) {
       const db = ITEM_DB[invItem.id];
       if (db) {
         const isEq = (db.type==='weapon'&&player.equippedWeapon===invItem.id)||(db.type==='armor'&&player.equippedArmor===invItem.id);
         cell.className = 'inv-cell rarity-'+db.rarity + (isEq?' is-equipped':'');
-
-        // Icon
         const iconS = document.createElement('span');
         iconS.style.cssText='pointer-events:none;font-size:22px;';
-        iconS.textContent = db.icon;
-        cell.appendChild(iconS);
-
-        // Badge tipo
+        iconS.textContent = db.icon; cell.appendChild(iconS);
         const badge = document.createElement('span');
         badge.className='inv-badge'; badge.style.pointerEvents='none';
         badge.textContent = db.type==='consumable'?'❤':db.type==='weapon'?'⚔':'🛡';
         cell.appendChild(badge);
-
-        // Preço venda (canto sup. esq.)
         const price = document.createElement('span');
         price.style.cssText='position:absolute;top:2px;left:3px;font-family:VT323,monospace;font-size:9px;color:#5a3808;pointer-events:none;';
-        price.textContent = getSellPrice(invItem.id)+'g';
-        cell.appendChild(price);
-
-        // Equipped star
+        price.textContent = getSellPrice(invItem.id)+'g'; cell.appendChild(price);
         if (isEq) {
           const star = document.createElement('span');
           star.style.cssText='position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--amber);pointer-events:none;';
-          star.textContent='★';
-          cell.appendChild(star);
+          star.textContent='★'; cell.appendChild(star);
         }
-
-        // Hover: mostra popup com delay (permite arrastar)
         let hoverTimer = null;
         cell.addEventListener('mouseenter', ev => {
           if (dragState.active) return;
@@ -1557,59 +1915,31 @@ function renderInventory() {
         cell.addEventListener('mouseleave', () => {
           clearTimeout(hoverTimer);
           if (dragState.active) return;
-          hideItemPopup(false); // delay para ir ao popup
+          hideItemPopup(false);
         });
-
-        // Mouse down: inicia drag (com threshold de tempo)
-        let mouseDownTime = 0;
-        cell.addEventListener('mousedown', ev => {
-          if (ev.button !== 0) return;
-          ev.preventDefault();
-          mouseDownTime = Date.now();
-        });
-        cell.addEventListener('mouseup', ev => {
-          if (ev.button !== 0) return;
-          const elapsed = Date.now() - mouseDownTime;
-          // Clique rápido (<200ms) = não inicia drag
-          if (elapsed < 200) return;
-          // Se segurou mais tempo, é drag
-        });
-
-        // Drag: inicia ao mover com mouse pressionado
-        let mouseDown = false;
-        let dragStarted = false;
-        cell.addEventListener('mousedown', ev => {
-          if (ev.button !== 0) return;
-          mouseDown = true; dragStarted = false;
-        });
+        let mouseDown = false, dragStarted = false;
+        cell.addEventListener('mousedown', ev => { if(ev.button!==0)return; mouseDown=true; dragStarted=false; });
         cell.addEventListener('mousemove', ev => {
           if (!mouseDown || dragStarted) return;
           dragStarted = true;
           clearTimeout(hoverTimer);
           startDrag(i, db.icon, ev);
         });
-        document.addEventListener('mouseup', () => { mouseDown = false; dragStarted = false; }, { once: false });
+        document.addEventListener('mouseup', () => { mouseDown=false; dragStarted=false; }, {once:false});
       }
     } else {
       cell.className = 'inv-cell empty';
     }
-
-    // Drop target
-    cell.addEventListener('mouseenter', () => { if (dragState.active && parseInt(cell.dataset.idx) !== dragState.fromIdx) cell.classList.add('drag-over'); });
+    cell.addEventListener('mouseenter', () => { if(dragState.active&&parseInt(cell.dataset.idx)!==dragState.fromIdx)cell.classList.add('drag-over'); });
     cell.addEventListener('mouseleave', () => cell.classList.remove('drag-over'));
-    cell.addEventListener('mouseup', () => { if (dragState.active) { const t = parseInt(cell.dataset.idx); if (!isNaN(t)) endDrag(t); } });
-
+    cell.addEventListener('mouseup', () => { if(dragState.active){const t=parseInt(cell.dataset.idx);if(!isNaN(t))endDrag(t);}});
     grid.appendChild(cell);
   }
-
-  // Atualiza contador
   const cnt = document.getElementById('inv-count');
   if (cnt) cnt.textContent = player.inventory.filter(Boolean).length + '/20';
 }
 
-// ─────────────────────────────────────────────────────────
-// SLOTS DE EQUIPAMENTO
-// ─────────────────────────────────────────────────────────
+// EQUIP SLOTS
 const SLOT_MAP = {
   weapon:  {types:['weapon'],  label:'⚔'},
   offhand: {types:['armor'],   label:'🛡'},
@@ -1622,7 +1952,6 @@ const SLOT_MAP = {
   ring2:   {types:['accessory'],label:'💍'},
   amulet:  {types:['accessory'],label:'📿'},
 };
-
 function renderEquipSlots() {
   for (const slotId of Object.keys(SLOT_MAP)) {
     const el = document.getElementById('eslot-'+slotId);
@@ -1645,28 +1974,19 @@ function renderEquipSlots() {
       const lb = document.createElement('span'); lb.className='equip-slot-label'; lb.textContent=def.label; el.appendChild(lb);
     }
   }
-
-  // Lista de equipados em destaque (abaixo dos slots)
   const list = document.getElementById('equipped-items-list');
   if (!list) return;
   list.innerHTML = '';
   const eqItems = [];
   if (player.equippedWeapon) { const db=ITEM_DB[player.equippedWeapon]; if(db) eqItems.push({id:player.equippedWeapon, db}); }
   if (player.equippedArmor)  { const db=ITEM_DB[player.equippedArmor];  if(db) eqItems.push({id:player.equippedArmor, db}); }
-
-  if (eqItems.length === 0) {
-    list.innerHTML = '<div class="no-equip-msg">Sem itens equipados</div>';
-  } else {
+  if (eqItems.length === 0) { list.innerHTML = '<div class="no-equip-msg">Sem itens equipados</div>'; }
+  else {
     for (const eq of eqItems) {
-      const row = document.createElement('div');
-      row.className = 'equipped-item-row';
+      const row = document.createElement('div'); row.className = 'equipped-item-row';
       const statKey = eq.db.type==='weapon' ? 'atk' : 'def';
       const statVal = eq.db.effect[statKey] || 0;
-      row.innerHTML =
-        `<span class="ei-icon">${eq.db.icon}</span>`+
-        `<span class="ei-name" style="color:${{common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[eq.db.rarity]}">${eq.db.name}</span>`+
-        `<span class="ei-stat">+${statVal}</span>`+
-        `<span class="ei-unequip" title="Desequipar">✕</span>`;
+      row.innerHTML = `<span class="ei-icon">${eq.db.icon}</span><span class="ei-name" style="color:${{common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[eq.db.rarity]}">${eq.db.name}</span><span class="ei-stat">+${statVal}</span><span class="ei-unequip" title="Desequipar">✕</span>`;
       row.querySelector('.ei-unequip').addEventListener('click', ev => {
         ev.stopPropagation();
         removeEquip(eq.id);
@@ -1675,8 +1995,6 @@ function renderEquipSlots() {
       list.appendChild(row);
     }
   }
-
-  // Bônus totais
   let atkBonus=0, defBonus=0, hpBonus=0;
   if (player.equippedWeapon){const db=ITEM_DB[player.equippedWeapon];if(db&&db.effect){atkBonus+=db.effect.atk||0;}}
   if (player.equippedArmor) {const db=ITEM_DB[player.equippedArmor]; if(db&&db.effect){defBonus+=db.effect.def||0;hpBonus+=db.effect.hp||0;}}
@@ -1690,12 +2008,10 @@ function openInventory(){
   panel.classList.add('open');
   updateInventoryPanel();renderInventory();renderEquipSlots();
 }
-
 function closeInventory(){
   document.getElementById('inv-panel').classList.remove('open');
   hideItemPopup(true);
 }
-
 function updateInventoryPanel(){
   const p=player;const def=CLASS_DEF[p.classId];
   document.getElementById('stat-class').textContent=p.subclass?p.subclass:def.name;
@@ -1712,12 +2028,203 @@ function updateInventoryPanel(){
 }
 
 // ─────────────────────────────────────────────────────────
+// NPC PANEL — TROCA DE CLASSE
+// ─────────────────────────────────────────────────────────
+function openNpcPanel() {
+  closeAllPanels();
+  npcSelectedClass = null;
+  npcSelectedSubclass = null;
+  npcPanelOpen = true;
+  document.getElementById('npc-panel').classList.add('open');
+  renderNpcPanel();
+}
+
+function closeNpcPanel() {
+  document.getElementById('npc-panel').classList.remove('open');
+  npcPanelOpen = false;
+  npcSelectedClass = null;
+  npcSelectedSubclass = null;
+}
+
+function renderNpcPanel() {
+  document.getElementById('npc-gold-display').textContent = player.gold;
+
+  // Dialogues based on state
+  const dialogues = {
+    default: '"Ah, viajante! Posso sentir o poder dentro de você... Deseja explorar um caminho diferente? Posso reforjar sua essência — por um preço, é claro."',
+    same: '"Você já trilha esse caminho, campeão. Escolha uma transformação diferente."',
+    noGold: '"Seus cofres estão vazios, aventureiro. Regresse quando tiver ouro suficiente."',
+    confirm: '"Excelente escolha! Que seu novo poder o guie para a glória!"'
+  };
+  document.getElementById('npc-dialogue').textContent = dialogues.default;
+
+  // Class grid
+  const classGrid = document.getElementById('npc-class-grid');
+  classGrid.innerHTML = '';
+  const classDefs = [
+    { id:'warrior', icon:'⚔', name:'Cavaleiro', cost: CLASS_CHANGE_COST.warrior },
+    { id:'mage',    icon:'🔮', name:'Mago',      cost: CLASS_CHANGE_COST.mage },
+    { id:'archer',  icon:'🏹', name:'Arqueiro',  cost: CLASS_CHANGE_COST.archer },
+  ];
+  for (const cd of classDefs) {
+    const card = document.createElement('div');
+    const isCurrent = player.classId === cd.id;
+    card.className = 'npc-class-card' + (isCurrent ? ' current' : '') + (npcSelectedClass === cd.id ? ' selected' : '');
+    card.innerHTML = `
+      <span class="ncc-icon">${cd.icon}</span>
+      <div class="ncc-name" style="color:var(--${cd.id})">${cd.name}</div>
+      <div class="ncc-cost">${isCurrent ? '—' : cd.cost + ' 🪙'}</div>
+      ${isCurrent ? '<span class="ncc-badge curr-badge">Atual</span>' : ''}
+    `;
+    if (!isCurrent) {
+      card.addEventListener('click', () => {
+        npcSelectedClass = cd.id;
+        npcSelectedSubclass = null;
+        renderNpcPanel();
+      });
+    }
+    classGrid.appendChild(card);
+  }
+
+  // Subclass section — always show subclasses of the CURRENT class base
+  // (the subclass they'll pick if they change TO npcSelectedClass, or current if no selection)
+  const subclassSourceId = npcSelectedClass || player.classId;
+  const subOptions = SUBCLASS_DEF[subclassSourceId];
+  const subSection = document.getElementById('npc-sub-section');
+  const subGrid = document.getElementById('npc-sub-grid');
+  const subTitle = document.getElementById('npc-sub-title');
+  subTitle.textContent = `✦ SUBCLASSES DE ${CLASS_DEF[subclassSourceId].name.toUpperCase()}`;
+  subGrid.innerHTML = '';
+
+  for (const sub of subOptions) {
+    const card = document.createElement('div');
+    card.className = 'npc-sub-card' + (npcSelectedSubclass === sub.id ? ' selected' : '');
+    card.innerHTML = `
+      <span class="nsc-icon">${sub.icon}</span>
+      <div class="nsc-name">${sub.name}</div>
+      <div class="nsc-desc">${sub.desc}</div>
+      <div class="nsc-bonus">${sub.bonuses}</div>
+    `;
+    card.addEventListener('click', () => {
+      npcSelectedSubclass = sub.id;
+      renderNpcPanel();
+    });
+    subGrid.appendChild(card);
+  }
+
+  // Confirm button logic
+  const confirmBtn = document.getElementById('npc-confirm-btn');
+  const msgEl = document.getElementById('npc-msg');
+  msgEl.textContent = '';
+  msgEl.className = 'npc-msg';
+
+  // Determine cost and validity
+  const changingClass = npcSelectedClass && npcSelectedClass !== player.classId;
+  const pickingSubclass = !!npcSelectedSubclass;
+
+  if (!changingClass && !pickingSubclass) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Selecione uma opção';
+  } else if (changingClass && !pickingSubclass) {
+    const cost = CLASS_CHANGE_COST[npcSelectedClass];
+    confirmBtn.disabled = player.gold < cost;
+    confirmBtn.textContent = `Trocar classe — ${cost} 🪙`;
+    if (player.gold < cost) { msgEl.textContent = 'Ouro insuficiente!'; msgEl.className = 'npc-msg err'; }
+  } else if (changingClass && pickingSubclass) {
+    const cost = CLASS_CHANGE_COST[npcSelectedClass] + SUBCLASS_CHANGE_COST;
+    confirmBtn.disabled = player.gold < cost;
+    confirmBtn.textContent = `Trocar + Subclasse — ${cost} 🪙`;
+    if (player.gold < cost) { msgEl.textContent = 'Ouro insuficiente!'; msgEl.className = 'npc-msg err'; }
+  } else if (!changingClass && pickingSubclass) {
+    // Only changing subclass (same base class)
+    const cost = SUBCLASS_CHANGE_COST;
+    confirmBtn.disabled = player.gold < cost;
+    confirmBtn.textContent = `Trocar subclasse — ${cost} 🪙`;
+    if (player.gold < cost) { msgEl.textContent = 'Ouro insuficiente!'; msgEl.className = 'npc-msg err'; }
+  }
+}
+
+function confirmClassChange() {
+  const changingClass = npcSelectedClass && npcSelectedClass !== player.classId;
+  const pickingSubclass = !!npcSelectedSubclass;
+  const msgEl = document.getElementById('npc-msg');
+
+  if (!changingClass && !pickingSubclass) return;
+
+  let totalCost = 0;
+  if (changingClass) totalCost += CLASS_CHANGE_COST[npcSelectedClass];
+  if (pickingSubclass) totalCost += SUBCLASS_CHANGE_COST;
+
+  if (player.gold < totalCost) {
+    msgEl.textContent = 'Ouro insuficiente!';
+    msgEl.className = 'npc-msg err';
+    return;
+  }
+
+  player.gold -= totalCost;
+
+  const targetClass = changingClass ? npcSelectedClass : player.classId;
+
+  // Recalculate stats for new class
+  recalcPlayerForClass(player, targetClass);
+
+  // Apply subclass if selected
+  if (pickingSubclass) {
+    const subOptions = SUBCLASS_DEF[targetClass];
+    const subDef = subOptions.find(s => s.id === npcSelectedSubclass);
+    if (subDef) {
+      subDef.apply(player);
+      player.subclass = subDef.name;
+      player.subclassChosen = true;
+    }
+  }
+
+  // Update HUD
+  document.getElementById('hud-icon').textContent = CLASS_DEF[targetClass].icon;
+  document.getElementById('hud-cname').textContent = player.subclass
+    ? player.subclass.split(' ').slice(-1)[0]
+    : CLASS_DEF[targetClass].name;
+  renderSkillsHUD();
+  updateHUD();
+  updateInventoryPanel();
+  renderInventory();
+  renderEquipSlots();
+
+  const classLabel = CLASS_DEF[targetClass].name;
+  const subLabel = pickingSubclass ? ` → ${player.subclass}` : '';
+  addLog(`🧙 Reforjado: ${classLabel}${subLabel}! -${totalCost}🪙`, 'llvl');
+  showLevelUpBanner(`✦ ${player.subclass || classLabel}`);
+
+  msgEl.textContent = '✓ Transformação completa!';
+  msgEl.className = 'npc-msg ok';
+
+  // Reset selection and re-render
+  npcSelectedClass = null;
+  npcSelectedSubclass = null;
+  setTimeout(() => {
+    renderNpcPanel();
+  }, 800);
+}
+
+// ─────────────────────────────────────────────────────────
 // INPUT
 // ─────────────────────────────────────────────────────────
+function closeAllPanels() {
+  closeInventory();
+  closeShop();
+  closeMusicPanel();
+  if (npcPanelOpen) closeNpcPanel();
+}
+
 document.addEventListener('keydown', ev => {
   keys[ev.key]=true;
   if(ev.key==='Escape'){
-    const inv=document.getElementById('inv-panel');const shop=document.getElementById('shop-panel');
+    const inv=document.getElementById('inv-panel');
+    const shop=document.getElementById('shop-panel');
+    const music=document.getElementById('music-panel');
+    const npc=document.getElementById('npc-panel');
+    if(npc.classList.contains('open')){closeNpcPanel();ev.preventDefault();return;}
+    if(music.classList.contains('open')){closeMusicPanel();ev.preventDefault();return;}
     if(inv.classList.contains('open')){closeInventory();ev.preventDefault();return;}
     if(shop.classList.contains('open')){closeShop();ev.preventDefault();return;}
     return;
@@ -1726,15 +2233,21 @@ document.addEventListener('keydown', ev => {
   if(gameState==='subclass')return;
   const p=player;
   if(ev.key==='i'||ev.key==='I'){
+    if(npcPanelOpen){closeNpcPanel();return;}
     const panel=document.getElementById('inv-panel');const shop=document.getElementById('shop-panel');
     if(shop.classList.contains('open'))closeShop();
     if(panel.classList.contains('open'))closeInventory();else openInventory();
     ev.preventDefault();return;
   }
   if(ev.key==='p'||ev.key==='P'){
+    if(npcPanelOpen){closeNpcPanel();return;}
     const shop=document.getElementById('shop-panel');const inv=document.getElementById('inv-panel');
     if(inv.classList.contains('open'))closeInventory();
     if(shop.classList.contains('open'))closeShop();else openShop();
+    ev.preventDefault();return;
+  }
+  if(ev.key==='m'||ev.key==='M'){
+    toggleMusicPanel();
     ev.preventDefault();return;
   }
   if(ev.key==='f'||ev.key==='F'){tryOpenChest();ev.preventDefault();return;}
@@ -1745,7 +2258,7 @@ document.addEventListener('keydown', ev => {
     ev.preventDefault();return;
   }
   const inv2=document.getElementById('inv-panel');const shop2=document.getElementById('shop-panel');
-  if(inv2.classList.contains('open')||shop2.classList.contains('open'))return;
+  if(inv2.classList.contains('open')||shop2.classList.contains('open')||npcPanelOpen)return;
   const sm={'q':0,'Q':0,'e':1,'E':1,'r':2,'R':2};
   if(sm[ev.key]!==undefined){
     const si=sm[ev.key],sk=p.skills[si];
@@ -1755,19 +2268,16 @@ document.addEventListener('keydown', ev => {
 });
 document.addEventListener('keyup', ev=>{keys[ev.key]=false;});
 
-// Fechar popup ao clicar fora do inventário
 document.addEventListener('click', ev => {
   const popup = document.getElementById('item-popup');
   const invPanel = document.getElementById('inv-panel');
   if (popup && popup.style.display !== 'none') {
-    if (!popup.contains(ev.target) && !invPanel.contains(ev.target)) {
-      hideItemPopup(true);
-    }
+    if (!popup.contains(ev.target) && !invPanel.contains(ev.target)) hideItemPopup(true);
   }
 });
 
 // ─────────────────────────────────────────────────────────
-// SUBCLASSE
+// SUBCLASSE (original level-up screen)
 // ─────────────────────────────────────────────────────────
 function showSubclassScreen(){
   if(gameState!=='playing')return;gameState='subclass';
@@ -1787,19 +2297,16 @@ function chooseSubclass(opt){
 // LOJA
 // ─────────────────────────────────────────────────────────
 const SHOP_CATALOG = [
-  {id:'potion',basePrice:18},{id:'big_potion',basePrice:50},{id:'elixir',basePrice:140},
-  {id:'old_sword',basePrice:35},{id:'short_bow',basePrice:35},{id:'oak_staff',basePrice:40},
-  {id:'steel_sword',basePrice:90},{id:'venom_bow',basePrice:100},{id:'mage_staff',basePrice:110},
-  {id:'troll_club',basePrice:130},{id:'dragon_sword',basePrice:320},{id:'elven_bow',basePrice:280},{id:'arcane_tome',basePrice:290},
-  {id:'leather_armor',basePrice:45},{id:'robe',basePrice:45},{id:'shield',basePrice:80},{id:'heavy_armor',basePrice:260},{id:'shadow_cloak',basePrice:240},
+  {id:'potion'},{id:'big_potion'},{id:'elixir'},
+  {id:'old_sword'},{id:'short_bow'},{id:'oak_staff'},
+  {id:'steel_sword'},{id:'venom_bow'},{id:'mage_staff'},
+  {id:'troll_club'},{id:'dragon_sword'},{id:'elven_bow'},{id:'arcane_tome'},
+  {id:'leather_armor'},{id:'robe'},{id:'shield'},{id:'heavy_armor'},{id:'shadow_cloak'},
 ];
-
 let currentShopTab='consumable';let shopSelectedItem=null;
-
 function openShop(){document.getElementById('shop-panel').classList.add('open');updateShopSidebar();renderShopGrid(currentShopTab);}
 function closeShop(){document.getElementById('shop-panel').classList.remove('open');shopSelectedItem=null;document.getElementById('shop-confirm').classList.remove('visible');document.getElementById('shop-msg').textContent='';}
 function switchShopTab(type,btn){currentShopTab=type;shopSelectedItem=null;document.getElementById('shop-confirm').classList.remove('visible');document.querySelectorAll('.shop-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderShopGrid(type);}
-
 function renderShopGrid(filterType){
   const grid=document.getElementById('shop-grid');grid.innerHTML='';
   const items=SHOP_CATALOG.filter(entry=>{const db=ITEM_DB[entry.id];if(!db)return false;if(filterType==='all')return true;return db.type===filterType;});
@@ -1813,9 +2320,7 @@ function renderShopGrid(filterType){
   if(items.length===0)grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);font-style:italic;padding:20px;">Sem itens.</div>';
   document.getElementById('shop-gold-val').textContent=player.gold;
 }
-
 function selectShopItem(id,price,db){shopSelectedItem={id,price};document.getElementById('shop-confirm').classList.add('visible');document.getElementById('shop-confirm-icon').textContent=db.icon;document.getElementById('shop-confirm-name').textContent=db.name;document.getElementById('shop-confirm-desc').textContent=db.desc;document.getElementById('shop-confirm-price').textContent=price;document.getElementById('shop-msg').textContent='';const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';}
-
 function confirmBuy(){
   if(!shopSelectedItem)return;const{id,price}=shopSelectedItem;const db=ITEM_DB[id];if(!db){showShopMsg('Item inválido','err');return;}
   if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}if(player.inventory.length>=20){showShopMsg('Inventário cheio!','err');return;}
@@ -1824,20 +2329,13 @@ function confirmBuy(){
   const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';
   renderShopGrid(currentShopTab);selectShopItem(id,price,db);addLog('🛒 Comprou '+db.name+' por '+price+'🪙','lchest');
 }
-
 function showShopMsg(msg,type){const el=document.getElementById('shop-msg');el.textContent=msg;el.className='shop-msg '+type;setTimeout(()=>{if(el.textContent===msg)el.textContent='';},2500);}
 function updateShopSidebar(){if(!player)return;document.getElementById('sh-hp').textContent=Math.ceil(player.hp)+'/'+player.maxHp;document.getElementById('sh-mp').textContent=Math.ceil(player.mp)+'/'+player.maxMp;document.getElementById('sh-atk').textContent=player.atk;document.getElementById('sh-def').textContent=player.def;document.getElementById('sh-lvl').textContent=player.level;document.getElementById('shop-gold-val').textContent=player.gold;}
-
-// ─────────────────────────────────────────────────────────
-// MÚSICA
-// ─────────────────────────────────────────────────────────
-function toggleMusicPanel(){if(musicPlaying&&audioElement){audioElement.pause();musicPlaying=false;document.getElementById('music-status').textContent='OFF';}else if(audioElement){audioElement.play();musicPlaying=true;document.getElementById('music-status').textContent='▶ ON';}else{document.getElementById('music-file-input').click();}}
-function loadMusicFile(event){const file=event.target.files[0];if(!file)return;const url=URL.createObjectURL(file);if(audioElement){audioElement.pause();audioElement.src='';}audioElement=new Audio(url);audioElement.loop=true;audioElement.volume=0.5;audioElement.play();musicPlaying=true;document.getElementById('music-status').textContent='▶ '+file.name.substring(0,12)+'…';addLog('🎵 Música: '+file.name,'');}
 
 // GAME OVER
 function triggerGameOver(){player.isAlive=false;gameState='dead';setTimeout(()=>{document.getElementById('screen-gameover').classList.add('active');document.getElementById('go-stats').innerHTML=`Nível ${player.level} · ${kills} eliminados · ${player.gold} 🪙<br><em>${player.subclass||CLASS_DEF[player.classId].name}</em><br>Baús abertos: ${chests.filter(c=>c.open).length}/${chests.length}`;},600);}
 
-// PREVIEW DA SELEÇÃO DE CLASSE
+// CLASS PREVIEWS
 function drawClassPreviews(){
   function drawPrev(id,fn){const cv=document.getElementById('prev-'+id);const cx=cv.getContext('2d');cx.clearRect(0,0,80,100);const grd=cx.createRadialGradient(40,55,5,40,55,38);const c={warrior:'rgba(230,126,34,.3)',mage:'rgba(142,68,173,.3)',archer:'rgba(39,174,96,.3)'};grd.addColorStop(0,c[id]);grd.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=grd;cx.fillRect(0,0,80,100);fn(cx,{x:40,y:65,size:16,facing:{x:0,y:-1},hitFlash:0,classId:id,color:CLASS_DEF[id].color,isDashing:false,subSkill:null});}
   function animatePrev(){drawPrev('warrior',drawWarriorPlayer);drawPrev('mage',drawMagePlayer);drawPrev('archer',drawArcherPlayer);requestAnimationFrame(animatePrev);}
@@ -1851,8 +2349,6 @@ function addLog(msg,cls=''){logLines.unshift({msg,cls});if(logLines.length>8)log
 // INIT
 window.addEventListener('DOMContentLoaded',()=>{
   drawClassPreviews();
-
-  // Setup popup listeners após DOM
   const popup = document.getElementById('item-popup');
   if (popup) {
     popup.addEventListener('mouseenter', () => clearTimeout(popupState.hideTimer));
