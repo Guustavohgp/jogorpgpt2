@@ -36,7 +36,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 
 /* CENTRAL BOSS BAR */
 #central-boss-bar {
-  position:fixed; top:90px; left:50%; transform:translateX(-50%);
+  position:fixed; top:14px; left:50%; transform:translateX(-50%);
   width:min(480px,72vw); background:rgba(8,6,4,.92);
   border:2px solid #8b1a1a; border-radius:10px;
   padding:8px 14px 10px; text-align:center; z-index:90;
@@ -61,6 +61,45 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 #pet-hud-name { color:var(--amber); font-size:13px; }
 #pet-hp-track { width:100%; height:5px; background:#1a1a1a; border-radius:3px; margin-top:3px; }
 #pet-hp-fill  { height:100%; background:#27ae60; border-radius:3px; }
+
+/* ─── ARTIFACT PANEL ──────────────────────────────────────── */
+#artifact-panel {
+  position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+  width:min(540px,92vw); background:rgba(8,5,18,.97);
+  border:2px solid #6020b0; border-radius:14px;
+  padding:12px 16px 14px; z-index:98; display:none;
+  box-shadow:0 0 36px rgba(130,40,220,.45);
+  font-family:'Cinzel',serif;
+}
+#artifact-panel.open { display:block; }
+.artp-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.artp-title { font-size:14px; color:#c070ff; letter-spacing:.1em; text-shadow:0 0 10px #8030c0; }
+.artp-close { cursor:pointer; color:#70508a; font-size:16px; }
+.artp-close:hover { color:#c070ff; }
+.artp-slots { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
+.art-slot {
+  width:56px; height:56px; border:2px solid #4a1880; border-radius:10px;
+  background:rgba(28,10,52,.7); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; cursor:pointer;
+  position:relative; transition:border-color .15s, background .15s; flex-shrink:0;
+}
+.art-slot:hover { border-color:#b060f0; background:rgba(50,18,80,.8); }
+.art-slot.equipped { border-color:#8040d0; background:rgba(55,15,95,.9); }
+.art-slot.equipped:hover { border-color:#e090ff; }
+.art-slot-icon { font-size:24px; line-height:1.15; }
+.art-slot-lbl { font-size:7.5px; color:#8060a0; font-family:'VT323',monospace; max-width:52px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.art-unequip-x { position:absolute; top:-5px; right:-5px; width:15px; height:15px;
+  background:#8b1a1a; border-radius:50%; font-size:9px; color:#fff; text-align:center;
+  line-height:15px; display:none; cursor:pointer; z-index:2; }
+.art-slot.equipped:hover .art-unequip-x { display:block; }
+.artp-divider { width:1px; height:52px; background:#3a1860; flex-shrink:0; }
+.artp-effects { font-size:10px; color:#9070b8; line-height:1.75; font-family:'Crimson Text',serif; flex:1; min-width:0; }
+.artp-effects span.eff-name { color:#e090ff; font-weight:600; }
+.artp-hint { font-size:10px; color:#3a2558; margin-top:8px; font-family:'Crimson Text',serif; }
+
+/* ─── PET TYPE TAG in shop ────────────────────────────────── */
+.shop-pet-tag { font-size:9px; padding:1px 5px; border-radius:8px; margin-top:2px;
+  display:inline-block; border:1px solid #4a1880; background:#1a0a30; color:#c070ff; }
 
 /* CLASS SELECT */
 #screen-select {
@@ -716,7 +755,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
       <div class="hud-info-row">🪙 Ouro: <span class="hud-info-val" id="hud-gold">0</span></div>
       <div class="hud-info-row">💀 Mortos: <span class="hud-info-val" id="hud-kills">0</span></div>
       <div class="hud-info-row">⚔ ATK: <span class="hud-info-val" id="hud-atk">10</span> &nbsp;🛡 DEF: <span class="hud-info-val" id="hud-def">5</span></div>
-      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música</div>
+      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música &nbsp;[J] Artefatos</div>
     </div>
     <div id="minimap"><canvas id="mm-canvas" width="120" height="90"></canvas></div>
     <div id="lvl-banner">⬆ LEVEL UP!</div>
@@ -798,6 +837,16 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   </div>
 </div>
 
+<!-- ARTIFACT PANEL -->
+<div id="artifact-panel">
+  <div class="artp-header">
+    <div class="artp-title">💎 ARTEFATOS  <span style="font-size:10px;color:#6040a0;font-family:VT323,monospace;" id="artp-count">0/3 equipados</span></div>
+    <span class="artp-close" onclick="closeArtifactPanel()">[J] ✕</span>
+  </div>
+  <div class="artp-slots" id="artp-slots"></div>
+  <div class="artp-hint" id="artp-hint">Abra o inventário para ver artefatos na mochila · Clique num slot vazio para equipar · ✕ para desequipar</div>
+</div>
+
 <!-- Drag ghost -->
 <div id="drag-ghost"></div>
 
@@ -812,6 +861,8 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
     <button class="shop-tab active" onclick="switchShopTab('consumable',this)">🧪 Poções</button>
     <button class="shop-tab" onclick="switchShopTab('weapon',this)">⚔ Armas</button>
     <button class="shop-tab" onclick="switchShopTab('armor',this)">🛡 Armaduras</button>
+    <button class="shop-tab" onclick="switchShopTab('pet',this)">🐾 Pets</button>
+    <button class="shop-tab" onclick="switchShopTab('artifact',this)">💎 Artefatos</button>
     <button class="shop-tab" onclick="switchShopTab('all',this)">📦 Tudo</button>
   </div>
   <div class="shop-body">
@@ -1004,7 +1055,7 @@ const ENEMY_DEF = [
   {id:'boss',name:'▲ DRAGÃO ▲',color:'#c0392b',hp:500,atk:40,def:18,spd:70,xp:400,atkRange:50,atkSpeed:1800,goldRange:[60,120],size:30,drawFn:drawBoss,drops:[{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
   {id:'lich',name:'▲ LICH ▲',color:'#9b59b6',hp:380,atk:35,def:14,spd:85,xp:350,atkRange:55,atkSpeed:1600,goldRange:[50,100],size:26,drawFn:drawLich,drops:[{id:'mage_staff',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
   {id:'ogre_boss',name:'▲ OGRO CHEFE ▲',color:'#e67e22',hp:600,atk:45,def:22,spd:55,xp:450,atkRange:45,atkSpeed:2200,goldRange:[70,130],size:34,drawFn:drawOgreBoss,drops:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
-  {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:2500,atk:80,def:35,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9}],minLevel:10,isBoss:true,isCentralBoss:true},
+  {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:2500,atk:80,def:35,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],minLevel:10,isBoss:true,isCentralBoss:true},
 ];
 
 const ITEM_DB = {
@@ -1025,7 +1076,23 @@ const ITEM_DB = {
   elven_bow:    {name:'Arco Élfico',      icon:'🌿',  type:'weapon',     effect:{atk:20,critBonus:.05},desc:'+20 ATK +CRIT',rarity:'epic',forClass:['archer']},
   arcane_tome:  {name:'Tomo das Eras',    icon:'📖',  type:'weapon',     effect:{atk:22,mp:50},desc:'+22 ATK +50MP',rarity:'epic',forClass:['mage']},
   heavy_armor:  {name:'Armadura Pesada',  icon:'⚜️',  type:'armor',      effect:{def:14},  desc:'+14 DEF',  rarity:'epic',   forClass:['warrior']},
-  shadow_cloak: {name:'Manto das Sombras',icon:'🌑',  type:'armor',      effect:{def:8,spd:20},desc:'+8 DEF +SPD',rarity:'epic',forClass:['archer','mage']},
+  shadow_cloak: {name:'Manto das Sombras',icon:'🌑',  type:'armor',      effect:{def:8,spd:20},desc:'+8 DEF +20 SPD',rarity:'epic',forClass:['archer','mage']},
+  // ── PETS ────────────────────────────────────────────────
+  pet_healer:{name:'Fada Curadora',   icon:'💚',type:'pet',petType:'healer',effect:{},desc:'Cura +2 HP/s passivo',          rarity:'rare',forClass:null},
+  pet_attack:{name:'Lobo de Batalha', icon:'🐺',type:'pet',petType:'attack',effect:{},desc:'Ataca inimigos próximos auto',   rarity:'rare',forClass:null},
+  pet_tank:  {name:'Golem de Pedra',  icon:'🗿',type:'pet',petType:'tank',  effect:{},desc:'Tanque: absorve dano e atrai',   rarity:'rare',forClass:null},
+  // ── ARTIFACTS ───────────────────────────────────────────
+  art_xp:    {name:'Tomo da Sabedoria', icon:'📚',type:'artifact',effect:{xpMult:1.40},         desc:'+40% XP ganho',            rarity:'epic',forClass:null},
+  art_gold:  {name:'Anel da Ganância',  icon:'💍',type:'artifact',effect:{goldMult:1.50},        desc:'+50% Gold ganho',          rarity:'epic',forClass:null},
+  art_atk:   {name:'Gema do Guerreiro', icon:'🔴',type:'artifact',effect:{atkMult:1.25},         desc:'+25% Dano global',         rarity:'epic',forClass:null},
+  art_hp:    {name:'Orbe da Vitalidade',icon:'🟤',type:'artifact',effect:{maxHpFlat:80},         desc:'+80 HP máximo',            rarity:'epic',forClass:null},
+  art_def:   {name:'Escudo Eterno',     icon:'🔵',type:'artifact',effect:{dmgReduce:0.15},       desc:'-15% dano recebido',       rarity:'epic',forClass:null},
+  art_poison:{name:'Gema do Veneno',    icon:'🟢',type:'artifact',effect:{poisonMult:1.60},      desc:'+60% dano de veneno',      rarity:'epic',forClass:null},
+  art_fire:  {name:'Gema do Fogo',      icon:'🔥',type:'artifact',effect:{fireMult:1.60},        desc:'+60% dano de fogo',        rarity:'epic',forClass:null},
+  art_ice:   {name:'Gema do Gelo',      icon:'❄️', type:'artifact',effect:{iceMult:1.60},         desc:'+60% dano de gelo',        rarity:'epic',forClass:null},
+  art_sword: {name:'Fio da Espada',     icon:'⚔️', type:'artifact',effect:{swordMult:1.35},      desc:'+35% dano de espada',      rarity:'epic',forClass:null},
+  art_bow:   {name:'Olho do Arqueiro',  icon:'🎯',type:'artifact',effect:{bowMult:1.35},         desc:'+35% dano de arco',        rarity:'epic',forClass:null},
+  art_auto:  {name:'Orbe da Coleta',    icon:'✨',type:'artifact',effect:{autoCollect:true},     desc:'Coleta gold/XP automaticamente',rarity:'epic',forClass:null},
 };
 
 const CHEST_LOOT = {
@@ -1052,6 +1119,136 @@ let particles   = [];
 let lootItems   = [];
 let chests      = [];
 
+// ═══════════════════════════════════════════════════════
+//  ARTIFACT SYSTEM
+// ═══════════════════════════════════════════════════════
+const ART_MAX_SLOTS = 3;
+let equippedArtifacts = []; // array of itemIds (max ART_MAX_SLOTS)
+let artifactPanelOpen = false;
+
+/** Called every time equippedArtifacts changes — writes bonus fields onto player */
+function recalcArtifacts() {
+  if (!player) return;
+  // reset all artifact bonuses
+  player.art = {
+    xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0,
+    dmgReduce:0, poisonMult:1, fireMult:1, iceMult:1,
+    swordMult:1, bowMult:1, autoCollect:false, hpApplied:0
+  };
+  for (const id of equippedArtifacts) {
+    const ef = ITEM_DB[id]?.effect || {};
+    if (ef.xpMult)       player.art.xpMult       *= ef.xpMult;
+    if (ef.goldMult)     player.art.goldMult      *= ef.goldMult;
+    if (ef.atkMult)      player.art.atkMult       *= ef.atkMult;
+    if (ef.maxHpFlat)    player.art.maxHpFlat     += ef.maxHpFlat;
+    if (ef.dmgReduce)    player.art.dmgReduce     += ef.dmgReduce;
+    if (ef.poisonMult)   player.art.poisonMult    *= ef.poisonMult;
+    if (ef.fireMult)     player.art.fireMult      *= ef.fireMult;
+    if (ef.iceMult)      player.art.iceMult       *= ef.iceMult;
+    if (ef.swordMult)    player.art.swordMult     *= ef.swordMult;
+    if (ef.bowMult)      player.art.bowMult       *= ef.bowMult;
+    if (ef.autoCollect)  player.art.autoCollect    = true;
+  }
+  // Apply flat HP bonus (avoid re-applying on every recalc)
+  const prev = player.art.hpApplied;
+  const next  = player.art.maxHpFlat;
+  player.maxHp = player.maxHp - prev + next;
+  if (player.maxHp < 1) player.maxHp = 1;
+  player.hp = Math.min(player.hp, player.maxHp);
+  player.art.hpApplied = next;
+  renderArtifactPanel();
+  if (document.getElementById('inv-panel').classList.contains('open')) updateInventoryPanel();
+}
+
+function equipArtifact(itemId) {
+  if (equippedArtifacts.includes(itemId)) { addLog('💎 Artefato já equipado.',''); return; }
+  if (equippedArtifacts.length >= ART_MAX_SLOTS) { addLog('💎 Slots cheios! Desequipe um artefato.','ldmg'); return; }
+  equippedArtifacts.push(itemId);
+  recalcArtifacts();
+  addLog(`💎 Artefato equipado: ${ITEM_DB[itemId].icon} ${ITEM_DB[itemId].name}`,'llvl');
+}
+
+function unequipArtifact(itemId) {
+  equippedArtifacts = equippedArtifacts.filter(id => id !== itemId);
+  recalcArtifacts();
+  addLog(`💎 ${ITEM_DB[itemId]?.name} removido.`,'');
+}
+
+function openArtifactPanel() {
+  closeAllPanels();
+  artifactPanelOpen = true;
+  document.getElementById('artifact-panel').classList.add('open');
+  renderArtifactPanel();
+}
+function closeArtifactPanel() {
+  artifactPanelOpen = false;
+  document.getElementById('artifact-panel').classList.remove('open');
+}
+
+function renderArtifactPanel() {
+  const slotsEl = document.getElementById('artp-slots');
+  if (!slotsEl || !player) return;
+  slotsEl.innerHTML = '';
+
+  // ── Equipped slots (always show ART_MAX_SLOTS) ───────────
+  for (let s = 0; s < ART_MAX_SLOTS; s++) {
+    const id = equippedArtifacts[s];
+    const slot = document.createElement('div');
+    if (id) {
+      const db = ITEM_DB[id];
+      slot.className = 'art-slot equipped';
+      slot.title = db.name + '\n' + db.desc;
+      slot.innerHTML =
+        `<span class="art-slot-icon">${db.icon}</span>` +
+        `<span class="art-slot-lbl">${db.name}</span>` +
+        `<span class="art-unequip-x" title="Desequipar">✕</span>`;
+      slot.querySelector('.art-unequip-x').addEventListener('click', ev => {
+        ev.stopPropagation(); unequipArtifact(id);
+      });
+    } else {
+      slot.className = 'art-slot';
+      slot.innerHTML = `<span class="art-slot-icon" style="opacity:.25;font-size:18px">💎</span><span class="art-slot-lbl" style="color:#3a2050">Vazio</span>`;
+    }
+    slotsEl.appendChild(slot);
+  }
+
+  // ── Divider + effects list ───────────────────────────────
+  const div = document.createElement('div'); div.className = 'artp-divider'; slotsEl.appendChild(div);
+  const effDiv = document.createElement('div'); effDiv.className = 'artp-effects';
+  if (equippedArtifacts.length === 0) {
+    effDiv.textContent = 'Nenhum artefato equipado. Compre na loja ou derrote o Guardião.';
+  } else {
+    effDiv.innerHTML = equippedArtifacts.map(id => {
+      const db = ITEM_DB[id];
+      return `${db.icon} <span class="eff-name">${db.name}</span>: ${db.desc}`;
+    }).join('<br>');
+  }
+  slotsEl.appendChild(effDiv);
+
+  // ── Inventory artifacts available to equip ───────────────
+  const owned = (player.inventory || []).filter(it => it && ITEM_DB[it.id]?.type === 'artifact' && !equippedArtifacts.includes(it.id));
+  if (owned.length > 0) {
+    const divider2 = document.createElement('div');
+    divider2.style.cssText = 'width:100%;font-size:9px;color:#3a2060;font-family:VT323,monospace;letter-spacing:.06em;padding-top:4px;';
+    divider2.textContent = '── NA MOCHILA (clique para equipar) ──';
+    slotsEl.parentElement.insertBefore(divider2, slotsEl.parentElement.querySelector('.artp-hint'));
+    const ownRow = document.createElement('div');
+    ownRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
+    for (const it of owned) {
+      const db = ITEM_DB[it.id];
+      const s2 = document.createElement('div');
+      s2.className = 'art-slot'; s2.title = db.name + '\n' + db.desc;
+      s2.style.borderColor = '#7030c0';
+      s2.innerHTML = `<span class="art-slot-icon">${db.icon}</span><span class="art-slot-lbl" style="color:#9060c0">+Equipar</span>`;
+      s2.addEventListener('click', () => { equipArtifact(it.id); });
+      ownRow.appendChild(s2);
+    }
+    slotsEl.parentElement.insertBefore(ownRow, slotsEl.parentElement.querySelector('.artp-hint'));
+  }
+
+  document.getElementById('artp-count').textContent = `${equippedArtifacts.length}/${ART_MAX_SLOTS} equipados`;
+}
+
 // NPC data
 let npcObj = null; // {x, y}
 let npcPanelOpen = false;
@@ -1063,18 +1260,23 @@ let npcSelectedSubclass = null; // which subclass to pick (if base already chose
 // ═══════════════════════════════════════════════════════
 let pet = null; // active pet object or null
 
-function createPet(ownerPlayer) {
+function createPet(ownerPlayer, petType) {
+  const type = petType || player?.activePetType || 'attack';
+  const CFG = {
+    healer: {hp:100,maxHp:100, atkRange:0,    atkSpeed:99999, color:'#50e890', name:'Fada Curadora',   icon:'💚', healRate:2.0, size:9},
+    attack: {hp:120,maxHp:120, atkRange:110,  atkSpeed:1200,  color:'#f0c060', name:'Lobo de Batalha', icon:'🐺', healRate:0,   size:10},
+    tank:   {hp:400,maxHp:400, atkRange:70,   atkSpeed:1800,  color:'#9090a8', name:'Golem de Pedra',  icon:'🗿', healRate:0,   size:14, isTank:true},
+  };
+  const c = CFG[type] || CFG.attack;
   return {
     x: ownerPlayer.x - 30, y: ownerPlayer.y,
-    size: 10,
-    hp: 120, maxHp: 120,
-    atk: 0, // calculated as % of player atk
-    atkTimer: 0, atkSpeed: 1200, atkRange: 110,
+    size: c.size, hp: c.hp, maxHp: c.maxHp,
+    atkTimer: 0, atkSpeed: c.atkSpeed, atkRange: c.atkRange,
     isAlive: true, hitFlash: 0,
-    vx: 0, vy: 0,
     bobTimer: Math.random() * Math.PI * 2,
-    color: '#f0c060',
-    name: 'Companheiro'
+    color: c.color, name: c.name, icon: c.icon,
+    petType: type, healRate: c.healRate, isTank: !!c.isTank,
+    healTimer: 0,
   };
 }
 
@@ -1084,17 +1286,41 @@ function updatePet(dt) {
   pet.bobTimer += dt * 0.004;
   if (pet.hitFlash > 0) pet.hitFlash -= dt;
 
-  // Follow player — orbit around player loosely
-  const targetX = p.x + Math.cos(pet.bobTimer * 0.5) * 32 - p.facing.x * 20;
+  // ── Follow player ────────────────────────────────────────
+  const targetX = p.x + Math.cos(pet.bobTimer * 0.5) * 34 - p.facing.x * 22;
   const targetY = p.y + Math.sin(pet.bobTimer * 0.5) * 22 + 10;
   const dx = targetX - pet.x, dy = targetY - pet.y;
   const dist = Math.hypot(dx, dy);
-  const speed = Math.min(dist * 5, 260) * dt / 1000;
+  const speed = Math.min(dist * 5, 280) * dt / 1000;
   if (dist > 4) { pet.x += (dx / dist) * speed; pet.y += (dy / dist) * speed; }
 
-  // Auto-attack nearest enemy
+  // ── Pet-type specific behaviour ──────────────────────────
+  if (pet.petType === 'healer') {
+    // Heal player over time
+    pet.healTimer = (pet.healTimer || 0) + dt;
+    if (pet.healTimer >= 1000) {
+      pet.healTimer -= 1000;
+      p.hp = Math.min(p.maxHp, p.hp + pet.healRate);
+    }
+  }
+
+  if (pet.petType === 'tank') {
+    // Tank: increase aggro — enemies prefer pet if closer
+    // (handled in enemy targeting: enemies chase pet if within range)
+    // Absorb contact damage from enemies (enemies hit tank instead of player nearby)
+    for (const e of enemies) {
+      if (!e.isAlive) continue;
+      if (Math.hypot(e.x - pet.x, e.y - pet.y) < e.size + pet.size + 6) {
+        const pd = Math.max(1, Math.floor(e.atk * 0.5));
+        pet.hp -= pd * dt / 1000;
+        pet.hitFlash = 120;
+      }
+    }
+  }
+
+  // ── Auto-attack (attack + tank) ──────────────────────────
   pet.atkTimer = Math.max(0, pet.atkTimer - dt);
-  if (pet.atkTimer <= 0) {
+  if (pet.atkTimer <= 0 && pet.atkRange > 0) {
     let closest = null, closestDist = pet.atkRange;
     for (const e of enemies) {
       if (!e.isAlive) continue;
@@ -1103,74 +1329,103 @@ function updatePet(dt) {
     }
     if (closest) {
       pet.atkTimer = pet.atkSpeed;
-      // Pet does 25-35% of player ATK
-      const petAtk = Math.max(1, Math.floor(p.atk * (0.25 + Math.random() * 0.10)));
+      const petAtk = Math.max(1, Math.floor(p.atk * (0.20 + Math.random() * 0.10)));
       const dmg = Math.max(1, petAtk - Math.floor(closest.def * 0.3));
       applyDamageToEnemy(closest, dmg, false);
-      // Visual projectile from pet to enemy
-      const pdx = closest.x - pet.x, pdy = closest.y - pet.y, plen = Math.hypot(pdx, pdy);
-      projectiles.push({x:pet.x,y:pet.y,vx:(pdx/plen)*420,vy:(pdy/plen)*420,dmg:0,color:'#f0c060',isCrit:false,radius:4,life:600,aoeRadius:0,piercing:false,targetEnemy:null,poisonProc:0,freezeProc:0,isPetProj:true});
+      const pdx = closest.x - pet.x, pdy = closest.y - pet.y, plen = Math.hypot(pdx, pdy) || 1;
+      projectiles.push({x:pet.x,y:pet.y,vx:(pdx/plen)*400,vy:(pdy/plen)*400,dmg:0,color:pet.color,isCrit:false,radius:4,life:500,aoeRadius:0,piercing:false,targetEnemy:null,poisonProc:0,freezeProc:0,isPetProj:true});
     }
   }
 
-  // Pet can take damage from enemies (enemies attack pet if very close)
-  for (const e of enemies) {
-    if (!e.isAlive) continue;
-    if (Math.hypot(e.x - pet.x, e.y - pet.y) < e.size + pet.size + 4) {
-      const pd = Math.max(1, Math.floor(e.atk * 0.4) - 2);
-      pet.hp -= pd * dt / 1000; // slow damage over time when touching
-      pet.hitFlash = 100;
-      if (pet.hp <= 0) {
-        pet.isAlive = false;
-        addLog('💔 Seu companheiro caiu! Reaparecerá em 15s...', 'ldmg');
-        setTimeout(() => {
-          if (player && player.isAlive) {
-            pet = createPet(player);
-            addLog('🐾 Companheiro voltou!', 'lheal');
-          }
-        }, 15000);
-        break;
+  // ── Contact damage (healer & attack) ────────────────────
+  if (pet.petType !== 'tank') {
+    for (const e of enemies) {
+      if (!e.isAlive) continue;
+      if (Math.hypot(e.x - pet.x, e.y - pet.y) < e.size + pet.size + 4) {
+        const pd = Math.max(1, Math.floor(e.atk * 0.3) - 1);
+        pet.hp -= pd * dt / 1000;
+        pet.hitFlash = 100;
       }
     }
   }
 
-  // Slow HP regen
-  pet.hp = Math.min(pet.maxHp, pet.hp + dt * 0.008);
+  // ── Death + respawn ──────────────────────────────────────
+  if (pet.hp <= 0) {
+    pet.isAlive = false;
+    addLog(`💔 ${pet.name} caiu! Reaparecerá em 15s...`, 'ldmg');
+    const savedType = pet.petType;
+    setTimeout(() => {
+      if (player && player.isAlive) {
+        pet = createPet(player, savedType);
+        addLog(`🐾 ${pet.name} voltou!`, 'lheal');
+      }
+    }, 15000);
+    return;
+  }
+
+  // ── Passive HP regen ─────────────────────────────────────
+  pet.hp = Math.min(pet.maxHp, pet.hp + dt * 0.006);
   updatePetHUD();
 }
 
 function renderPet() {
   if (!pet || !pet.isAlive) return;
   ctx.save();
-  if (pet.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 8; }
-  // Draw little wolf / spirit companion
+  if (pet.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; }
   const t = pet.size, bob = Math.sin(pet.bobTimer) * 2;
   const x = pet.x, y = pet.y + bob;
-  // Glowing aura
-  const aura = ctx.createRadialGradient(x, y, 0, x, y, t * 2.5);
-  aura.addColorStop(0, 'rgba(240,192,96,.3)');
-  aura.addColorStop(1, 'rgba(240,192,96,0)');
-  ctx.fillStyle = aura;
-  ctx.beginPath(); ctx.arc(x, y, t * 2.5, 0, Math.PI * 2); ctx.fill();
-  // Body
-  ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#d4a840';
-  ctx.beginPath(); ctx.ellipse(x, y, t * 1.1, t * 0.75, 0, 0, Math.PI * 2); ctx.fill();
-  // Head
-  ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#e8c060';
-  ctx.beginPath(); ctx.ellipse(x + t * 0.85, y - t * 0.2, t * 0.62, t * 0.55, 0.3, 0, Math.PI * 2); ctx.fill();
-  // Ears
-  ctx.fillStyle = '#c89040';
-  ctx.beginPath(); ctx.moveTo(x + t * 0.7, y - t * 0.6); ctx.lineTo(x + t * 0.5, y - t * 1.1); ctx.lineTo(x + t * 1.0, y - t * 0.75); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(x + t * 1.0, y - t * 0.55); ctx.lineTo(x + t * 0.85, y - t * 1.05); ctx.lineTo(x + t * 1.25, y - t * 0.65); ctx.fill();
-  // Eyes
-  ctx.fillStyle = '#f0e040';
-  ctx.beginPath(); ctx.arc(x + t * 1.0, y - t * 0.25, t * 0.14, 0, Math.PI * 2); ctx.fill();
-  // Tail
-  ctx.strokeStyle = '#c89040'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x - t * 0.9, y);
-  ctx.quadraticCurveTo(x - t * 1.8, y - t * 1.2, x - t * 1.2, y - t * 0.4);
-  ctx.stroke();
+
+  if (pet.petType === 'healer') {
+    // Fairy / spirit: glowing orb with sparkles
+    const aura = ctx.createRadialGradient(x, y, 0, x, y, t * 3);
+    aura.addColorStop(0, 'rgba(80,232,144,.4)'); aura.addColorStop(1, 'rgba(80,232,144,0)');
+    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(x, y, t * 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#50e890';
+    ctx.beginPath(); ctx.arc(x, y, t * 0.9, 0, Math.PI * 2); ctx.fill();
+    // Wings
+    ctx.fillStyle = 'rgba(180,255,200,.5)';
+    ctx.beginPath(); ctx.ellipse(x - t * 1.1, y - t * 0.3, t * 0.9, t * 0.45, -0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + t * 1.1, y - t * 0.3, t * 0.9, t * 0.45,  0.4, 0, Math.PI * 2); ctx.fill();
+    // Core glow
+    ctx.fillStyle = '#b0ffcc'; ctx.beginPath(); ctx.arc(x, y, t * 0.4, 0, Math.PI * 2); ctx.fill();
+    // Cross heal symbol
+    const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+    ctx.fillStyle = `rgba(255,255,255,${pulse})`;
+    ctx.fillRect(x - t * 0.05, y - t * 0.4, t * 0.1, t * 0.8);
+    ctx.fillRect(x - t * 0.4, y - t * 0.05, t * 0.8, t * 0.1);
+
+  } else if (pet.petType === 'tank') {
+    // Stone golem: big blocky shape
+    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#606878';
+    ctx.beginPath(); ctx.roundRect(x - t * 1.1, y - t * 0.9, t * 2.2, t * 1.8, [4]); ctx.fill();
+    ctx.fillStyle = '#7a8090';
+    ctx.beginPath(); ctx.roundRect(x - t * 0.8, y - t * 1.5, t * 1.6, t * 0.8, [3]); ctx.fill();
+    // Eyes (red aggressive)
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.arc(x - t * 0.3, y - t * 1.2, t * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + t * 0.3, y - t * 1.2, t * 0.2, 0, Math.PI * 2); ctx.fill();
+    // Cracks
+    ctx.strokeStyle = '#3a4050'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x - t * 0.4, y - t * 0.4); ctx.lineTo(x + t * 0.2, y + t * 0.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + t * 0.5, y - t * 0.2); ctx.lineTo(x + t * 0.8, y + t * 0.6); ctx.stroke();
+
+  } else {
+    // Attack wolf (original golden wolf)
+    const aura = ctx.createRadialGradient(x, y, 0, x, y, t * 2.5);
+    aura.addColorStop(0, 'rgba(240,192,96,.3)'); aura.addColorStop(1, 'rgba(240,192,96,0)');
+    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(x, y, t * 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#d4a840';
+    ctx.beginPath(); ctx.ellipse(x, y, t * 1.1, t * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#e8c060';
+    ctx.beginPath(); ctx.ellipse(x + t * 0.85, y - t * 0.2, t * 0.62, t * 0.55, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c89040';
+    ctx.beginPath(); ctx.moveTo(x + t * 0.7, y - t * 0.6); ctx.lineTo(x + t * 0.5, y - t * 1.1); ctx.lineTo(x + t * 1.0, y - t * 0.75); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + t * 1.0, y - t * 0.55); ctx.lineTo(x + t * 0.85, y - t * 1.05); ctx.lineTo(x + t * 1.25, y - t * 0.65); ctx.fill();
+    ctx.fillStyle = '#f0e040'; ctx.beginPath(); ctx.arc(x + t * 1.0, y - t * 0.25, t * 0.14, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#c89040'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - t * 0.9, y); ctx.quadraticCurveTo(x - t * 1.8, y - t * 1.2, x - t * 1.2, y - t * 0.4); ctx.stroke();
+  }
+
   ctx.shadowBlur = 0;
   ctx.restore();
 }
@@ -1182,7 +1437,9 @@ function updatePetHUD() {
   const pct = Math.max(0, pet.hp / pet.maxHp * 100);
   document.getElementById('pet-hp-fill').style.width = pct + '%';
   document.getElementById('pet-hp-fill').style.background = pct > 50 ? '#27ae60' : pct > 25 ? '#e67e22' : '#e74c3c';
-  document.getElementById('pet-hud-hp').textContent = 'HP: ' + Math.ceil(pet.hp) + '/' + pet.maxHp;
+  document.getElementById('pet-hud-hp').textContent = 'HP: ' + Math.ceil(Math.max(0, pet.hp)) + '/' + pet.maxHp;
+  const nameEl = document.getElementById('pet-hud-name');
+  if (nameEl) nameEl.textContent = (pet.icon || '🐾') + ' ' + (pet.name || 'Pet');
   if (!pet.isAlive) { hud.classList.remove('visible'); }
 }
 
@@ -1442,7 +1699,9 @@ function findFreePos(minDist=0,fromX=0,fromY=0){for(let tries=0;tries<400;tries+
 // ─────────────────────────────────────────────────────────
 function createPlayer(classId){
   const def=CLASS_DEF[classId];
-  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25};
+  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,
+    activePetType:null,
+    art:{xpMult:1,goldMult:1,atkMult:1,maxHpFlat:0,dmgReduce:0,poisonMult:1,fireMult:1,iceMult:1,swordMult:1,bowMult:1,autoCollect:false,hpApplied:0}};
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1558,6 +1817,7 @@ function startGame(classId){
   window.addEventListener('resize',resizeCanvas);
   generateMap();
   player=createPlayer(classId);
+  equippedArtifacts = [];
   pet = createPet(player);
   spawnInitialEnemies();
   spawnBossChestGuards();
@@ -1684,24 +1944,48 @@ function aoeExplosion(x,y,radius,dmg,color){for(const e of enemies){if(!e.isAliv
 function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(e.hp<=0){e.hp=0;killEnemy(e);}}
 
 function killEnemy(e){
-  e.isAlive=false;e.deathTimer=600;kills++;player.kills++;player.xp+=e.xp;
-  const[gmin,gmax]=e.goldRange;player.gold+=Math.floor(gmin+Math.random()*(gmax-gmin));
-  for(const drop of e.drops){if(Math.random()<drop.chance)spawnLoot(e.x,e.y,drop.id);}
-  if(Math.random()<.7)spawnLoot(e.x+(Math.random()-.5)*20,e.y+(Math.random()-.5)*20,'gold_coin');
+  e.isAlive=false;e.deathTimer=600;kills++;player.kills++;
+  // XP with artifact multiplier
+  const xpGain = Math.floor(e.xp * (player.art?.xpMult || 1));
+  player.xp += xpGain;
+  // Gold with artifact multiplier
+  const[gmin,gmax]=e.goldRange;
+  const goldGain = Math.floor((gmin+Math.random()*(gmax-gmin)) * (player.art?.goldMult || 1));
+  player.gold += goldGain;
+  // Auto-collect: skip loot spawning, pick up instantly
+  const autoCollect = player.art?.autoCollect || false;
+  for(const drop of e.drops){
+    if(Math.random()<drop.chance){
+      if(autoCollect) collectLootDirect(drop.id);
+      else spawnLoot(e.x,e.y,drop.id);
+    }
+  }
+  if(Math.random()<.7){
+    if(autoCollect){ const g=1+Math.floor(Math.random()*5); player.gold+=Math.floor(g*(player.art?.goldMult||1)); addLog(`🪙 +${g} ouro (auto)`,''); }
+    else spawnLoot(e.x+(Math.random()-.5)*20,e.y+(Math.random()-.5)*20,'gold_coin');
+  }
   spawnDeathParticles(e.x,e.y,e.color);
-  addLog(`${e.isBoss?'💀 BOSS':'💀'} ${e.name}! +${e.xp}xp`,e.isBoss?'lboss':'ldmg');
+  addLog(`${e.isBoss?'💀 BOSS':'💀'} ${e.name}! +${xpGain}xp`,e.isBoss?'lboss':'ldmg');
   if(e.guardingChest){e.guardingChest.bossKilled=true;addLog('🎁 Baú liberado! Pressione F para abrir.','lchest');}
   if(e.isCentralBoss){ centralBoss = null; document.getElementById('central-boss-bar').classList.remove('visible'); addLog('🏆 O GUARDIÃO ETERNO foi derrotado! Lenda!','lboss'); }
   checkLevelUp();
 }
 
 function spawnLoot(x,y,itemId){lootItems.push({x,y,id:itemId,life:22000,bob:Math.random()*Math.PI*2});}
+function collectLootDirect(itemId) {
+  // Used by autoCollect artifact — pick up instantly without world drop
+  if (itemId === 'gold_coin') { const g=1+Math.floor(Math.random()*5); player.gold+=g; return; }
+  const item = ITEM_DB[itemId]; if (!item) return;
+  if (item.type === 'consumable' || item.type === 'artifact') { addItemToInventory(itemId); addLog(`${item.icon} Auto-coletou: ${item.name}`,'ldrop'); }
+  else { addItemToInventory(itemId); addLog(`${item.icon} Auto-coletou: ${item.name} [${item.rarity}]`,'ldrop'); }
+}
 function updateLoot(dt){for(let i=lootItems.length-1;i>=0;i--){lootItems[i].life-=dt;lootItems[i].bob+=dt*.003;if(lootItems[i].life<=0)lootItems.splice(i,1);}}
 
 function collectLoot(loot){
-  if(loot.id==='gold_coin'){const g=1+Math.floor(Math.random()*5);player.gold+=g;addLog(`🪙 +${g} ouro`,'');return;}
+  if(loot.id==='gold_coin'){const g=1+Math.floor(Math.random()*5);player.gold+=Math.floor(g*(player.art?.goldMult||1));addLog(`🪙 +${g} ouro`,'');return;}
   const item=ITEM_DB[loot.id];if(!item)return;
   if(item.type==='consumable'){addItemToInventory(loot.id);addLog(`${item.icon} Coletou ${item.name}`,'ldrop');}
+  else if(item.type==='artifact'){addItemToInventory(loot.id);addLog(`💎 Artefato encontrado: ${item.icon} ${item.name}! (Abra inventário [I] para ver)`,'llvl');}
   else{addItemToInventory(loot.id);const curr=item.type==='weapon'?player.equippedWeapon:player.equippedArmor;const currBonus=curr?(ITEM_DB[curr].effect.atk||ITEM_DB[curr].effect.def||0):0;const newBonus=item.effect.atk||item.effect.def||0;const canEquip=!item.forClass||item.forClass.includes(player.classId);if(newBonus>currBonus&&canEquip){equipItem(loot.id);addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`,'ldrop');}else addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`,'ldrop');}
 }
 
@@ -1757,8 +2041,8 @@ function sellInventoryItem(idx){
   renderInventory();updateInventoryPanel();renderEquipSlots();
 }
 
-function getSellPrice(itemId){const db=ITEM_DB[itemId];if(!db)return 1;const base={consumable:8,weapon:15,armor:12}[db.type]||5;const rarityMult={common:1,rare:2.5,epic:6}[db.rarity]||1;return Math.floor(base*rarityMult);}
-function getShopBuyPrice(itemId){const db=ITEM_DB[itemId];if(!db)return 10;const base={consumable:18,weapon:35,armor:30}[db.type]||20;const rarityMult={common:1,rare:2.8,epic:7}[db.rarity]||1;return Math.floor(base*rarityMult);}
+function getSellPrice(itemId){const db=ITEM_DB[itemId];if(!db)return 1;if(db.type==='pet')return 500;if(db.type==='artifact')return 3000;const base={consumable:8,weapon:15,armor:12}[db.type]||5;const rarityMult={common:1,rare:2.5,epic:6}[db.rarity]||1;return Math.floor(base*rarityMult);}
+function getShopBuyPrice(itemId){const db=ITEM_DB[itemId];if(!db)return 10;if(db.type==='pet')return 1500;if(db.type==='artifact')return 10000;const base={consumable:18,weapon:35,armor:30}[db.type]||20;const rarityMult={common:1,rare:2.8,epic:7}[db.rarity]||1;return Math.floor(base*rarityMult);}
 
 function updateChests(){for(const c of chests)c.bob+=0.02;}
 
@@ -2633,18 +2917,26 @@ function showItemPopup(idx, anchorEl) {
   const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]||'#aaa';
   const canEquip = !db.forClass || db.forClass.includes(player.classId);
   const isEq = (db.type==='weapon'&&player.equippedWeapon===invItem.id)||(db.type==='armor'&&player.equippedArmor===invItem.id);
+  const isArtEquipped = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
   const sellPrice = getSellPrice(invItem.id);
   info.innerHTML =
-    (isEq ? '<div class="tt-equipped-badge">✦ Equipado</div>' : '') +
+    (isEq || isArtEquipped ? '<div class="tt-equipped-badge">✦ Equipado</div>' : '') +
     `<div class="tt-name" style="color:${rarityColor}">${db.icon} ${db.name}</div>`+
     `<div class="tt-rarity" style="color:${rarityColor}">${db.rarity.toUpperCase()}</div>`+
     `<div class="tt-desc">${db.desc}</div>`+
     (db.forClass ? `<div class="tt-class">Para: ${db.forClass.join('/')}</div>` : '')+
-    (!canEquip ? '<div class="tt-warn">❌ Classe errada</div>' : '')+
+    (!canEquip && db.type!=='artifact' && db.type!=='pet' ? '<div class="tt-warn">❌ Classe errada</div>' : '')+
     `<div class="tt-sell-price">Venda: ${sellPrice} 🪙</div>`;
   acts.innerHTML = '';
   if (db.type === 'consumable') {
     acts.appendChild(makePopupBtn('Usar', 'use-btn', ()=>{ doUseItem(idx); }));
+  } else if (db.type === 'artifact') {
+    if (isArtEquipped) acts.appendChild(makePopupBtn('Desequipar 💎', 'unequip-btn', ()=>{ unequipArtifact(invItem.id); hideItemPopup(true); }));
+    else acts.appendChild(makePopupBtn('Equipar 💎', 'equip-btn', ()=>{ equipArtifact(invItem.id); hideItemPopup(true); }));
+  } else if (db.type === 'pet') {
+    const isActive = pet && pet.petType === db.petType;
+    if (isActive) acts.appendChild(makePopupBtn('Pet Ativo ✓', 'equip-btn', ()=>{ hideItemPopup(true); }));
+    else acts.appendChild(makePopupBtn('Ativar Pet 🐾', 'equip-btn', ()=>{ activatePet(invItem.id); hideItemPopup(true); }));
   } else if (canEquip) {
     if (isEq) acts.appendChild(makePopupBtn('Desequipar', 'unequip-btn', ()=>{ doUseItem(idx); }));
     else acts.appendChild(makePopupBtn('Equipar', 'equip-btn', ()=>{ doUseItem(idx); }));
@@ -2669,6 +2961,14 @@ function makePopupBtn(label, cls, onClick) {
 }
 function doUseItem(idx) { useInventoryItem(idx); hideItemPopup(true); }
 function doSellItem(idx) { sellInventoryItem(idx); hideItemPopup(true); }
+
+function activatePet(itemId) {
+  const db = ITEM_DB[itemId]; if (!db || db.type !== 'pet') return;
+  player.activePetType = db.petType;
+  pet = createPet(player, db.petType);
+  addLog(`🐾 ${db.icon} ${db.name} ativado! Segue você automaticamente.`, 'lheal');
+  updatePetHUD();
+}
 function hideItemPopup(immediate = false) {
   clearTimeout(popupState.hideTimer);
   if (immediate) _doHidePopup();
@@ -2729,13 +3029,15 @@ function renderInventory() {
       const db = ITEM_DB[invItem.id];
       if (db) {
         const isEq = (db.type==='weapon'&&player.equippedWeapon===invItem.id)||(db.type==='armor'&&player.equippedArmor===invItem.id);
-        cell.className = 'inv-cell rarity-'+db.rarity + (isEq?' is-equipped':'');
+        const isArtEq = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
+        const isPetActive = db.type==='pet' && pet && pet.petType===db.petType;
+        cell.className = 'inv-cell rarity-'+db.rarity + ((isEq||isArtEq||isPetActive)?' is-equipped':'');
         const iconS = document.createElement('span');
         iconS.style.cssText='pointer-events:none;font-size:22px;';
         iconS.textContent = db.icon; cell.appendChild(iconS);
         const badge = document.createElement('span');
         badge.className='inv-badge'; badge.style.pointerEvents='none';
-        badge.textContent = db.type==='consumable'?'❤':db.type==='weapon'?'⚔':'🛡';
+        badge.textContent = db.type==='consumable'?'❤':db.type==='weapon'?'⚔':db.type==='artifact'?'💎':db.type==='pet'?'🐾':'🛡';
         cell.appendChild(badge);
         const price = document.createElement('span');
         price.style.cssText='position:absolute;top:2px;left:3px;font-family:VT323,monospace;font-size:9px;color:#5a3808;pointer-events:none;';
@@ -3053,6 +3355,7 @@ function closeAllPanels() {
   closeShop();
   closeMusicPanel();
   if (npcPanelOpen) closeNpcPanel();
+  closeArtifactPanel();
 }
 
 document.addEventListener('keydown', ev => {
@@ -3062,8 +3365,10 @@ document.addEventListener('keydown', ev => {
     const shop=document.getElementById('shop-panel');
     const music=document.getElementById('music-panel');
     const npc=document.getElementById('npc-panel');
+    const art=document.getElementById('artifact-panel');
     if(npc.classList.contains('open')){closeNpcPanel();ev.preventDefault();return;}
     if(music.classList.contains('open')){closeMusicPanel();ev.preventDefault();return;}
+    if(art.classList.contains('open')){closeArtifactPanel();ev.preventDefault();return;}
     if(inv.classList.contains('open')){closeInventory();ev.preventDefault();return;}
     if(shop.classList.contains('open')){closeShop();ev.preventDefault();return;}
     return;
@@ -3087,6 +3392,11 @@ document.addEventListener('keydown', ev => {
   }
   if(ev.key==='m'||ev.key==='M'){
     toggleMusicPanel();
+    ev.preventDefault();return;
+  }
+  if(ev.key==='j'||ev.key==='J'){
+    const art=document.getElementById('artifact-panel');
+    if(art.classList.contains('open'))closeArtifactPanel();else openArtifactPanel();
     ev.preventDefault();return;
   }
   if(ev.key==='f'||ev.key==='F'){tryOpenChest();ev.preventDefault();return;}
@@ -3141,6 +3451,11 @@ const SHOP_CATALOG = [
   {id:'steel_sword'},{id:'venom_bow'},{id:'mage_staff'},
   {id:'troll_club'},{id:'dragon_sword'},{id:'elven_bow'},{id:'arcane_tome'},
   {id:'leather_armor'},{id:'robe'},{id:'shield'},{id:'heavy_armor'},{id:'shadow_cloak'},
+  // Pets
+  {id:'pet_healer'},{id:'pet_attack'},{id:'pet_tank'},
+  // Artifacts
+  {id:'art_xp'},{id:'art_gold'},{id:'art_atk'},{id:'art_hp'},{id:'art_def'},
+  {id:'art_poison'},{id:'art_fire'},{id:'art_ice'},{id:'art_sword'},{id:'art_bow'},{id:'art_auto'},
 ];
 let currentShopTab='consumable';let shopSelectedItem=null;
 function openShop(){document.getElementById('shop-panel').classList.add('open');updateShopSidebar();renderShopGrid(currentShopTab);}
@@ -3152,7 +3467,10 @@ function renderShopGrid(filterType){
   for(const entry of items){
     const db=ITEM_DB[entry.id];const price=getShopBuyPrice(entry.id);const canAfford=player.gold>=price;const rarityColor={common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity];const classLabel=db.forClass?db.forClass.join('/'):'Todos';
     const div=document.createElement('div');div.className='shop-item'+(canAfford?'':' cant-afford');
-    div.innerHTML='<span class="shop-item-icon">'+db.icon+'</span><div class="shop-item-rarity" style="color:'+rarityColor+'">'+db.rarity.toUpperCase()+'</div><div class="shop-item-name">'+db.name+'</div><div class="shop-item-desc">'+db.desc+'</div><div class="shop-item-class">'+classLabel+'</div><div class="shop-item-price">🪙 '+price+'</div>';
+    let extraTag='';
+    if(db.type==='pet'){const ptLabel={healer:'💚 Cura',attack:'⚔ Ataque',tank:'🛡 Tank'}[db.petType]||'Pet';extraTag=`<div class="shop-pet-tag">${ptLabel}</div>`;}
+    else if(db.type==='artifact'){extraTag=`<div class="shop-pet-tag" style="border-color:#8040d0;color:#d090ff;">💎 Artefato</div>`;}
+    div.innerHTML='<span class="shop-item-icon">'+db.icon+'</span><div class="shop-item-rarity" style="color:'+rarityColor+'">'+db.rarity.toUpperCase()+'</div><div class="shop-item-name">'+db.name+'</div><div class="shop-item-desc">'+db.desc+'</div>'+extraTag+'<div class="shop-item-class">'+classLabel+'</div><div class="shop-item-price">🪙 '+price+'</div>';
     div.addEventListener('click',()=>selectShopItem(entry.id,price,db));div.addEventListener('dblclick',()=>{selectShopItem(entry.id,price,db);confirmBuy();});
     grid.appendChild(div);
   }
@@ -3162,8 +3480,14 @@ function renderShopGrid(filterType){
 function selectShopItem(id,price,db){shopSelectedItem={id,price};document.getElementById('shop-confirm').classList.add('visible');document.getElementById('shop-confirm-icon').textContent=db.icon;document.getElementById('shop-confirm-name').textContent=db.name;document.getElementById('shop-confirm-desc').textContent=db.desc;document.getElementById('shop-confirm-price').textContent=price;document.getElementById('shop-msg').textContent='';const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';}
 function confirmBuy(){
   if(!shopSelectedItem)return;const{id,price}=shopSelectedItem;const db=ITEM_DB[id];if(!db){showShopMsg('Item inválido','err');return;}
-  if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}if(player.inventory.length>=20){showShopMsg('Inventário cheio!','err');return;}
-  player.gold-=price;addItemToInventory(id);showShopMsg('✓ '+db.name+' comprado!','ok');
+  if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}
+  if(db.type!=='pet'&&db.type!=='artifact'&&player.inventory.length>=20){showShopMsg('Inventário cheio!','err');return;}
+  if(player.inventory.length>=20){showShopMsg('Inventário cheio!','err');return;}
+  player.gold-=price;addItemToInventory(id);
+  // Auto-activate pet on purchase
+  if(db.type==='pet'){activatePet(id);showShopMsg('✓ '+db.name+' ativado!','ok');}
+  else if(db.type==='artifact'){showShopMsg('✓ '+db.name+' adquirido! Equipe em [J]','ok');}
+  else{showShopMsg('✓ '+db.name+' comprado!','ok');}
   document.getElementById('shop-gold-val').textContent=player.gold;document.getElementById('hud-gold').textContent=player.gold;
   const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';
   renderShopGrid(currentShopTab);selectShopItem(id,price,db);addLog('🛒 Comprou '+db.name+' por '+price+'🪙','lchest');
