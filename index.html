@@ -36,7 +36,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 
 /* CENTRAL BOSS BAR */
 #central-boss-bar {
-  position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  position:fixed; top:90px; left:50%; transform:translateX(-50%);
   width:min(480px,72vw); background:rgba(8,6,4,.92);
   border:2px solid #8b1a1a; border-radius:10px;
   padding:8px 14px 10px; text-align:center; z-index:90;
@@ -1061,7 +1061,7 @@ const ENEMY_DEF = [
   {id:'boss',name:'▲ DRAGÃO ▲',color:'#c0392b',hp:500,atk:40,def:18,spd:70,xp:400,atkRange:50,atkSpeed:1800,goldRange:[60,120],size:30,drawFn:drawBoss,drops:[{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
   {id:'lich',name:'▲ LICH ▲',color:'#9b59b6',hp:380,atk:35,def:14,spd:85,xp:350,atkRange:55,atkSpeed:1600,goldRange:[50,100],size:26,drawFn:drawLich,drops:[{id:'mage_staff',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
   {id:'ogre_boss',name:'▲ OGRO CHEFE ▲',color:'#e67e22',hp:600,atk:45,def:22,spd:55,xp:450,atkRange:45,atkSpeed:2200,goldRange:[70,130],size:34,drawFn:drawOgreBoss,drops:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
-  {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:2500,atk:80,def:35,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],minLevel:10,isBoss:true,isCentralBoss:true},
+  {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:4000,atk:100,def:55,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],minLevel:10,isBoss:true,isCentralBoss:true},
 ];
 
 const ITEM_DB = {
@@ -1504,12 +1504,12 @@ function checkCentralBossProximity() {
     if (!centralBossWarned) {
       centralBossWarned = true;
       addLog('⚠ Você precisa estar no nível 10 para enfrentar este boss.', 'ldmg');
-      showLevelUpBanner('⚠ Nível 10 necessário!');
+      showLevelUpBanner('⚠ Nível 8 necessário!');
       setTimeout(() => { centralBossWarned = false; }, 5000);
     }
     // Disable enemy aggro for central boss against low-level player
     centralBoss.aggroRange = 0;
-  } else if (dist < 200 && player.level >= 10) {
+  } else if (dist < 200 && player.level >= 8) {
     centralBoss.aggroRange = 200;
     centralBossWarned = false;
   }
@@ -2248,7 +2248,7 @@ function renderEnemies(){
     if(!e.isAlive&&e.deathTimer<=0)continue;
     ctx.save();ctx.globalAlpha=e.isAlive?1:e.deathTimer/600;
     if(e.hitFlash>0){ctx.shadowColor='#fff';ctx.shadowBlur=12*(e.hitFlash/150);}
-    if(e.isCentralBoss && player.level < 10 && e.isAlive) {
+    if(e.isCentralBoss && player.level < 8 && e.isAlive) {
       // Show warning ring around central boss
       const pulse = Math.sin(Date.now()/400)*.3+.7;
       ctx.save();
@@ -3542,7 +3542,809 @@ function drawClassPreviews(){
 const logLines=[];
 function addLog(msg,cls=''){logLines.unshift({msg,cls});if(logLines.length>8)logLines.pop();const container=document.getElementById('log-lines');container.innerHTML='';for(const l of logLines.slice(0,6)){const el=document.createElement('div');el.className='log-line '+l.cls;el.textContent=l.msg;container.appendChild(el);}}
 
+// ═══════════════════════════════════════════════════════════════════
+// ⚔ ECHOES OF THE FALLEN — EXPANDED ITEM SYSTEM PATCH
+// ═══════════════════════════════════════════════════════════════════
+//  EXPANDED ITEM DATABASE (overrides original ITEM_DB)
+// ─────────────────────────────────────────────────────────
+
+Object.assign(ITEM_DB, {
+  // ── CONSUMABLES ──────────────────────────────────────────────────
+  mana_potion:  {name:'Poção de Mana',     icon:'💧',  type:'consumable', slot:null, effect:{mp:40},          desc:'+40 MP',          rarity:'common', forClass:null},
+  full_elixir:  {name:'Elixir Supremo',    icon:'🌟',  type:'consumable', slot:null, effect:{hp:300,mp:100},  desc:'+300HP +100MP',   rarity:'epic',   forClass:null},
+  antidote:     {name:'Antídoto',          icon:'🍶',  type:'consumable', slot:null, effect:{hp:20},          desc:'+20HP',           rarity:'common', forClass:null},
+
+  // ── WEAPONS — WARRIOR ────────────────────────────────────────────
+  iron_axe:     {name:'Machado de Ferro',  icon:'🪓',  type:'weapon', slot:'weapon', effect:{atk:6},          desc:'+6 ATK',          rarity:'common', forClass:['warrior']},
+  wooden_club:  {name:'Clava de Madeira',  icon:'🏏',  type:'weapon', slot:'weapon', effect:{atk:3},          desc:'+3 ATK',          rarity:'common', forClass:['warrior']},
+  war_hammer:   {name:'Martelo de Guerra', icon:'🔨',  type:'weapon', slot:'weapon', effect:{atk:14},         desc:'+14 ATK',         rarity:'rare',   forClass:['warrior']},
+  battle_axe:   {name:'Machado de Batalha',icon:'🪓',  type:'weapon', slot:'weapon', effect:{atk:13},         desc:'+13 ATK',         rarity:'rare',   forClass:['warrior']},
+  cursed_blade: {name:'Lâmina Maldita',    icon:'🩸',  type:'weapon', slot:'weapon', effect:{atk:28},         desc:'+28 ATK',         rarity:'epic',   forClass:['warrior']},
+  titan_maul:   {name:'Maça dos Titãs',    icon:'⚒️',  type:'weapon', slot:'weapon', effect:{atk:30},         desc:'+30 ATK',         rarity:'epic',   forClass:['warrior']},
+
+  // ── WEAPONS — MAGE ───────────────────────────────────────────────
+  crystal_wand: {name:'Varinha de Cristal',icon:'✨',  type:'weapon', slot:'weapon', effect:{atk:5,mp:20},    desc:'+5 ATK +20MP',    rarity:'common', forClass:['mage']},
+  bone_staff:   {name:'Cajado de Ossos',   icon:'🦴',  type:'weapon', slot:'weapon', effect:{atk:7,mp:10},    desc:'+7 ATK +10MP',    rarity:'common', forClass:['mage']},
+  ember_wand:   {name:'Varinha de Brasa',  icon:'🔥',  type:'weapon', slot:'weapon', effect:{atk:16,mp:20},   desc:'+16 ATK +20MP',   rarity:'rare',   forClass:['mage']},
+  frost_rod:    {name:'Cajado do Gelo',    icon:'❄️',  type:'weapon', slot:'weapon', effect:{atk:12,mp:40},   desc:'+12 ATK +40MP',   rarity:'rare',   forClass:['mage']},
+  void_staff:   {name:'Cajado do Vazio',   icon:'🌑',  type:'weapon', slot:'weapon', effect:{atk:26,mp:40},   desc:'+26 ATK +40MP',   rarity:'epic',   forClass:['mage']},
+  chaos_orb:    {name:'Orbe do Caos',      icon:'🔴',  type:'weapon', slot:'weapon', effect:{atk:24,mp:60},   desc:'+24 ATK +60MP',   rarity:'epic',   forClass:['mage']},
+
+  // ── WEAPONS — ARCHER ─────────────────────────────────────────────
+  hunting_bow:  {name:'Arco de Caça',      icon:'🏹',  type:'weapon', slot:'weapon', effect:{atk:6},          desc:'+6 ATK',          rarity:'common', forClass:['archer']},
+  wood_crossbow:{name:'Besta de Madeira',  icon:'🎯',  type:'weapon', slot:'weapon', effect:{atk:7},          desc:'+7 ATK',          rarity:'common', forClass:['archer']},
+  silver_bow:   {name:'Arco de Prata',     icon:'🏹',  type:'weapon', slot:'weapon', effect:{atk:14,critBonus:.05},desc:'+14 ATK +5%CRIT',rarity:'rare',forClass:['archer']},
+  steel_crossbow:{name:'Besta de Aço',     icon:'🎯',  type:'weapon', slot:'weapon', effect:{atk:15},         desc:'+15 ATK',         rarity:'rare',   forClass:['archer']},
+  storm_bow:    {name:'Arco da Tempestade',icon:'⚡',  type:'weapon', slot:'weapon', effect:{atk:23},         desc:'+23 ATK',         rarity:'epic',   forClass:['archer']},
+  shadow_xbow:  {name:'Besta das Sombras', icon:'🌑',  type:'weapon', slot:'weapon', effect:{atk:25,critBonus:.08},desc:'+25 ATK +8%CRIT',rarity:'epic',forClass:['archer']},
+
+  // ── OFFHAND ───────────────────────────────────────────────────────
+  wooden_shield:{name:'Escudo de Madeira', icon:'🪵',  type:'armor', slot:'offhand', effect:{def:3},          desc:'+3 DEF',          rarity:'common', forClass:['warrior']},
+  kite_shield:  {name:'Escudo Kite',       icon:'🔷',  type:'armor', slot:'offhand', effect:{def:10},         desc:'+10 DEF',         rarity:'rare',   forClass:['warrior']},
+  aegis:        {name:'Égide Sagrada',     icon:'⚜️',  type:'armor', slot:'offhand', effect:{def:16,hp:30},   desc:'+16 DEF +30HP',   rarity:'epic',   forClass:['warrior']},
+  spell_focus:  {name:'Foco de Magia',     icon:'🔯',  type:'armor', slot:'offhand', effect:{mp:20,atk:3},    desc:'+20MP +3ATK',     rarity:'common', forClass:['mage']},
+  arcane_focus: {name:'Foco Arcano',       icon:'💠',  type:'armor', slot:'offhand', effect:{mp:40,atk:6},    desc:'+40MP +6ATK',     rarity:'rare',   forClass:['mage']},
+  void_tome:    {name:'Tomo Proibido',     icon:'📕',  type:'armor', slot:'offhand', effect:{mp:70,atk:10},   desc:'+70MP +10ATK',    rarity:'epic',   forClass:['mage']},
+  iron_quiver:  {name:'Aljava de Ferro',   icon:'🗝️',  type:'armor', slot:'offhand', effect:{atk:3},          desc:'+3 ATK',          rarity:'common', forClass:['archer']},
+  silver_quiver:{name:'Aljava de Prata',   icon:'💎',  type:'armor', slot:'offhand', effect:{atk:6,critBonus:.03},desc:'+6ATK +3%CRIT',rarity:'rare',forClass:['archer']},
+  elven_quiver: {name:'Aljava Élfica',     icon:'🍃',  type:'armor', slot:'offhand', effect:{atk:10,critBonus:.06},desc:'+10ATK +6%CRIT',rarity:'epic',forClass:['archer']},
+
+  // ── HEAD ──────────────────────────────────────────────────────────
+  iron_helm:    {name:'Elmo de Ferro',     icon:'⛑️',  type:'armor', slot:'head', effect:{def:4},             desc:'+4 DEF',          rarity:'common', forClass:['warrior']},
+  steel_helm:   {name:'Elmo de Aço',       icon:'🪖',  type:'armor', slot:'head', effect:{def:8},             desc:'+8 DEF',          rarity:'rare',   forClass:['warrior']},
+  knight_helm:  {name:'Elmo do Cavaleiro', icon:'👑',  type:'armor', slot:'head', effect:{def:12,hp:20},      desc:'+12 DEF +20HP',   rarity:'rare',   forClass:['warrior']},
+  dragon_helm:  {name:'Elmo do Dragão',    icon:'🐲',  type:'armor', slot:'head', effect:{def:18,hp:40},      desc:'+18 DEF +40HP',   rarity:'epic',   forClass:['warrior']},
+  cloth_hood:   {name:'Capuz de Pano',     icon:'🎓',  type:'armor', slot:'head', effect:{def:2,mp:15},       desc:'+2 DEF +15MP',    rarity:'common', forClass:['mage']},
+  wizard_hat:   {name:'Chapéu do Mago',    icon:'🪄',  type:'armor', slot:'head', effect:{def:4,mp:30},       desc:'+4 DEF +30MP',    rarity:'rare',   forClass:['mage']},
+  archmage_crown:{name:'Coroa do Arcamago',icon:'👑',  type:'armor', slot:'head', effect:{def:6,mp:60,atk:8}, desc:'+6DEF +60MP +8ATK',rarity:'epic',  forClass:['mage']},
+  leather_hood: {name:'Capuz de Couro',    icon:'🧢',  type:'armor', slot:'head', effect:{def:3},             desc:'+3 DEF',          rarity:'common', forClass:['archer']},
+  ranger_hood:  {name:'Capuz do Ranger',   icon:'🎩',  type:'armor', slot:'head', effect:{def:6,critBonus:.04},desc:'+6DEF +4%CRIT',  rarity:'rare',   forClass:['archer']},
+  shadow_hood:  {name:'Capuz das Sombras', icon:'🌑',  type:'armor', slot:'head', effect:{def:8,critBonus:.07,atk:5},desc:'+8DEF +7%CRIT +5ATK',rarity:'epic',forClass:['archer']},
+
+  // ── CHEST ─────────────────────────────────────────────────────────
+  chainmail:    {name:'Cota de Malha',     icon:'🧥',  type:'armor', slot:'chest', effect:{def:6,hp:15},      desc:'+6 DEF +15HP',    rarity:'common', forClass:['warrior']},
+  plate_armor:  {name:'Armadura de Placas',icon:'⚜️',  type:'armor', slot:'chest', effect:{def:12,hp:25},     desc:'+12 DEF +25HP',   rarity:'rare',   forClass:['warrior']},
+  titan_plate:  {name:'Placa dos Titãs',   icon:'🛡️',  type:'armor', slot:'chest', effect:{def:24,hp:60},     desc:'+24 DEF +60HP',   rarity:'epic',   forClass:['warrior']},
+  cloth_robe:   {name:'Robe de Pano',      icon:'👘',  type:'armor', slot:'chest', effect:{def:2,mp:20},      desc:'+2 DEF +20MP',    rarity:'common', forClass:['mage']},
+  archmage_robe:{name:'Manto do Arcamago', icon:'🌟',  type:'armor', slot:'chest', effect:{def:7,mp:60,atk:6},desc:'+7DEF +60MP +6ATK',rarity:'epic',  forClass:['mage']},
+  void_robe:    {name:'Manto do Vazio',    icon:'🌑',  type:'armor', slot:'chest', effect:{def:8,mp:80,atk:8},desc:'+8DEF +80MP +8ATK',rarity:'epic',  forClass:['mage']},
+  studded_leather:{name:'Couro Cravejado', icon:'🎽',  type:'armor', slot:'chest', effect:{def:8,spd:15},     desc:'+8 DEF +15SPD',   rarity:'rare',   forClass:['archer']},
+  windwalker:   {name:'Armadura do Vento', icon:'💨',  type:'armor', slot:'chest', effect:{def:10,spd:30,critBonus:.05},desc:'+10DEF +30SPD +5%CRIT',rarity:'epic',forClass:['archer']},
+
+  // Update existing items to add slot field
+  old_sword:    {name:'Espada Velha',      icon:'🗡️',  type:'weapon', slot:'weapon', effect:{atk:4},          desc:'+4 ATK',          rarity:'common', forClass:['warrior']},
+  steel_sword:  {name:'Espada de Aço',     icon:'⚔️',  type:'weapon', slot:'weapon', effect:{atk:10},         desc:'+10 ATK',         rarity:'rare',   forClass:['warrior']},
+  troll_club:   {name:'Clava do Troll',    icon:'🪓',  type:'weapon', slot:'weapon', effect:{atk:16},         desc:'+16 ATK',         rarity:'rare',   forClass:['warrior']},
+  dragon_sword: {name:'Lâmina do Dragão',  icon:'🔥',  type:'weapon', slot:'weapon', effect:{atk:25},         desc:'+25 ATK',         rarity:'epic',   forClass:['warrior']},
+  short_bow:    {name:'Arco Curto',        icon:'🏹',  type:'weapon', slot:'weapon', effect:{atk:5},          desc:'+5 ATK',          rarity:'common', forClass:['archer']},
+  venom_bow:    {name:'Arco Venenoso',     icon:'🏹',  type:'weapon', slot:'weapon', effect:{atk:12},         desc:'+12 ATK',         rarity:'rare',   forClass:['archer']},
+  elven_bow:    {name:'Arco Élfico',       icon:'🌿',  type:'weapon', slot:'weapon', effect:{atk:20,critBonus:.05},desc:'+20 ATK +CRIT',rarity:'epic',  forClass:['archer']},
+  oak_staff:    {name:'Cajado de Carvalho',icon:'🪄',  type:'weapon', slot:'weapon', effect:{atk:6,mp:15},    desc:'+6 ATK +15MP',    rarity:'common', forClass:['mage']},
+  mage_staff:   {name:'Cajado Arcano',     icon:'🔮',  type:'weapon', slot:'weapon', effect:{atk:14,mp:30},   desc:'+14 ATK +30MP',   rarity:'rare',   forClass:['mage']},
+  arcane_tome:  {name:'Tomo das Eras',     icon:'📖',  type:'weapon', slot:'weapon', effect:{atk:22,mp:50},   desc:'+22 ATK +50MP',   rarity:'epic',   forClass:['mage']},
+  shield:       {name:'Escudo de Ferro',   icon:'🛡️',  type:'armor',  slot:'offhand',effect:{def:6},          desc:'+6 DEF',          rarity:'rare',   forClass:['warrior']},
+  leather_armor:{name:'Armadura de Couro', icon:'🦺',  type:'armor',  slot:'chest',  effect:{def:4,spd:10},   desc:'+4 DEF +SPD',     rarity:'common', forClass:['archer']},
+  robe:         {name:'Manto Arcano',      icon:'👘',  type:'armor',  slot:'chest',  effect:{def:4,mp:35},    desc:'+4 DEF +35MP',    rarity:'rare',   forClass:['mage']},
+  heavy_armor:  {name:'Armadura Pesada',   icon:'⚔️',  type:'armor',  slot:'chest',  effect:{def:18,hp:40},   desc:'+18 DEF +40HP',   rarity:'epic',   forClass:['warrior']},
+  shadow_cloak: {name:'Manto das Sombras', icon:'🌑',  type:'armor',  slot:'chest',  effect:{def:12,spd:20},  desc:'+12 DEF +20SPD',  rarity:'epic',   forClass:['archer','mage']},
+
+  // ── GLOVES ────────────────────────────────────────────────────────
+  iron_gauntlets:{name:'Manoplas de Ferro',icon:'🧤',  type:'armor', slot:'gloves', effect:{def:3,atk:2},     desc:'+3 DEF +2ATK',    rarity:'common', forClass:['warrior']},
+  steel_gauntlets:{name:'Manoplas de Aço', icon:'🥊',  type:'armor', slot:'gloves', effect:{def:5,atk:4},     desc:'+5 DEF +4ATK',    rarity:'rare',   forClass:['warrior']},
+  dragon_gauntlets:{name:'Manoplas Dracônicas',icon:'🐲',type:'armor',slot:'gloves',effect:{def:8,atk:8},     desc:'+8 DEF +8ATK',    rarity:'epic',   forClass:['warrior']},
+  spell_gloves: {name:'Luvas de Feiticeiro',icon:'🧤', type:'armor', slot:'gloves', effect:{def:2,mp:20},     desc:'+2 DEF +20MP',    rarity:'common', forClass:['mage']},
+  arcane_gloves:{name:'Luvas Arcanas',     icon:'✋',  type:'armor', slot:'gloves', effect:{def:3,mp:35,atk:4},desc:'+3DEF +35MP +4ATK',rarity:'rare',  forClass:['mage']},
+  void_gloves:  {name:'Luvas do Vazio',    icon:'🖐️',  type:'armor', slot:'gloves', effect:{def:5,mp:50,atk:8},desc:'+5DEF +50MP +8ATK',rarity:'epic',  forClass:['mage']},
+  leather_gloves:{name:'Luvas de Couro',   icon:'🤜',  type:'armor', slot:'gloves', effect:{def:2,critBonus:.02},desc:'+2DEF +2%CRIT', rarity:'common', forClass:['archer']},
+  hunter_gloves:{name:'Luvas do Caçador',  icon:'🎯',  type:'armor', slot:'gloves', effect:{def:4,critBonus:.04,atk:3},desc:'+4DEF +4%CRIT +3ATK',rarity:'rare',forClass:['archer']},
+  shadow_gloves:{name:'Luvas das Sombras', icon:'🌑',  type:'armor', slot:'gloves', effect:{def:6,critBonus:.07,atk:6},desc:'+6DEF +7%CRIT +6ATK',rarity:'epic',forClass:['archer']},
+
+  // ── LEGS ──────────────────────────────────────────────────────────
+  iron_greaves: {name:'Grevas de Ferro',   icon:'👖',  type:'armor', slot:'legs', effect:{def:4,hp:10},       desc:'+4 DEF +10HP',    rarity:'common', forClass:['warrior']},
+  steel_greaves:{name:'Grevas de Aço',     icon:'🦵',  type:'armor', slot:'legs', effect:{def:8,hp:20},       desc:'+8 DEF +20HP',    rarity:'rare',   forClass:['warrior']},
+  titan_greaves:{name:'Grevas dos Titãs',  icon:'⚜️',  type:'armor', slot:'legs', effect:{def:14,hp:35},      desc:'+14 DEF +35HP',   rarity:'epic',   forClass:['warrior']},
+  cloth_pants:  {name:'Calças de Pano',    icon:'👖',  type:'armor', slot:'legs', effect:{def:2,mp:15},       desc:'+2 DEF +15MP',    rarity:'common', forClass:['mage']},
+  silk_pants:   {name:'Calças de Seda',    icon:'👗',  type:'armor', slot:'legs', effect:{def:3,mp:30},       desc:'+3 DEF +30MP',    rarity:'rare',   forClass:['mage']},
+  arcane_pants: {name:'Calças Arcanas',    icon:'🌀',  type:'armor', slot:'legs', effect:{def:5,mp:50,atk:5}, desc:'+5DEF +50MP +5ATK',rarity:'epic',  forClass:['mage']},
+  leather_pants:{name:'Calças de Couro',   icon:'🩳',  type:'armor', slot:'legs', effect:{def:3,spd:8},       desc:'+3 DEF +8SPD',    rarity:'common', forClass:['archer']},
+  ranger_pants: {name:'Calças do Ranger',  icon:'👖',  type:'armor', slot:'legs', effect:{def:5,spd:15},      desc:'+5 DEF +15SPD',   rarity:'rare',   forClass:['archer']},
+  shadow_pants: {name:'Calças das Sombras',icon:'🌑',  type:'armor', slot:'legs', effect:{def:7,spd:25,critBonus:.03},desc:'+7DEF +25SPD +3%CRIT',rarity:'epic',forClass:['archer']},
+
+  // ── BOOTS ─────────────────────────────────────────────────────────
+  iron_boots:   {name:'Botas de Ferro',    icon:'👢',  type:'armor', slot:'boots', effect:{def:3},            desc:'+3 DEF',          rarity:'common', forClass:['warrior']},
+  steel_boots:  {name:'Botas de Aço',      icon:'🥾',  type:'armor', slot:'boots', effect:{def:6,hp:15},      desc:'+6 DEF +15HP',    rarity:'rare',   forClass:['warrior']},
+  titan_boots:  {name:'Botas dos Titãs',   icon:'⚜️',  type:'armor', slot:'boots', effect:{def:10,hp:25},     desc:'+10 DEF +25HP',   rarity:'epic',   forClass:['warrior']},
+  cloth_boots:  {name:'Botas de Pano',     icon:'🥿',  type:'armor', slot:'boots', effect:{def:1,mp:10,spd:5},desc:'+1DEF +10MP +SPD',rarity:'common', forClass:['mage']},
+  silk_boots:   {name:'Botas de Seda',     icon:'👟',  type:'armor', slot:'boots', effect:{def:2,mp:25,spd:10},desc:'+2DEF +25MP +SPD',rarity:'rare',   forClass:['mage']},
+  arcane_boots: {name:'Botas Arcanas',     icon:'🌟',  type:'armor', slot:'boots', effect:{def:4,mp:40,spd:15,atk:4},desc:'+4DEF +40MP +SPD +4ATK',rarity:'epic',forClass:['mage']},
+  leather_boots:{name:'Botas de Couro',    icon:'👢',  type:'armor', slot:'boots', effect:{def:2,spd:12},     desc:'+2 DEF +12SPD',   rarity:'common', forClass:['archer']},
+  swift_boots:  {name:'Botas Velozes',     icon:'⚡',  type:'armor', slot:'boots', effect:{def:4,spd:22},     desc:'+4 DEF +22SPD',   rarity:'rare',   forClass:['archer']},
+  wind_boots:   {name:'Botas do Vento',    icon:'💨',  type:'armor', slot:'boots', effect:{def:5,spd:35},     desc:'+5 DEF +35SPD',   rarity:'epic',   forClass:['archer']},
+  traveler_boots:{name:'Botas do Viajante',icon:'🥾',  type:'armor', slot:'boots', effect:{def:2,spd:10},     desc:'+2 DEF +10SPD',   rarity:'common', forClass:null},
+
+  // ── RINGS ─────────────────────────────────────────────────────────
+  copper_ring:  {name:'Anel de Cobre',     icon:'💍',  type:'armor', slot:'ring', effect:{atk:2},             desc:'+2 ATK',          rarity:'common', forClass:null},
+  iron_ring:    {name:'Anel de Ferro',     icon:'💍',  type:'armor', slot:'ring', effect:{def:2},             desc:'+2 DEF',          rarity:'common', forClass:null},
+  vitality_ring:{name:'Anel de Vitalidade',icon:'💍',  type:'armor', slot:'ring', effect:{hp:20},             desc:'+20 HP',          rarity:'common', forClass:null},
+  mana_ring:    {name:'Anel de Mana',      icon:'💍',  type:'armor', slot:'ring', effect:{mp:20},             desc:'+20 MP',          rarity:'common', forClass:null},
+  silver_ring:  {name:'Anel de Prata',     icon:'💎',  type:'armor', slot:'ring', effect:{atk:5,def:3},       desc:'+5 ATK +3 DEF',   rarity:'rare',   forClass:null},
+  warrior_ring: {name:'Anel do Guerreiro', icon:'🔴',  type:'armor', slot:'ring', effect:{atk:8,hp:25},       desc:'+8 ATK +25HP',    rarity:'rare',   forClass:['warrior']},
+  mage_ring:    {name:'Anel do Mago',      icon:'🔵',  type:'armor', slot:'ring', effect:{atk:7,mp:35},       desc:'+7 ATK +35MP',    rarity:'rare',   forClass:['mage']},
+  archer_ring:  {name:'Anel do Arqueiro',  icon:'🟢',  type:'armor', slot:'ring', effect:{atk:7,critBonus:.05},desc:'+7 ATK +5%CRIT', rarity:'rare',   forClass:['archer']},
+  ring_power:   {name:'Anel do Poder',     icon:'💠',  type:'armor', slot:'ring', effect:{atk:12,def:6,hp:30},desc:'+12ATK +6DEF +30HP',rarity:'epic', forClass:null},
+  ring_arcane:  {name:'Anel Arcano',       icon:'🌀',  type:'armor', slot:'ring', effect:{atk:10,mp:60},      desc:'+10ATK +60MP',    rarity:'epic',   forClass:['mage']},
+  ring_critmaster:{name:'Anel do Crítico', icon:'⚡',  type:'armor', slot:'ring', effect:{atk:8,critBonus:.10},desc:'+8ATK +10%CRIT', rarity:'epic',   forClass:['archer']},
+  ring_fortress:{name:'Anel da Fortaleza', icon:'🛡️',  type:'armor', slot:'ring', effect:{def:14,hp:50},      desc:'+14DEF +50HP',    rarity:'epic',   forClass:['warrior']},
+
+  // ── AMULETS ───────────────────────────────────────────────────────
+  bone_amulet:  {name:'Amuleto de Osso',   icon:'📿',  type:'armor', slot:'amulet', effect:{hp:15},           desc:'+15 HP',          rarity:'common', forClass:null},
+  wooden_charm: {name:'Amuleto de Madeira',icon:'🪬',  type:'armor', slot:'amulet', effect:{def:2},           desc:'+2 DEF',          rarity:'common', forClass:null},
+  herb_charm:   {name:'Amuleto de Ervas',  icon:'🌿',  type:'armor', slot:'amulet', effect:{hp:10,mp:10},     desc:'+10HP +10MP',     rarity:'common', forClass:null},
+  silver_amulet:{name:'Amuleto de Prata',  icon:'📿',  type:'armor', slot:'amulet', effect:{atk:5,def:5},     desc:'+5ATK +5DEF',     rarity:'rare',   forClass:null},
+  dragon_tooth: {name:'Dente de Dragão',   icon:'🦷',  type:'armor', slot:'amulet', effect:{atk:8,hp:30},     desc:'+8ATK +30HP',     rarity:'rare',   forClass:['warrior']},
+  arcane_crystal:{name:'Cristal Arcano',   icon:'💎',  type:'armor', slot:'amulet', effect:{atk:6,mp:45},     desc:'+6ATK +45MP',     rarity:'rare',   forClass:['mage']},
+  hawk_eye:     {name:'Olho de Falcão',    icon:'👁️',  type:'armor', slot:'amulet', effect:{atk:6,critBonus:.06},desc:'+6ATK +6%CRIT',rarity:'rare',   forClass:['archer']},
+  amulet_titan: {name:'Colar dos Titãs',   icon:'⚜️',  type:'armor', slot:'amulet', effect:{atk:10,def:8,hp:50},desc:'+10ATK +8DEF +50HP',rarity:'epic',forClass:null},
+  soul_pendant: {name:'Pingente da Alma',  icon:'🔮',  type:'armor', slot:'amulet', effect:{atk:12,mp:80,def:5},desc:'+12ATK +80MP +5DEF',rarity:'epic',forClass:['mage']},
+  assassin_mark:{name:'Marca do Assassino',icon:'☠️',  type:'armor', slot:'amulet', effect:{atk:10,critBonus:.12,spd:20},desc:'+10ATK +12%CRIT +20SPD',rarity:'epic',forClass:['archer']},
+  berserker_heart:{name:'Coração Berserker',icon:'❤️', type:'armor', slot:'amulet', effect:{atk:14,hp:60},    desc:'+14ATK +60HP',    rarity:'epic',   forClass:['warrior']},
+});
+
+// Ensure existing items have slot field (backwards compat)
+(function patchExistingSlots() {
+  const slotMap = {
+    weapon: 'weapon', offhand: 'offhand',
+    head: 'head', chest: 'chest', gloves: 'gloves',
+    legs: 'legs', boots: 'boots'
+  };
+  for (const [id, db] of Object.entries(ITEM_DB)) {
+    if (!db.slot) {
+      if (db.type === 'weapon') ITEM_DB[id].slot = 'weapon';
+      else if (db.type === 'armor') ITEM_DB[id].slot = 'chest'; // default armor to chest
+    }
+  }
+})();
+
+// ─────────────────────────────────────────────────────────
+//  EQUIPMENT SYSTEM — all slots support
+// ─────────────────────────────────────────────────────────
+const ALL_SLOTS = ['weapon','offhand','head','chest','gloves','legs','boots','ring1','ring2','amulet'];
+const SLOT_LABEL = {
+  weapon:'⚔ Arma', offhand:'🛡 Mão Sec.', head:'👑 Cabeça',
+  chest:'🧥 Peitoral', gloves:'🧤 Luvas', legs:'👖 Calças',
+  boots:'👢 Botas', ring1:'💍 Anel 1', ring2:'💍 Anel 2', amulet:'📿 Amuleto'
+};
+const SLOT_ICON_EMPTY = {
+  weapon:'⚔', offhand:'🛡', head:'👑', chest:'🧥',
+  gloves:'🧤', legs:'👖', boots:'👢', ring1:'💍', ring2:'💍', amulet:'📿'
+};
+// Which item slot-type can go in each equipment slot
+const SLOT_ACCEPTS = {
+  weapon:  ['weapon'],
+  offhand: ['offhand'],
+  head:    ['head'],
+  chest:   ['chest'],
+  gloves:  ['gloves'],
+  legs:    ['legs'],
+  boots:   ['boots'],
+  ring1:   ['ring'],
+  ring2:   ['ring'],
+  amulet:  ['amulet'],
+};
+
+function getEquippedItem(slotId) {
+  return player?.equippedSlots?.[slotId] || null;
+}
+
+function calcEquipBonuses() {
+  const b = {atk:0, def:0, hp:0, mp:0, spd:0, critBonus:0};
+  if (!player?.equippedSlots) return b;
+  for (const slotId of ALL_SLOTS) {
+    const itemId = player.equippedSlots[slotId]; if (!itemId) continue;
+    const db = ITEM_DB[itemId]; if (!db?.effect) continue;
+    if (db.effect.atk)       b.atk       += db.effect.atk;
+    if (db.effect.def)       b.def       += db.effect.def;
+    if (db.effect.hp)        b.hp        += db.effect.hp;
+    if (db.effect.mp)        b.mp        += db.effect.mp;
+    if (db.effect.spd)       b.spd       += db.effect.spd;
+    if (db.effect.critBonus) b.critBonus += db.effect.critBonus;
+  }
+  return b;
+}
+
+function applyEquipBonuses() {
+  if (!player) return;
+  const b = calcEquipBonuses();
+  player.atk        = player.baseAtk + b.atk;
+  player.def        = player.baseDef + b.def;
+  const baseDef = CLASS_DEF[player.classId];
+  player.spd        = (baseDef?.spd || 150) + b.spd;
+  if (player.subSkill === 'wind') player.spd = Math.max(player.spd, player.atkSpeed * 0.55 ? player.spd : player.spd);
+  player.critChance = (CLASS_DEF[player.classId]?.critChance || 0.1) + b.critBonus;
+  if (player.subclass && player._subCritBonus) player.critChance += player._subCritBonus;
+  // HP bonus delta
+  const prevHp = player._hpBonus || 0;
+  player.maxHp  = player.maxHp - prevHp + b.hp;
+  if (player.maxHp < 1) player.maxHp = 1;
+  player._hpBonus = b.hp;
+  // MP bonus delta
+  const prevMp = player._mpBonus || 0;
+  player.maxMp  = player.maxMp - prevMp + b.mp;
+  if (player.maxMp < 1) player.maxMp = 1;
+  player._mpBonus = b.mp;
+}
+
+function resolveEquipSlot(itemId, preferredSlot) {
+  const db = ITEM_DB[itemId]; if (!db) return null;
+  const itemSlotType = db.slot;
+  if (!player.equippedSlots) player.equippedSlots = {};
+  if (preferredSlot && SLOT_ACCEPTS[preferredSlot]?.includes(itemSlotType)) return preferredSlot;
+  const candidates = ALL_SLOTS.filter(s => SLOT_ACCEPTS[s]?.includes(itemSlotType));
+  if (!candidates.length) return null;
+  for (const s of candidates) { if (!player.equippedSlots[s]) return s; }
+  return candidates[0];
+}
+
+function equipItem(itemId, preferredSlot) {
+  const db = ITEM_DB[itemId]; if (!db) return;
+  if (!player.equippedSlots) player.equippedSlots = {};
+  const targetSlot = resolveEquipSlot(itemId, preferredSlot);
+  if (!targetSlot) { addLog(`❌ Sem slot para ${db.name}`, 'ldmg'); return; }
+  const existing = player.equippedSlots[targetSlot];
+  if (existing && existing !== itemId) addLog(`↩ Desequipou ${ITEM_DB[existing]?.name || existing}`, '');
+  player.equippedSlots[targetSlot] = itemId;
+  // Legacy compat
+  if (db.type === 'weapon') player.equippedWeapon = itemId;
+  else if (db.type === 'armor') player.equippedArmor = itemId;
+  applyEquipBonuses();
+  if (document.getElementById('inv-panel')?.classList.contains('open')) {
+    renderInventory(); updateInventoryPanel(); renderEquipSlots();
+  }
+}
+
+function removeEquip(itemId) {
+  if (!player?.equippedSlots) return;
+  for (const slotId of ALL_SLOTS) {
+    if (player.equippedSlots[slotId] === itemId) {
+      delete player.equippedSlots[slotId];
+      break;
+    }
+  }
+  if (player.equippedWeapon === itemId) player.equippedWeapon = null;
+  if (player.equippedArmor  === itemId) player.equippedArmor  = null;
+  applyEquipBonuses();
+}
+
+function isItemEquipped(itemId) {
+  if (!player?.equippedSlots) return false;
+  return Object.values(player.equippedSlots).includes(itemId);
+}
+
+function buildStatStr(effect) {
+  if (!effect) return '';
+  const parts = [];
+  if (effect.atk)       parts.push('+'+effect.atk+' ATK');
+  if (effect.def)       parts.push('+'+effect.def+' DEF');
+  if (effect.hp)        parts.push('+'+effect.hp+' HP');
+  if (effect.mp)        parts.push('+'+effect.mp+' MP');
+  if (effect.spd)       parts.push((effect.spd>0?'+':'')+effect.spd+' SPD');
+  if (effect.critBonus) parts.push('+'+(effect.critBonus*100).toFixed(0)+'%CRIT');
+  return parts.slice(0,3).join(' ');
+}
+
+function getSellPrice(itemId) {
+  const db = ITEM_DB[itemId]; if (!db) return 1;
+  if (db.type==='pet')      return 500;
+  if (db.type==='artifact') return 3000;
+  const base = {consumable:8, weapon:18, armor:14}[db.type] || 5;
+  const rarityMult = {common:1, rare:3, epic:7}[db.rarity] || 1;
+  return Math.floor(base * rarityMult);
+}
+
+function getShopBuyPrice(itemId) {
+  const db = ITEM_DB[itemId]; if (!db) return 10;
+  if (db.type==='pet')      return 1500;
+  if (db.type==='artifact') return 2000;
+  const base = {consumable:18, weapon:40, armor:35}[db.type] || 20;
+  const rarityMult = {common:1, rare:3, epic:8}[db.rarity] || 1;
+  return Math.floor(base * rarityMult);
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: createPlayer — adds equippedSlots
+// ─────────────────────────────────────────────────────────
+function createPlayer(classId) {
+  const def = CLASS_DEF[classId];
+  return {
+    classId, ...def, x: 4.5*T, y: 4.5*T,
+    maxHp: def.hp, hp: def.hp, maxMp: def.mp, mp: def.mp,
+    baseAtk: def.atk, atk: def.atk,
+    baseDef: def.def, def: def.def,
+    level: 1, xp: 0, xpNext: 100, gold: 0, kills: 0,
+    inventory: [],
+    equippedSlots: {},
+    equippedWeapon: null, equippedArmor: null,
+    _hpBonus: 0, _mpBonus: 0,
+    vx: 0, vy: 0, facing: {x:1, y:0},
+    atkTimer: 0, dashTimer: 0, dashMaxCd: 3000,
+    isDashing: false, dashDuration: 0, dashDirX: 0, dashDirY: 0,
+    skillCds: [0, 0, 0], hitFlash: 0, isAlive: true,
+    subclass: null, subSkill: null, subclassChosen: false,
+    skillDmgMult: 1, arrowAoe: 0, holyRegen: false, fireAura: false,
+    holyRegenTimer: 0, fireAuraTimer: 0, poisonProc: .25, rageBonus: 0,
+    activePetType: null,
+    art: {xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0, dmgReduce:0,
+          poisonMult:1, fireMult:1, iceMult:1, swordMult:1, bowMult:1,
+          autoCollect:false, hpApplied:0}
+  };
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: useInventoryItem — all slot types
+// ─────────────────────────────────────────────────────────
+function useInventoryItem(idx) {
+  const invItem = player.inventory[idx]; if (!invItem) return;
+  const db = ITEM_DB[invItem.id]; if (!db) return;
+  if (db.type === 'consumable') {
+    if (db.effect.hp) player.hp = Math.min(player.maxHp, player.hp + db.effect.hp);
+    if (db.effect.mp) player.mp = Math.min(player.maxMp, player.mp + db.effect.mp);
+    addLog(`${db.icon} Usou ${db.name}: ${db.desc}`, 'lheal');
+    player.inventory.splice(idx, 1);
+  } else if (db.type === 'weapon' || db.type === 'armor') {
+    if (db.forClass && !db.forClass.includes(player.classId)) {
+      addLog(`❌ ${db.name} é para ${db.forClass.join('/')}!`, 'ldmg'); return;
+    }
+    if (isItemEquipped(invItem.id)) removeEquip(invItem.id);
+    else equipItem(invItem.id);
+  } else if (db.type === 'artifact') {
+    if (equippedArtifacts.includes(invItem.id)) unequipArtifact(invItem.id);
+    else equipArtifact(invItem.id);
+  } else if (db.type === 'pet') {
+    activatePet(invItem.id);
+  }
+  renderInventory(); updateInventoryPanel(); renderEquipSlots();
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: collectLoot — smart auto-equip all slots
+// ─────────────────────────────────────────────────────────
+function collectLoot(loot) {
+  if (loot.id === 'gold_coin') {
+    const g = 1 + Math.floor(Math.random() * 5);
+    player.gold += Math.floor(g * (player.art?.goldMult || 1));
+    addLog(`🪙 +${g} ouro`, ''); return;
+  }
+  const item = ITEM_DB[loot.id]; if (!item) return;
+  if (item.type === 'consumable') {
+    addItemToInventory(loot.id);
+    addLog(`${item.icon} Coletou ${item.name}`, 'ldrop');
+  } else if (item.type === 'artifact') {
+    addItemToInventory(loot.id);
+    addLog(`💎 Artefato: ${item.icon} ${item.name}! [J] para equipar`, 'llvl');
+  } else if (item.type === 'pet') {
+    addItemToInventory(loot.id);
+    addLog(`🐾 Pet: ${item.icon} ${item.name}!`, 'llvl');
+  } else if (item.type === 'weapon' || item.type === 'armor') {
+    addItemToInventory(loot.id);
+    const canEquip = !item.forClass || item.forClass.includes(player.classId);
+    if (canEquip) {
+      const targetSlot = resolveEquipSlot(loot.id);
+      if (targetSlot) {
+        const currentId = player.equippedSlots?.[targetSlot];
+        if (!currentId) {
+          equipItem(loot.id);
+          addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`, 'ldrop');
+        } else {
+          const currDb = ITEM_DB[currentId];
+          const score = e => Object.values(e||{}).reduce((a,v)=>typeof v==='number'?a+v:a,0);
+          if (score(item.effect) > score(currDb?.effect)) {
+            equipItem(loot.id);
+            addLog(`${item.icon} ↑ Upgradou para ${item.name}! (${item.desc})`, 'ldrop');
+          } else {
+            addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`, 'ldrop');
+          }
+        }
+      }
+    } else {
+      addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`, 'ldrop');
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: recalcPlayerForClass — clear all slots
+// ─────────────────────────────────────────────────────────
+function recalcPlayerForClass(p, newClassId) {
+  const def = CLASS_DEF[newClassId];
+  const lvl = p.level, levelsGained = lvl - 1;
+  const hpPerLvl  = newClassId==='warrior'?22:newClassId==='archer'?13:9;
+  const atkPerLvl = newClassId==='mage'?5:3;
+  const defPerLvl = newClassId==='warrior'?3:1;
+  const mpPerLvl  = newClassId==='mage'?12:5;
+  p.classId = newClassId; p.name = def.name; p.icon = def.icon;
+  p.color = def.color; p.secondColor = def.secondColor;
+  p.atkRange = def.atkRange; p.atkSpeed = def.atkSpeed;
+  p.critChance = def.critChance; p.critMult = def.critMult;
+  p.skills = def.skills; p.spd = def.spd;
+  p.maxHp = def.hp + hpPerLvl * levelsGained;
+  p.maxMp = def.mp + mpPerLvl * levelsGained;
+  p.baseAtk = def.atk + atkPerLvl * levelsGained;
+  p.baseDef = def.def + defPerLvl * levelsGained;
+  p._hpBonus = 0; p._mpBonus = 0;
+  p.subclass = null; p.subSkill = null; p.subclassChosen = false;
+  p.skillDmgMult = 1; p.arrowAoe = 0; p.holyRegen = false;
+  p.fireAura = false; p.rageBonus = 0; p.poisonProc = 0.25;
+  if (!p.equippedSlots) p.equippedSlots = {};
+  // Remove items not valid for new class
+  for (const [slotId, itemId] of Object.entries(p.equippedSlots)) {
+    if (!itemId) continue;
+    const db = ITEM_DB[itemId];
+    if (db?.forClass && !db.forClass.includes(newClassId)) delete p.equippedSlots[slotId];
+  }
+  p.equippedWeapon = p.equippedSlots.weapon || null;
+  p.equippedArmor  = p.equippedSlots.chest  || null;
+  applyEquipBonuses();
+  p.hp = p.maxHp; p.mp = p.maxMp; p.skillCds = [0, 0, 0];
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: renderEquipSlots — all 10 slots
+// ─────────────────────────────────────────────────────────
+function renderEquipSlots() {
+  for (const slotId of ALL_SLOTS) {
+    const el = document.getElementById('eslot-' + slotId); if (!el) continue;
+    const itemId = player.equippedSlots?.[slotId];
+    el.innerHTML = '';
+    if (itemId && ITEM_DB[itemId]) {
+      const db = ITEM_DB[itemId];
+      el.className = 'equip-slot filled rarity-' + db.rarity + (slotId==='chest'?' equip-slot-chest':'');
+      const ic = document.createElement('span'); ic.className = 'slot-icon'; ic.textContent = db.icon; el.appendChild(ic);
+      const nm = document.createElement('span'); nm.className = 'slot-name'; nm.textContent = db.name; el.appendChild(nm);
+    } else {
+      el.className = 'equip-slot' + (slotId==='chest'?' equip-slot-chest':'');
+      const lb = document.createElement('span'); lb.className = 'equip-slot-label';
+      lb.textContent = SLOT_ICON_EMPTY[slotId] || '?'; el.appendChild(lb);
+    }
+  }
+  const list = document.getElementById('equipped-items-list'); if (!list) return;
+  list.innerHTML = '';
+  const eqSlots = player.equippedSlots || {};
+  const eqEntries = Object.entries(eqSlots).filter(([,id]) => id && ITEM_DB[id]);
+  if (!eqEntries.length) { list.innerHTML = '<div class="no-equip-msg">Sem itens equipados</div>'; }
+  else {
+    for (const [slotId, itemId] of eqEntries) {
+      const db = ITEM_DB[itemId];
+      const row = document.createElement('div'); row.className = 'equipped-item-row';
+      const statStr = buildStatStr(db.effect);
+      row.innerHTML = `<span class="ei-icon">${db.icon}</span><span class="ei-name" style="color:${{common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]};max-width:90px;overflow:hidden;text-overflow:ellipsis;">${db.name}</span><span class="ei-stat" style="font-size:10px;color:#2ecc71">${statStr}</span><span class="ei-unequip" title="Desequipar">✕</span>`;
+      row.querySelector('.ei-unequip').addEventListener('click', ev => {
+        ev.stopPropagation();
+        removeEquip(itemId); renderInventory(); updateInventoryPanel(); renderEquipSlots();
+      });
+      list.appendChild(row);
+    }
+  }
+  const b = calcEquipBonuses();
+  const ea = document.getElementById('eb-atk'); if (ea) ea.textContent = '+' + b.atk;
+  const ed = document.getElementById('eb-def'); if (ed) ed.textContent = '+' + b.def;
+  const eh = document.getElementById('eb-hp');  if (eh) eh.textContent = '+' + b.hp;
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: renderInventory — correct equip check
+// ─────────────────────────────────────────────────────────
+function renderInventory() {
+  const grid = document.getElementById('inv-grid'); grid.innerHTML = '';
+  for (let i = 0; i < 20; i++) {
+    const cell = document.createElement('div'); cell.dataset.idx = i;
+    const invItem = player.inventory[i];
+    if (invItem) {
+      const db = ITEM_DB[invItem.id];
+      if (db) {
+        const isEq = isItemEquipped(invItem.id);
+        const isArtEq = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
+        const isPetActive = db.type==='pet' && pet && pet.petType===db.petType;
+        cell.className = 'inv-cell rarity-'+db.rarity+((isEq||isArtEq||isPetActive)?' is-equipped':'');
+        const iconS = document.createElement('span');
+        iconS.style.cssText = 'pointer-events:none;font-size:22px;'; iconS.textContent = db.icon; cell.appendChild(iconS);
+        const badge = document.createElement('span'); badge.className = 'inv-badge'; badge.style.pointerEvents = 'none';
+        badge.textContent = db.slot ? (SLOT_ICON_EMPTY?.[db.slot]||'?') : {consumable:'❤',artifact:'💎',pet:'🐾'}[db.type]||'?';
+        cell.appendChild(badge);
+        const price = document.createElement('span');
+        price.style.cssText = 'position:absolute;top:2px;left:3px;font-family:VT323,monospace;font-size:9px;color:#5a3808;pointer-events:none;';
+        price.textContent = getSellPrice(invItem.id)+'g'; cell.appendChild(price);
+        if (isEq) { const star = document.createElement('span'); star.style.cssText='position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--amber);pointer-events:none;'; star.textContent='★'; cell.appendChild(star); }
+        let hoverTimer = null;
+        cell.addEventListener('mouseenter', ev => { if(dragState.active)return; clearTimeout(popupState?.hideTimer); hoverTimer = setTimeout(()=>showItemPopup(i,cell),80); });
+        cell.addEventListener('mouseleave', () => { clearTimeout(hoverTimer); if(!dragState.active)hideItemPopup(false); });
+        let mouseDown = false, dragStarted = false;
+        cell.addEventListener('mousedown', ev => { if(ev.button!==0)return; mouseDown=true; dragStarted=false; });
+        cell.addEventListener('mousemove', ev => { if(!mouseDown||dragStarted)return; dragStarted=true; clearTimeout(hoverTimer); startDrag(i,db.icon,ev); });
+        document.addEventListener('mouseup',()=>{mouseDown=false;dragStarted=false;},{once:false});
+      }
+    } else { cell.className = 'inv-cell empty'; }
+    cell.addEventListener('mouseenter',()=>{if(dragState.active&&parseInt(cell.dataset.idx)!==dragState.fromIdx)cell.classList.add('drag-over');});
+    cell.addEventListener('mouseleave',()=>cell.classList.remove('drag-over'));
+    cell.addEventListener('mouseup',()=>{if(dragState.active){const t=parseInt(cell.dataset.idx);if(!isNaN(t))endDrag(t);}});
+    grid.appendChild(cell);
+  }
+  const cnt = document.getElementById('inv-count');
+  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length+'/20';
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: showItemPopup — all slot types
+// ─────────────────────────────────────────────────────────
+function showItemPopup(idx, anchorEl) {
+  const invItem = player.inventory[idx]; if (!invItem) return;
+  const db = ITEM_DB[invItem.id]; if (!db) return;
+  clearTimeout(popupState?.hideTimer);
+  popupState.active = true; popupState.idx = idx;
+  const popup = document.getElementById('item-popup');
+  const info  = document.getElementById('popup-info-content');
+  const acts  = document.getElementById('popup-actions');
+  const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]||'#aaa';
+  const canEquip = !db.forClass || db.forClass.includes(player.classId);
+  const isEq = isItemEquipped(invItem.id);
+  const isArtEquipped = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
+  const sellPrice = getSellPrice(invItem.id);
+  const slotStr = db.slot ? (SLOT_LABEL?.[db.slot] || db.slot) : '';
+  const statStr = buildStatStr(db.effect);
+  info.innerHTML =
+    (isEq||isArtEquipped ? '<div class="tt-equipped-badge">✦ Equipado</div>' : '') +
+    `<div class="tt-name" style="color:${rarityColor}">${db.icon} ${db.name}</div>`+
+    `<div class="tt-rarity" style="color:${rarityColor}">${db.rarity.toUpperCase()}${slotStr?' · '+slotStr:''}</div>`+
+    (statStr?`<div style="font-size:11px;color:#7cf07c;margin-bottom:3px">${statStr}</div>`:'')+
+    `<div class="tt-desc">${db.desc}</div>`+
+    (db.forClass?`<div class="tt-class">Para: ${db.forClass.join('/')}</div>`:'')+
+    (!canEquip&&db.type!=='artifact'&&db.type!=='pet'?'<div class="tt-warn">❌ Classe errada</div>':'')+
+    `<div class="tt-sell-price">Venda: ${sellPrice} 🪙</div>`;
+  acts.innerHTML = '';
+  if (db.type==='consumable') {
+    acts.appendChild(makePopupBtn('Usar','use-btn',()=>{ doUseItem(idx); }));
+  } else if (db.type==='artifact') {
+    if (isArtEquipped) acts.appendChild(makePopupBtn('Desequipar 💎','unequip-btn',()=>{ unequipArtifact(invItem.id); hideItemPopup(true); }));
+    else acts.appendChild(makePopupBtn('Equipar 💎','equip-btn',()=>{ equipArtifact(invItem.id); hideItemPopup(true); }));
+  } else if (db.type==='pet') {
+    const isActive = pet && pet.petType===db.petType;
+    if (isActive) acts.appendChild(makePopupBtn('Pet Ativo ✓','equip-btn',()=>{ hideItemPopup(true); }));
+    else acts.appendChild(makePopupBtn('Ativar Pet 🐾','equip-btn',()=>{ activatePet(invItem.id); hideItemPopup(true); }));
+  } else if (canEquip && (db.type==='weapon'||db.type==='armor')) {
+    if (isEq) acts.appendChild(makePopupBtn('Desequipar','unequip-btn',()=>{ doUseItem(idx); }));
+    else acts.appendChild(makePopupBtn(`Equipar (${SLOT_LABEL?.[db.slot]||db.slot})`,'equip-btn',()=>{ doUseItem(idx); }));
+  }
+  acts.appendChild(makePopupBtn(`Vender ${sellPrice}🪙`,'sell-btn',()=>{ doSellItem(idx); }));
+  popup.style.display = 'block';
+  const rect = anchorEl.getBoundingClientRect();
+  const pw=220, ph=190;
+  let x=rect.right+6, y=rect.top;
+  if (x+pw>window.innerWidth-8) x=rect.left-pw-6;
+  if (y+ph>window.innerHeight-8) y=window.innerHeight-ph-8;
+  if (y<4) y=4;
+  popup.style.left=x+'px'; popup.style.top=y+'px';
+}
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: SHOP CATALOG — all item types
+// ─────────────────────────────────────────────────────────
+SHOP_CATALOG.length = 0;
+[
+  // Consumables
+  'potion','big_potion','elixir','mana_potion','antidote','full_elixir',
+  // Warrior weapons
+  'old_sword','iron_axe','wooden_club','steel_sword','war_hammer','battle_axe','troll_club','dragon_sword','cursed_blade','titan_maul',
+  // Mage weapons
+  'oak_staff','crystal_wand','bone_staff','mage_staff','ember_wand','frost_rod','arcane_tome','void_staff','chaos_orb',
+  // Archer weapons
+  'short_bow','hunting_bow','wood_crossbow','venom_bow','silver_bow','steel_crossbow','elven_bow','storm_bow','shadow_xbow',
+  // Offhands
+  'wooden_shield','shield','kite_shield','aegis',
+  'spell_focus','arcane_focus','void_tome',
+  'iron_quiver','silver_quiver','elven_quiver',
+  // Head
+  'iron_helm','steel_helm','knight_helm','dragon_helm',
+  'cloth_hood','wizard_hat','archmage_crown',
+  'leather_hood','ranger_hood','shadow_hood',
+  // Chest
+  'chainmail','plate_armor','heavy_armor','titan_plate',
+  'cloth_robe','robe','archmage_robe','void_robe',
+  'leather_armor','studded_leather','shadow_cloak','windwalker',
+  // Gloves
+  'iron_gauntlets','steel_gauntlets','dragon_gauntlets',
+  'spell_gloves','arcane_gloves','void_gloves',
+  'leather_gloves','hunter_gloves','shadow_gloves',
+  // Legs
+  'iron_greaves','steel_greaves','titan_greaves',
+  'cloth_pants','silk_pants','arcane_pants',
+  'leather_pants','ranger_pants','shadow_pants',
+  // Boots
+  'iron_boots','steel_boots','titan_boots',
+  'cloth_boots','silk_boots','arcane_boots',
+  'leather_boots','swift_boots','wind_boots','traveler_boots',
+  // Rings
+  'copper_ring','iron_ring','vitality_ring','mana_ring',
+  'silver_ring','warrior_ring','mage_ring','archer_ring',
+  'ring_power','ring_arcane','ring_critmaster','ring_fortress',
+  // Amulets
+  'bone_amulet','wooden_charm','herb_charm',
+  'silver_amulet','dragon_tooth','arcane_crystal','hawk_eye',
+  'amulet_titan','soul_pendant','assassin_mark','berserker_heart',
+  // Pets
+  'pet_healer','pet_attack','pet_tank',
+  // Artifacts
+  'art_xp','art_gold','art_atk','art_hp','art_def','art_poison','art_fire','art_ice','art_sword','art_bow','art_auto',
+].forEach(id => SHOP_CATALOG.push({id}));
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: CHEST LOOT — expanded pools
+// ─────────────────────────────────────────────────────────
+Object.assign(CHEST_LOOT, {
+  common: [
+    'potion','mana_potion','antidote','old_sword','iron_axe','wooden_club',
+    'short_bow','hunting_bow','oak_staff','crystal_wand',
+    'bone_amulet','wooden_charm','herb_charm',
+    'iron_helm','leather_hood','cloth_hood',
+    'iron_boots','leather_boots','cloth_boots','traveler_boots',
+    'copper_ring','iron_ring','vitality_ring','mana_ring',
+    'iron_gauntlets','spell_gloves','leather_gloves',
+    'iron_greaves','cloth_pants','leather_pants',
+    'wooden_shield','spell_focus','iron_quiver','chainmail','cloth_robe','leather_armor',
+  ],
+  rare: [
+    'big_potion','steel_sword','war_hammer','battle_axe','troll_club',
+    'venom_bow','silver_bow','steel_crossbow',
+    'mage_staff','ember_wand','frost_rod',
+    'steel_helm','knight_helm','ranger_hood','wizard_hat',
+    'plate_armor','robe','studded_leather',
+    'steel_boots','silk_boots','swift_boots',
+    'silver_ring','warrior_ring','mage_ring','archer_ring',
+    'steel_gauntlets','arcane_gloves','hunter_gloves',
+    'steel_greaves','silk_pants','ranger_pants',
+    'shield','kite_shield','arcane_focus','silver_quiver',
+    'silver_amulet','dragon_tooth','arcane_crystal','hawk_eye',
+  ],
+  epic: [
+    'elixir','full_elixir',
+    'dragon_sword','cursed_blade','titan_maul',
+    'arcane_tome','void_staff','chaos_orb',
+    'elven_bow','storm_bow','shadow_xbow',
+    'dragon_helm','archmage_crown','shadow_hood',
+    'heavy_armor','titan_plate','archmage_robe','void_robe','shadow_cloak','windwalker',
+    'titan_boots','arcane_boots','wind_boots',
+    'ring_power','ring_arcane','ring_critmaster','ring_fortress',
+    'dragon_gauntlets','void_gloves','shadow_gloves',
+    'titan_greaves','arcane_pants','shadow_pants',
+    'aegis','void_tome','elven_quiver',
+    'amulet_titan','soul_pendant','assassin_mark','berserker_heart',
+  ],
+});
+
+// ─────────────────────────────────────────────────────────
+//  OVERRIDE: renderShopGrid — new tab filter + slot labels
+// ─────────────────────────────────────────────────────────
+function renderShopGrid(filterType) {
+  const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
+  const items = SHOP_CATALOG.filter(entry => {
+    const db = ITEM_DB[entry.id]; if (!db) return false;
+    if (filterType === 'all')         return true;
+    if (filterType === 'consumable')  return db.type === 'consumable';
+    if (filterType === 'weapon')      return db.type === 'weapon' || (db.type==='armor' && db.slot==='offhand');
+    if (filterType === 'upper')       return db.type === 'armor' && ['head','chest','gloves'].includes(db.slot);
+    if (filterType === 'lower')       return db.type === 'armor' && ['legs','boots'].includes(db.slot);
+    if (filterType === 'accessories') return db.type === 'armor' && ['ring','amulet'].includes(db.slot);
+    if (filterType === 'pet')         return db.type === 'pet';
+    if (filterType === 'artifact')    return db.type === 'artifact';
+    return db.type === filterType;
+  });
+  for (const entry of items) {
+    const db = ITEM_DB[entry.id];
+    const price = getShopBuyPrice(entry.id);
+    const canAfford = player.gold >= price;
+    const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity];
+    const classLabel = db.forClass ? db.forClass.join('/') : 'Todos';
+    const slotLabel = db.slot ? (SLOT_LABEL?.[db.slot] || db.slot) : '';
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (canAfford ? '' : ' cant-afford');
+    let extraTag = '';
+    if (db.type==='pet')      extraTag = `<div class="shop-pet-tag">${{healer:'💚 Cura',attack:'⚔ Ataque',tank:'🛡 Tank'}[db.petType]||'Pet'}</div>`;
+    else if (db.type==='artifact') extraTag = `<div class="shop-pet-tag" style="border-color:#8040d0;color:#d090ff;">💎 Artefato</div>`;
+    else if (slotLabel) extraTag = `<div class="shop-pet-tag" style="border-color:#3a5070;color:#7ab0e0;">${slotLabel}</div>`;
+    div.innerHTML =
+      `<span class="shop-item-icon">${db.icon}</span>`+
+      `<div class="shop-item-rarity" style="color:${rarityColor}">${db.rarity.toUpperCase()}</div>`+
+      `<div class="shop-item-name">${db.name}</div>`+
+      `<div class="shop-item-desc">${db.desc}</div>`+
+      extraTag+
+      `<div class="shop-item-class">${classLabel}</div>`+
+      `<div class="shop-item-price">🪙 ${price}</div>`;
+    div.addEventListener('click',()=>selectShopItem(entry.id,price,db));
+    div.addEventListener('dblclick',()=>{selectShopItem(entry.id,price,db);confirmBuy();});
+    grid.appendChild(div);
+  }
+  if (!items.length) grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);font-style:italic;padding:20px;">Sem itens.</div>';
+  document.getElementById('shop-gold-val').textContent = player.gold;
+}
+
+// ─────────────────────────────────────────────────────────
+//  PATCH SHOP TABS — inject new tabs into DOM
+// ─────────────────────────────────────────────────────────
+function _patchShopTabs() {
+  const shopTabs = document.querySelector('.shop-tabs');
+  if (!shopTabs) return;
+  shopTabs.innerHTML = `
+    <button class="shop-tab active" onclick="switchShopTab('consumable',this)">🧪 Poções</button>
+    <button class="shop-tab" onclick="switchShopTab('weapon',this)">⚔ Armas</button>
+    <button class="shop-tab" onclick="switchShopTab('upper',this)">🧥 Cabeça/Peito</button>
+    <button class="shop-tab" onclick="switchShopTab('lower',this)">👖 Pernas/Botas</button>
+    <button class="shop-tab" onclick="switchShopTab('accessories',this)">💍 Anéis/Amuletos</button>
+    <button class="shop-tab" onclick="switchShopTab('pet',this)">🐾 Pets</button>
+    <button class="shop-tab" onclick="switchShopTab('artifact',this)">💎 Artefatos</button>
+    <button class="shop-tab" onclick="switchShopTab('all',this)">📦 Tudo</button>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────
+//  PATCH ENEMY DROPS — use expanded drop pools
+// ─────────────────────────────────────────────────────────
+const ENEMY_DROP_POOLS = {
+  slime:    [{id:'potion',chance:.35},{id:'copper_ring',chance:.08},{id:'herb_charm',chance:.06}],
+  goblin:   [{id:'potion',chance:.25},{id:'old_sword',chance:.12},{id:'iron_axe',chance:.10},{id:'leather_gloves',chance:.08},{id:'copper_ring',chance:.07}],
+  skeleton: [{id:'potion',chance:.20},{id:'wooden_shield',chance:.12},{id:'bone_amulet',chance:.10},{id:'iron_helm',chance:.08},{id:'iron_ring',chance:.07}],
+  orc:      [{id:'big_potion',chance:.30},{id:'steel_sword',chance:.18},{id:'chainmail',chance:.12},{id:'iron_greaves',chance:.10},{id:'vitality_ring',chance:.08}],
+  troll:    [{id:'big_potion',chance:.40},{id:'troll_club',chance:.22},{id:'plate_armor',chance:.15},{id:'kite_shield',chance:.12},{id:'warrior_ring',chance:.10}],
+  boss:     [{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1},{id:'dragon_helm',chance:.5},{id:'heavy_armor',chance:.4},{id:'ring_fortress',chance:.3}],
+  lich:     [{id:'mage_staff',chance:.8},{id:'big_potion',chance:1},{id:'archmage_crown',chance:.5},{id:'archmage_robe',chance:.4},{id:'ring_arcane',chance:.3}],
+  ogre_boss:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1},{id:'dragon_gauntlets',chance:.5},{id:'titan_maul',chance:.4},{id:'berserker_heart',chance:.3}],
+  guardian: [{id:'elixir',chance:1},{id:'full_elixir',chance:.7},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'amulet_titan',chance:.7},{id:'ring_power',chance:.7},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],
+};
+
+function spawnEnemy(forceBossId=null) {
+  const available = forceBossId
+    ? [ENEMY_DEF.find(e=>e.id===forceBossId)]
+    : ENEMY_DEF.filter(e=>!e.isBoss&&!e.isCentralBoss&&e.minLevel<=player.level+1);
+  const def = available[Math.floor(Math.random()*available.length)];
+  const scale = 1+(player.level-1)*0.08;
+  const pos = findFreePos(T*8,player.x,player.y);
+  const drops = ENEMY_DROP_POOLS[def.id] || def.drops || [];
+  const enemy = {
+    ...def, uid:def.id+'_'+Date.now()+Math.random(), defId:def.id,
+    x:pos.x, y:pos.y,
+    maxHp:Math.floor(def.hp*scale), hp:Math.floor(def.hp*scale),
+    atk:Math.floor(def.atk*scale),
+    vx:0, vy:0, atkTimer:0, aggroRange:180, isAlive:true,
+    hitFlash:0, deathTimer:0, roamTimer:0, roamDX:0, roamDY:0,
+    spawnX:pos.x, spawnY:pos.y, guardingChest:null,
+    poisonTimer:0, poisonStacks:0, frozenTimer:0,
+    drops
+  };
+  if (def.isBoss) onBossSpawned();
+  return enemy;
+}
+
+// ─────────────────────────────────────────────────────────
+//  INIT: run patches after DOMContentLoaded
+// ─────────────────────────────────────────────────────────
+(function applyPatches() {
+  const origDCL = window.onload;
+  const patchFn = () => {
+    _patchShopTabs();
+    currentShopTab = 'consumable';
+    // Ensure equippedSlots exists on player if game already started
+    if (typeof player !== 'undefined' && player && !player.equippedSlots) {
+      player.equippedSlots = {};
+      if (player.equippedWeapon) player.equippedSlots.weapon = player.equippedWeapon;
+      if (player.equippedArmor)  player.equippedSlots.chest  = player.equippedArmor;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(patchFn, 100));
+  } else {
+    setTimeout(patchFn, 100);
+  }
+})();
+
 // INIT
+
 window.addEventListener('DOMContentLoaded',()=>{
   drawClassPreviews();
   const popup = document.getElementById('item-popup');
