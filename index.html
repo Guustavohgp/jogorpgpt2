@@ -894,31 +894,37 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 <!-- ═══ MUSIC PANEL ═══ -->
 <div id="music-panel">
   <div class="mp-title">
-    🎵 Sistema de Música
+    🎵 Música do Jogo
     <span class="mp-close" onclick="closeMusicPanel()">✕</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+    <button id="mp-toggle-btn" onclick="toggleMusic()" style="
+      font-family:'Cinzel',serif;font-size:12px;padding:6px 16px;cursor:pointer;
+      background:#1a0a08;border:1px solid var(--amber);border-radius:6px;color:var(--amber);
+      letter-spacing:.06em;transition:background .2s;min-width:110px;">
+      ⏸ Pausar
+    </button>
+    <div style="font-size:11px;color:var(--text-dim);line-height:1.5;">
+      Exploração toca em loop automático.<br>
+      Boss ativa ao encontrar o Guardião.
+    </div>
   </div>
   <div class="mp-track">
     <div class="mp-track-label">🌿 EXPLORAÇÃO 1</div>
     <div class="mp-track-row">
-      <span class="mp-status" id="mp-status-0">Nenhum arquivo</span>
-      <button class="mp-btn" onclick="document.getElementById('mp-file-0').click()">📂 Carregar</button>
-      <input type="file" id="mp-file-0" accept="audio/*" style="display:none" onchange="loadMusicTrack(0,this)">
+      <span class="mp-status" id="mp-status-0">Carregando…</span>
     </div>
   </div>
   <div class="mp-track">
     <div class="mp-track-label">🌙 EXPLORAÇÃO 2</div>
     <div class="mp-track-row">
-      <span class="mp-status" id="mp-status-1">Nenhum arquivo</span>
-      <button class="mp-btn" onclick="document.getElementById('mp-file-1').click()">📂 Carregar</button>
-      <input type="file" id="mp-file-1" accept="audio/*" style="display:none" onchange="loadMusicTrack(1,this)">
+      <span class="mp-status" id="mp-status-1">Carregando…</span>
     </div>
   </div>
   <div class="mp-track">
     <div class="mp-track-label">🔥 BOSS</div>
     <div class="mp-track-row">
-      <span class="mp-status" id="mp-status-2">Nenhum arquivo</span>
-      <button class="mp-btn" onclick="document.getElementById('mp-file-2').click()">📂 Carregar</button>
-      <input type="file" id="mp-file-2" accept="audio/*" style="display:none" onchange="loadMusicTrack(2,this)">
+      <span class="mp-status" id="mp-status-2">Carregando…</span>
     </div>
   </div>
   <div class="mp-vol-row">
@@ -926,8 +932,8 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
     <input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.5" oninput="setMusicVolume(this.value)">
     <span id="music-vol-pct" style="font-family:VT323,monospace;font-size:16px;color:var(--amber);width:36px;">50%</span>
   </div>
-  <div class="mp-now-playing" id="mp-now-playing">Nenhuma música tocando</div>
-  <div class="mp-hint">[M] abre/fecha este painel • Música toca automaticamente durante batalha contra boss</div>
+  <div class="mp-now-playing" id="mp-now-playing">Iniciando música…</div>
+  <div class="mp-hint">[M] abre/fecha este painel</div>
 </div>
 
 <!-- ═══ NPC PANEL ═══ -->
@@ -1512,44 +1518,52 @@ function checkCentralBossProximity() {
 // ═══════════════════════════════════════════════════════
 //  SISTEMA DE MÚSICA
 // ═══════════════════════════════════════════════════════
-const musicTracks = [null, null, null]; // [explore1, explore2, boss]
-const musicNames  = ['', '', ''];
-let currentTrackIdx = -1; // which track index is active
-let musicVolume = 0.5;
-let bossActive = false; // true when a boss is alive on screen
+// ═══════════════════════════════════════════════════════
+//  MUSIC SYSTEM  — auto-loads from musica/ folder
+// ═══════════════════════════════════════════════════════
+const MUSIC_FILES = [
+  'musica/exploracao1.mp3',
+  'musica/exploracao2.mp3',
+  'musica/boss.mp3',
+];
+const MUSIC_LABELS = ['Exploração 1', 'Exploração 2', 'Boss'];
 
-function loadMusicTrack(trackIdx, inputEl) {
-  const file = inputEl.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  if (musicTracks[trackIdx]) {
-    musicTracks[trackIdx].pause();
-    musicTracks[trackIdx].src = '';
-  }
-  const audio = new Audio(url);
+const musicTracks = [null, null, null]; // Audio objects
+let currentTrackIdx = -1;
+let musicVolume = 0.5;
+let bossActive = false;
+let musicEnabled = true; // player can toggle with the button
+
+/** Create an Audio element for a given path and wire it up */
+function buildTrack(idx, path) {
+  const audio = new Audio(path);
   audio.loop = true;
   audio.volume = musicVolume;
+  // Fallback: if loop doesn't fire (some browsers), manually restart
   audio.addEventListener('ended', () => {
-    if (trackIdx < 2) { // exploration tracks auto-switch
-      switchExploreTrack();
-    }
+    if (!musicEnabled) return;
+    if (idx < 2 && !bossActive) switchExploreTrack();
   });
-  musicTracks[trackIdx] = audio;
-  musicNames[trackIdx] = file.name.length > 20 ? file.name.substring(0,18)+'…' : file.name;
-  const statusEl = document.getElementById('mp-status-' + trackIdx);
-  if (statusEl) { statusEl.textContent = musicNames[trackIdx]; statusEl.className = 'mp-status loaded'; }
-  addLog('🎵 Faixa ' + (trackIdx===2?'Boss':('Exploração '+(trackIdx+1))) + ': ' + musicNames[trackIdx], '');
-  // If this track type is currently needed, start playing it
-  if (trackIdx === 2 && bossActive) {
-    playTrack(2);
-  } else if (trackIdx < 2 && !bossActive && currentTrackIdx < 0) {
-    playTrack(trackIdx);
+  return audio;
+}
+
+/** Called once on DOMContentLoaded — pre-loads all three tracks */
+function initMusic() {
+  for (let i = 0; i < 3; i++) {
+    musicTracks[i] = buildTrack(i, MUSIC_FILES[i]);
+    const statusEl = document.getElementById('mp-status-' + i);
+    if (statusEl) { statusEl.textContent = MUSIC_LABELS[i]; statusEl.className = 'mp-status loaded'; }
   }
-  updateMusicPanel();
+}
+
+/** Start the music when the game begins (called from startGame) */
+function startMusic() {
+  if (!musicEnabled) return;
+  // Pick exploration track 0 first
+  playTrack(0);
 }
 
 function playTrack(idx) {
-  // Stop current
   if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
     musicTracks[currentTrackIdx].pause();
     musicTracks[currentTrackIdx].currentTime = 0;
@@ -1557,40 +1571,63 @@ function playTrack(idx) {
   if (!musicTracks[idx]) { currentTrackIdx = -1; return; }
   currentTrackIdx = idx;
   musicTracks[idx].volume = musicVolume;
-  musicTracks[idx].play().catch(()=>{});
+  if (musicEnabled) {
+    musicTracks[idx].play().catch(() => {
+      // Autoplay blocked — will start on first user interaction
+      document.addEventListener('click', () => {
+        if (musicEnabled && currentTrackIdx === idx) musicTracks[idx].play().catch(()=>{});
+      }, { once: true });
+    });
+  }
   updateMusicStatus();
 }
 
 function switchExploreTrack() {
-  if (bossActive) return;
-  // Pick a different explore track if available
+  if (bossActive || !musicEnabled) return;
   const available = [0, 1].filter(i => musicTracks[i] && i !== currentTrackIdx);
   if (available.length > 0) {
     playTrack(available[Math.floor(Math.random() * available.length)]);
-  } else if (musicTracks[currentTrackIdx < 0 ? 0 : currentTrackIdx]) {
-    playTrack(currentTrackIdx < 0 ? 0 : currentTrackIdx);
+  } else {
+    playTrack(currentTrackIdx >= 0 ? currentTrackIdx : 0);
   }
 }
 
 function onBossSpawned() {
   if (bossActive) return;
   bossActive = true;
-  if (musicTracks[2]) playTrack(2);
+  if (musicEnabled && musicTracks[2]) playTrack(2);
   updateMusicStatus();
 }
 
 function onBossDied() {
   bossActive = false;
-  // Back to explore music
+  if (!musicEnabled) { updateMusicStatus(); return; }
   const available = [0, 1].filter(i => musicTracks[i]);
   if (available.length > 0) {
-    const pick = available[Math.floor(Math.random() * available.length)];
-    playTrack(pick);
+    playTrack(available[Math.floor(Math.random() * available.length)]);
+  }
+  updateMusicStatus();
+}
+
+/** Toggle music on/off — the ONLY way music stops */
+function toggleMusic() {
+  musicEnabled = !musicEnabled;
+  const btn = document.getElementById('mp-toggle-btn');
+  if (musicEnabled) {
+    // Resume / restart appropriate track
+    if (bossActive && musicTracks[2]) {
+      playTrack(2);
+    } else {
+      const pick = [0, 1].find(i => musicTracks[i]) ?? -1;
+      if (pick >= 0) playTrack(pick);
+    }
+    if (btn) { btn.textContent = '⏸ Pausar'; btn.style.borderColor = 'var(--amber)'; btn.style.color = 'var(--amber)'; }
   } else {
+    // Pause current track — do NOT stop or reset
     if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
       musicTracks[currentTrackIdx].pause();
     }
-    currentTrackIdx = -1;
+    if (btn) { btn.textContent = '▶ Tocar'; btn.style.borderColor = '#555'; btn.style.color = '#888'; }
   }
   updateMusicStatus();
 }
@@ -1598,53 +1635,48 @@ function onBossDied() {
 function setMusicVolume(val) {
   musicVolume = parseFloat(val);
   musicTracks.forEach(t => { if (t) t.volume = musicVolume; });
-  const pct = Math.round(musicVolume * 100);
   const el = document.getElementById('music-vol-pct');
-  if (el) el.textContent = pct + '%';
+  if (el) el.textContent = Math.round(musicVolume * 100) + '%';
 }
 
 function updateMusicStatus() {
-  const names = ['Exploração 1', 'Exploração 2', 'Boss'];
   const statusEl = document.getElementById('music-status');
+  const nowEl    = document.getElementById('mp-now-playing');
+  if (!musicEnabled) {
+    if (statusEl) statusEl.textContent = 'OFF';
+    if (nowEl)    nowEl.textContent = '⏸ Música pausada pelo jogador';
+    return;
+  }
   if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
-    if (statusEl) statusEl.textContent = '▶ ' + names[currentTrackIdx];
+    const label = MUSIC_LABELS[currentTrackIdx] || '';
+    if (statusEl) statusEl.textContent = '▶ ' + label;
+    if (nowEl)    nowEl.textContent    = '▶ Tocando: ' + label;
   } else {
     if (statusEl) statusEl.textContent = 'OFF';
+    if (nowEl)    nowEl.textContent    = 'Nenhuma música';
   }
-  updateMusicPanel();
-}
-
-function updateMusicPanel() {
-  const names = ['Exploração 1', 'Exploração 2', 'Boss'];
-  const nowEl = document.getElementById('mp-now-playing');
-  if (!nowEl) return;
-  if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
-    nowEl.textContent = '▶ Tocando: ' + names[currentTrackIdx] + ' — ' + (musicNames[currentTrackIdx] || '?');
-  } else {
-    nowEl.textContent = 'Nenhuma música tocando';
-  }
+  // Update track status badges
   for (let i = 0; i < 3; i++) {
     const s = document.getElementById('mp-status-' + i);
-    if (!s) continue;
-    if (musicTracks[i]) {
-      if (currentTrackIdx === i) { s.className = 'mp-status playing'; s.textContent = '▶ ' + musicNames[i]; }
-      else { s.className = 'mp-status loaded'; s.textContent = musicNames[i]; }
-    }
+    if (!s || !musicTracks[i]) continue;
+    if (currentTrackIdx === i && musicEnabled) { s.className = 'mp-status playing'; s.textContent = '▶ ' + MUSIC_LABELS[i]; }
+    else { s.className = 'mp-status loaded'; s.textContent = MUSIC_LABELS[i]; }
   }
 }
+
+// updateMusicPanel kept as alias so existing calls don't break
+function updateMusicPanel() { updateMusicStatus(); }
 
 function toggleMusicPanel() {
   const panel = document.getElementById('music-panel');
   if (panel.classList.contains('open')) closeMusicPanel();
   else openMusicPanel();
 }
-
 function openMusicPanel() {
   closeAllPanels();
   document.getElementById('music-panel').classList.add('open');
-  updateMusicPanel();
+  updateMusicStatus();
 }
-
 function closeMusicPanel() {
   document.getElementById('music-panel').classList.remove('open');
 }
@@ -1831,6 +1863,7 @@ function startGame(classId){
   gameState='playing';
   lastTime=performance.now();
   requestAnimationFrame(gameLoop);
+  startMusic();
   addLog(`⚔ ${CLASS_DEF[classId].name} desperta!`,'llvl');
   addLog('WASD=mover | SHIFT=dash | Q/E/R=skills | I=inv | M=música','');
   addLog('🧙 Archimedes aguarda a W/NW do centro do mapa','lchest');
@@ -3517,6 +3550,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     popup.addEventListener('mouseenter', () => clearTimeout(popupState.hideTimer));
     popup.addEventListener('mouseleave', () => hideItemPopup(false));
   }
+  initMusic();
 });
 </script>
 </body>
