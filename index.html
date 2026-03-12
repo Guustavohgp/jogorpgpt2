@@ -2256,7 +2256,7 @@ function renderEnemies(){
       ctx.beginPath();ctx.arc(e.x,e.y,e.size*3.5,0,Math.PI*2);ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle=`rgba(255,60,60,${pulse*.9})`;ctx.font='bold 13px serif';ctx.textAlign='center';
-      ctx.fillText('⚠ Nv.10',e.x,e.y+e.size*4.2);
+      ctx.fillText('⚠ Nv.8',e.x,e.y+e.size*4.2);
       ctx.restore();
     }
     if(e.frozenTimer>0){ctx.globalAlpha*=.7;ctx.shadowColor='#5dade2';ctx.shadowBlur=10;}
