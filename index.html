@@ -826,6 +826,86 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   border:1px solid #e74c3c; border-radius:4px;
   padding:0 5px; vertical-align:middle; letter-spacing:.06em;
 }
+
+/* ═══ ULTIMATE SKILL ═══ */
+#ult-slot {
+  width:56px; height:56px;
+  background:rgba(8,10,13,.95);
+  border:2px solid #3a2060;
+  border-radius:9px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  position:relative; transition:border-color .2s, box-shadow .2s;
+  cursor:default;
+}
+#ult-slot.ready {
+  border-color:#9b59b6;
+  box-shadow:0 0 10px rgba(155,89,182,.5), 0 0 22px rgba(155,89,182,.2);
+}
+#ult-slot.active {
+  border-color:#e056fd;
+  box-shadow:0 0 18px rgba(224,86,253,.8), 0 0 40px rgba(224,86,253,.3);
+  animation:ultPulse 1s ease-in-out infinite;
+}
+#ult-slot.on-cd  { border-color:#2a1a40; }
+@keyframes ultPulse {
+  0%,100% { box-shadow:0 0 14px rgba(224,86,253,.7), 0 0 30px rgba(224,86,253,.2); }
+  50%     { box-shadow:0 0 26px rgba(224,86,253,1),  0 0 55px rgba(224,86,253,.4); }
+}
+#ult-key  { font-family:'VT323',monospace; font-size:11px; color:#9b59b6; position:absolute; top:2px; right:5px; letter-spacing:.04em; }
+#ult-icon { font-size:20px; }
+#ult-label{ position:absolute; bottom:-20px; left:50%; transform:translateX(-50%);
+  font-family:'VT323',monospace; font-size:12px; color:#9b59b6; white-space:nowrap; }
+#ult-cd-overlay {
+  position:absolute; inset:0; border-radius:7px;
+  background:rgba(0,0,0,.70);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'VT323',monospace; font-size:16px; color:#bb88ee;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#ult-slot.on-cd #ult-cd-overlay { opacity:1; }
+
+/* charge bar below ult slot */
+#ult-charge-bar {
+  position:absolute; bottom:-6px; left:0; right:0; height:3px;
+  background:#1a1030; border-radius:2px; overflow:hidden;
+}
+#ult-charge-fill {
+  height:100%; width:0%;
+  background:linear-gradient(90deg,#6c2fa0,#e056fd);
+  border-radius:2px; transition:width .2s linear;
+}
+
+/* Activation flash overlay */
+#ult-flash {
+  position:fixed; inset:0; z-index:180; pointer-events:none;
+  opacity:0; background:radial-gradient(ellipse at center, rgba(155,89,182,.35) 0%, transparent 70%);
+}
+#ult-flash.show { animation:ultFlash .5s ease forwards; }
+@keyframes ultFlash {
+  0%   { opacity:0; }
+  20%  { opacity:1; }
+  100% { opacity:0; }
+}
+
+/* Ultimate banner */
+#ult-banner {
+  position:fixed; top:42%; left:50%; transform:translate(-50%,-50%);
+  z-index:190; pointer-events:none; opacity:0;
+  font-family:'Cinzel',serif; text-align:center;
+}
+#ult-banner.show { animation:ultBanner 1.8s ease forwards; }
+@keyframes ultBanner {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(.6); }
+  15%  { opacity:1; transform:translate(-50%,-50%) scale(1.12); }
+  70%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-60%) scale(.9); }
+}
+#ult-banner-text {
+  font-size:clamp(20px,3.5vw,40px);
+  letter-spacing:.12em;
+  text-shadow:0 0 30px currentColor, 0 0 60px currentColor;
+}
 </style>
 </head>
 <body>
@@ -944,6 +1024,10 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
     <div id="music-btn" onclick="toggleMusicPanel()">
       🎵 Música: <span id="music-status">OFF</span>
     </div>
+    <!-- Ultimate flash overlay -->
+    <div id="ult-flash"></div>
+    <!-- Ultimate banner -->
+    <div id="ult-banner"><div id="ult-banner-text"></div></div>
     <div id="hud-skills">
       <div class="skill-slot ready" id="sk0">
         <span class="skill-key">Q</span>
@@ -962,6 +1046,14 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
         <span class="skill-icon" id="sk2-icon">⚡</span>
         <div class="skill-cd-overlay" id="sk2-cd"></div>
         <span class="skill-name-tip" id="sk2-name">Skill 3</span>
+      </div>
+      <!-- Ultimate slot -->
+      <div id="ult-slot" class="on-cd" title="Ultimate [ESPAÇO]">
+        <span id="ult-key">SPC</span>
+        <span id="ult-icon">💠</span>
+        <div id="ult-cd-overlay"></div>
+        <div id="ult-charge-bar"><div id="ult-charge-fill"></div></div>
+        <span id="ult-label">Ultimate</span>
       </div>
     </div>
     <div id="hud-info">
@@ -2114,7 +2206,7 @@ function findFreePos(minDist=0,fromX=0,fromY=0){for(let tries=0;tries<400;tries+
 // ─────────────────────────────────────────────────────────
 function createPlayer(classId){
   const def=CLASS_DEF[classId];
-  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,_subSkillLogic:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,
+  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,_subSkillLogic:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,ultShieldWall:0,ultBloodlust:0,
     activePetType:null,
     art:{xpMult:1,goldMult:1,atkMult:1,maxHpFlat:0,dmgReduce:0,poisonMult:1,fireMult:1,iceMult:1,swordMult:1,bowMult:1,autoCollect:false,hpApplied:0}};
 }
@@ -2192,6 +2284,7 @@ function recalcPlayerForClass(p, newClassId) {
 
   // Reset skill CDs
   p.skillCds = [0, 0, 0];
+  p.ultShieldWall = 0; p.ultBloodlust = 0; ultCd = 0;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2360,7 +2453,16 @@ function updateEnemies(dt){
         } else {
           dmg=Math.max(1,dmg-Math.floor(p.def*.5));
           if(p.subSkill==='defensive' || p._subSkillLogic==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
-          if(p.isAlive){p.hp-=dmg;p.hitFlash=200;playHurtSound();spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}
+          if(p.isAlive){
+            if(p.ultShieldWall>0){
+              applyDamageToEnemy(e, Math.floor(dmg*.5), false);
+              spawnDmgNumber(p.x,p.y-20,'REFLECT!','#3498db');
+            } else {
+              p.hp-=dmg; p.hitFlash=200; playHurtSound();
+              spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');
+              if(p.hp<=0){p.hp=0;triggerGameOver();}
+            }
+          }
         }
       }
     }else{e.roamTimer-=dt;if(e.roamTimer<=0){e.roamTimer=1200+Math.random()*2000;const ang=Math.random()*Math.PI*2;e.roamDX=Math.cos(ang);e.roamDY=Math.sin(ang);}if(Math.random()<.5)moveEntity(e,e.roamDX*e.spd*.4*dt/1000,e.roamDY*e.spd*.4*dt/1000);}
@@ -2389,7 +2491,7 @@ function fireProjectile(ox,oy,tx,ty,dmg,color,type,target=null,isCrit=false,targ
 
 function explodeProjectile(pr){spawnHitParticles(pr.x,pr.y,pr.color,8);}
 function aoeExplosion(x,y,radius,dmg,color){for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-x,e.y-y)<radius)applyDamageToEnemy(e,Math.floor(dmg),false);}particles.push({type:'explosion',x,y,r:radius,life:400,maxLife:400,color});}
-function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;if(e.isCentralBoss&&player&&player.level<getBossMinLevel(worldLevel)){spawnDmgNumber(e.x,e.y-e.size-4,`⚠ Nv.${getBossMinLevel(worldLevel)}!`,'#e74c3c');return;}e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(e.hp<=0){e.hp=0;killEnemy(e);}}
+function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;if(e.isCentralBoss&&player&&player.level<getBossMinLevel(worldLevel)){spawnDmgNumber(e.x,e.y-e.size-4,`⚠ Nv.${getBossMinLevel(worldLevel)}!`,'#e74c3c');return;}e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(player.ultBloodlust>0){const heal=Math.floor(dmg*.4);player.hp=Math.min(player.maxHp,player.hp+heal);spawnDmgNumber(player.x,player.y-24,'+'+heal,'#2ecc71');}if(e.hp<=0){e.hp=0;killEnemy(e);}}
 
 function killEnemy(e){
   e.isAlive=false;e.deathTimer=600;kills++;player.kills++;
@@ -2545,6 +2647,8 @@ function checkLevelUp(){
 function showLevelUpBanner(lv){const el=document.getElementById('lvl-banner');el.textContent=`⬆ NÍVEL ${lv}!`;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
 function updateSkillCDs(dt){
+  updateUltimateHUD(dt);
+  updateUltPassives(dt);
   for(let i=0;i<3;i++){
     player.skillCds[i]=Math.max(0,player.skillCds[i]-dt);
     const slot=document.getElementById('sk'+i);const cdEl=document.getElementById(`sk${i}-cd`);
@@ -3568,6 +3672,11 @@ function updateHUD(){
 
 function renderSkillsHUD(){
   player.skills.forEach((sk,i)=>{document.getElementById(`sk${i}-icon`).textContent=sk.icon;document.getElementById(`sk${i}-name`).textContent=sk.name;});
+  // Reset ult cd when subclass changes so icon refreshes
+  const ult = getPlayerUltimate();
+  const icon = document.getElementById('ult-icon');
+  const label = document.getElementById('ult-label');
+  if(ult){ icon.textContent=ult.icon; label.textContent=ult.name; }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -4330,7 +4439,38 @@ const SFX = (() => {
            vol:0.03, attack:0.005, decay:0.025, release:0.040, start:0.015 });
   }
 
-  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin };
+  // ── 9. DASH ─────────────────────────────────────────────
+  // Whoosh veloz + impacto de ar — sensação de velocidade explosiva
+  function playDash() {
+    tone({ type:'sawtooth', freq:600, freqEnd:120,
+           vol:0.10, attack:0.004, decay:0.06, release:0.05 });
+    noise({ vol:0.09, freq:900, q:0.6, duration:0.08 });
+    tone({ type:'square', freq:440, freqEnd:220,
+           vol:0.05, attack:0.002, decay:0.03, release:0.02 });
+  }
+
+  // ── 10. ULTIMATE ────────────────────────────────────────
+  // Explosão épica em 3 camadas: impacto grave + surge arcano + shimmer final
+  function playUltimate() {
+    // Boom grave profundo — peso do poder
+    tone({ type:'sine', freq:80, freqEnd:40,
+           vol:0.22, attack:0.005, decay:0.18, release:0.25 });
+    // Ruído de explosão denso
+    noise({ vol:0.18, freq:300, q:0.4, duration:0.20 });
+    // Surge ascendente dramático
+    tone({ type:'sawtooth', freq:120, freqEnd:800,
+           vol:0.14, attack:0.010, decay:0.12, release:0.18, start:0.03 });
+    // Camada de harmônico agudo — brilho mágico
+    tone({ type:'sine', freq:880, freqEnd:1760,
+           vol:0.10, attack:0.020, decay:0.10, release:0.20, start:0.08 });
+    // Shimmer final de poder (nota dourada)
+    tone({ type:'sine', freq:1320, freqEnd:1760,
+           vol:0.07, attack:0.015, decay:0.08, release:0.22, start:0.18 });
+    tone({ type:'sine', freq:2640,
+           vol:0.04, attack:0.020, decay:0.06, release:0.18, start:0.22 });
+  }
+
+  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin, playDash, playUltimate };
 })();
 
 function playAttackSound()        { try { SFX.playAttack();              } catch(e){} }
@@ -4341,8 +4481,307 @@ function playPickupSound()        { try { SFX.playPickup();              } catch
 function playHurtSound()          { try { SFX.playHurt();                } catch(e){} }
 function playSkillSound()         { try { SFX.playSkill();               } catch(e){} }
 function playCoinSound()          { try { SFX.playCoin();                } catch(e){} }
+function playDashSound()          { try { SFX.playDash();                } catch(e){} }
+function playUltimateSound()      { try { SFX.playUltimate();            } catch(e){} }
 
 
+
+
+// ═══════════════════════════════════════════════════════════
+// ULTIMATE SKILL SYSTEM
+// ═══════════════════════════════════════════════════════════
+const ULTIMATE_DEF = {
+  // ── CAVALEIRO ─────────────────────────────────────────────
+  defensive: {
+    id:'ult_shield_wall', name:'Muralha Divina', icon:'🛡',
+    cd:30000, mpCost:60,
+    desc:'Invulnerabilidade total por 4s + reflete todo dano recebido | Custo: 60 MP',
+    color:'#3498db',
+    use(p) {
+      p.ultShieldWall = 4000;
+      addLog('🛡 MURALHA DIVINA! Invulnerável por 4s!', 'lskill');
+      spawnUltParticles(p.x, p.y, '#3498db', 60);
+      showUltBanner('🛡 MURALHA DIVINA!', '#3498db');
+    }
+  },
+  berserker: {
+    id:'ult_bloodlust', name:'Sede de Sangue', icon:'🩸',
+    cd:30000, mpCost:50,
+    desc:'Cura 40% do dano causado e +50% ATK por 5s | Custo: 50 MP',
+    color:'#e74c3c',
+    use(p) {
+      p.ultBloodlust = 5000;
+      addLog('🩸 SEDE DE SANGUE! Vampirismo total por 5s!', 'lskill');
+      spawnUltParticles(p.x, p.y, '#e74c3c', 60);
+      showUltBanner('🩸 SEDE DE SANGUE!', '#e74c3c');
+    }
+  },
+  holy: {
+    id:'ult_divine_wrath', name:'Ira Divina', icon:'✨',
+    cd:30000, mpCost:70,
+    desc:'Onda sagrada que cura o jogador e destrói inimigos próximos | Custo: 70 MP',
+    color:'#f0c060',
+    use(p) {
+      const dmg = p.atk * 8;
+      let healed = 0;
+      for (const e of enemies) {
+        if (!e.isAlive) continue;
+        const d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d < 200) {
+          applyDamageToEnemy(e, Math.floor(dmg * (1 - d/200)), true);
+          healed += 30;
+        }
+      }
+      p.hp = Math.min(p.maxHp, p.hp + Math.min(healed, 120));
+      addLog(`✨ IRA DIVINA! +${Math.min(healed,120)} HP curado!`, 'lskill');
+      spawnUltParticles(p.x, p.y, '#f0c060', 80);
+      showUltBanner('✨ IRA DIVINA!', '#f0c060');
+    }
+  },
+  // ── MAGO ──────────────────────────────────────────────────
+  ice: {
+    id:'ult_blizzard', name:'Blizzard', icon:'🌨',
+    cd:30000, mpCost:80,
+    desc:'Congela TODOS os inimigos na tela por 3s e causa dano massivo | Custo: 80 MP',
+    color:'#a8d8f0',
+    use(p) {
+      const dmg = p.atk * 6;
+      for (const e of enemies) {
+        if (!e.isAlive) continue;
+        applyDamageToEnemy(e, Math.floor(dmg * (0.5 + Math.random())), true);
+        e.frozenTimer = 3000;
+      }
+      addLog('🌨 BLIZZARD! Todos congelados!', 'lskill');
+      spawnUltParticles(p.x, p.y, '#a8d8f0', 100);
+      showUltBanner('🌨 BLIZZARD!', '#a8d8f0');
+    }
+  },
+  arcane: {
+    id:'ult_arcane_surge', name:'Surto Arcano', icon:'🌀',
+    cd:30000, mpCost:90,
+    desc:'12 projéteis em espiral com dano arcano devastador | Custo: 90 MP',
+    color:'#c070ff',
+    use(p) {
+      const dmg = Math.floor(p.atk * 4 * p.skillDmgMult);
+      for (let i = 0; i < 12; i++) {
+        const ang = (i / 12) * Math.PI * 2;
+        projectiles.push({
+          x:p.x, y:p.y,
+          vx:Math.cos(ang)*380, vy:Math.sin(ang)*380,
+          dmg, color:'#c070ff', isCrit:true,
+          radius:10, life:1400, aoeRadius:30,
+          piercing:true, targetEnemy:null, poisonProc:0, freezeProc:0
+        });
+      }
+      addLog('🌀 SURTO ARCANO! 12 projéteis!', 'lskill');
+      spawnUltParticles(p.x, p.y, '#c070ff', 80);
+      showUltBanner('🌀 SURTO ARCANO!', '#c070ff');
+    }
+  },
+  fire_mage: {
+    id:'ult_meteor', name:'Meteorito', icon:'☄️',
+    cd:30000, mpCost:85,
+    desc:'Meteorito gigante causa dano enorme em área central | Custo: 85 MP',
+    color:'#ff8040',
+    use(p) {
+      const target = getNearestEnemy(p, 9999) || { x: p.x + p.facing.x*150, y: p.y + p.facing.y*150 };
+      const dmg = p.atk * 12;
+      // Impacto imediato na área
+      for (const e of enemies) {
+        if (!e.isAlive) continue;
+        const d = Math.hypot(e.x - target.x, e.y - target.y);
+        if (d < 120) applyDamageToEnemy(e, Math.floor(dmg * (1 - d/120)), true);
+      }
+      // Partículas de explosão
+      for (let i = 0; i < 80; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 80 + Math.random() * 200;
+        particles.push({ type:'hit', x:target.x, y:target.y,
+          vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd-60,
+          life:800, maxLife:800, r:4+Math.random()*6,
+          color:['#ff8040','#e67e22','#f0c060','#e74c3c'][Math.floor(Math.random()*4)],
+          gravity:120 });
+      }
+      addLog('☄️ METEORITO! Dano em área!', 'lskill');
+      showUltBanner('☄️ METEORITO!', '#ff8040');
+    }
+  },
+  // ── ARQUEIRO ──────────────────────────────────────────────
+  poison: {
+    id:'ult_toxic_cloud', name:'Nuvem Tóxica', icon:'☠',
+    cd:30000, mpCost:65,
+    desc:'Nuvem de veneno que cobre área enorme, envenenando todos | Custo: 65 MP',
+    color:'#6dde60',
+    use(p) {
+      let hit = 0;
+      for (const e of enemies) {
+        if (!e.isAlive) continue;
+        const d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d < 280) {
+          e.poisonStacks = Math.min((e.poisonStacks||0) + 8, 15);
+          e.poisonTimer = 0;
+          const dmg = Math.floor(p.atk * 2);
+          applyDamageToEnemy(e, dmg, false);
+          hit++;
+        }
+      }
+      addLog(`☠ NUVEM TÓXICA! ${hit} inimigos envenenados!`, 'lskill');
+      spawnUltParticles(p.x, p.y, '#6dde60', 90);
+      showUltBanner('☠ NUVEM TÓXICA!', '#6dde60');
+    }
+  },
+  wind: {
+    id:'ult_storm', name:'Tempestade de Flechas', icon:'🌪',
+    cd:30000, mpCost:75,
+    desc:'30 flechas em todas as direções, dano de área total | Custo: 75 MP',
+    color:'#7ae8e8',
+    use(p) {
+      const dmg = Math.floor(p.atk * 2.5);
+      for (let i = 0; i < 30; i++) {
+        const ang = (i / 30) * Math.PI * 2;
+        projectiles.push({
+          x:p.x, y:p.y,
+          vx:Math.cos(ang)*600, vy:Math.sin(ang)*600,
+          dmg, color:'#7ae8e8', isCrit:i%3===0,
+          radius:5, life:1000, aoeRadius:0,
+          piercing:true, targetEnemy:null, poisonProc:0, freezeProc:0
+        });
+      }
+      addLog('🌪 TEMPESTADE! 30 flechas!', 'lskill');
+      spawnUltParticles(p.x, p.y, '#7ae8e8', 70);
+      showUltBanner('🌪 TEMPESTADE DE FLECHAS!', '#7ae8e8');
+    }
+  },
+  fire_archer: {
+    id:'ult_fire_rain', name:'Chuva de Fogo', icon:'🔥',
+    cd:30000, mpCost:80,
+    desc:'20 flechas flamejantes com explosão em área cada uma | Custo: 80 MP',
+    color:'#ffb040',
+    use(p) {
+      const dmg = Math.floor(p.atk * 3);
+      for (let i = 0; i < 20; i++) {
+        const ang = (i / 20) * Math.PI * 2;
+        const spd = 300 + Math.random() * 150;
+        projectiles.push({
+          x:p.x, y:p.y,
+          vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
+          dmg, color:'#ffb040', isCrit:false,
+          radius:9, life:1200, aoeRadius:55,
+          piercing:false, targetEnemy:null, poisonProc:0, freezeProc:0
+        });
+      }
+      addLog('🔥 CHUVA DE FOGO! 20 flechas explosivas!', 'lskill');
+      spawnUltParticles(p.x, p.y, '#ffb040', 80);
+      showUltBanner('🔥 CHUVA DE FOGO!', '#ffb040');
+    }
+  },
+};
+
+// ── Estado da Ultimate ─────────────────────────────────────
+let ultCd = 0;          // ms restantes de cooldown
+const ULT_CD = 30000;   // 30 segundos
+
+// ── Helpers visuais ────────────────────────────────────────
+function spawnUltParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = 60 + Math.random() * 220;
+    particles.push({
+      type:'hit', x, y,
+      vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd - 40,
+      life: 700 + Math.random()*400, maxLife:1100,
+      r: 2 + Math.random()*5, color, gravity:60
+    });
+  }
+  // Flash overlay
+  const flash = document.getElementById('ult-flash');
+  flash.classList.remove('show'); void flash.offsetWidth; flash.classList.add('show');
+}
+
+function showUltBanner(text, color) {
+  const el  = document.getElementById('ult-banner');
+  const txt = document.getElementById('ult-banner-text');
+  txt.textContent = text;
+  txt.style.color = color;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1900);
+}
+
+// ── Pegar a ultimate ativa do jogador ──────────────────────
+function getPlayerUltimate() {
+  const sub = player.subSkill;
+  return sub && ULTIMATE_DEF[sub] ? ULTIMATE_DEF[sub] : null;
+}
+
+// ── Ativar ultimate ────────────────────────────────────────
+function activateUltimate() {
+  if (gameState !== 'playing') return;
+  const ult = getPlayerUltimate();
+  if (!ult) { addLog('⚠ Escolha uma subclasse para usar a Ultimate!', 'ldmg'); return; }
+  if (ultCd > 0) { addLog(`⏳ Ultimate em recarga: ${(ultCd/1000).toFixed(1)}s`, 'ldmg'); return; }
+  const mpCost = ult.mpCost || 0;
+  if (player.mp < mpCost) { addLog(`❌ MP insuficiente! (${mpCost} MP necessário)`, 'ldmg'); return; }
+  player.mp = Math.max(0, player.mp - mpCost);
+  ultCd = ULT_CD;
+  playUltimateSound();
+  ult.use(player);
+}
+
+// ── Update loop da Ultimate (chamado em updateSkillCDs) ────
+function updateUltimateHUD(dt) {
+  ultCd = Math.max(0, ultCd - dt);
+  const ult   = getPlayerUltimate();
+  const slot  = document.getElementById('ult-slot');
+  const cdEl  = document.getElementById('ult-cd-overlay');
+  const icon  = document.getElementById('ult-icon');
+  const label = document.getElementById('ult-label');
+  const fill  = document.getElementById('ult-charge-fill');
+
+  if (ult) {
+    icon.textContent  = ult.icon;
+    label.textContent = ult.name;
+    slot.title        = ult.desc + ' [ESPAÇO]';
+  } else {
+    icon.textContent  = '💠';
+    label.textContent = 'Ultimate';
+  }
+
+  const pct = ultCd > 0 ? ((ULT_CD - ultCd) / ULT_CD * 100) : 100;
+  fill.style.width = pct + '%';
+
+  if (ultCd > 0) {
+    slot.className = 'on-cd';
+    cdEl.textContent = (ultCd / 1000).toFixed(1);
+  } else {
+    slot.className = ult ? 'ready' : 'on-cd';
+    cdEl.textContent = '';
+  }
+}
+
+// ── Efeitos passivos da ultimate (shield wall, bloodlust) ──
+function updateUltPassives(dt) {
+  const p = player;
+  // Shield Wall: invulnerabilidade + reflect
+  if (p.ultShieldWall > 0) {
+    p.ultShieldWall -= dt;
+    if (Math.random() < 0.15) {
+      particles.push({ type:'hit', x:p.x+(Math.random()-.5)*40, y:p.y+(Math.random()-.5)*40,
+        vx:(Math.random()-.5)*60, vy:-50-Math.random()*60,
+        life:400, maxLife:400, r:3, color:'#3498db', gravity:0 });
+    }
+    if (p.ultShieldWall <= 0) addLog('🛡 Muralha Divina esgotada.', 'lskill');
+  }
+  // Bloodlust: vamp + bonus ATK
+  if (p.ultBloodlust > 0) {
+    p.ultBloodlust -= dt;
+    if (Math.random() < 0.10) {
+      particles.push({ type:'hit', x:p.x+(Math.random()-.5)*30, y:p.y+(Math.random()-.5)*30,
+        vx:(Math.random()-.5)*40, vy:-30-Math.random()*50,
+        life:350, maxLife:350, r:3, color:'#e74c3c', gravity:0 });
+    }
+    if (p.ultBloodlust <= 0) addLog('🩸 Sede de Sangue esgotada.', 'lskill');
+  }
+}
 
 document.addEventListener('keydown', ev => {
   keys[ev.key]=true;
@@ -4365,6 +4804,10 @@ document.addEventListener('keydown', ev => {
   const p=player;
   if(ev.key==='h'||ev.key==='H'){
     if(bigMapOpen)closeBigMap();else openBigMap();
+    ev.preventDefault();return;
+  }
+  if(ev.key===' '){
+    activateUltimate();
     ev.preventDefault();return;
   }
   if(ev.key==='i'||ev.key==='I'){
@@ -4394,7 +4837,7 @@ document.addEventListener('keydown', ev => {
   if(ev.key==='Shift'&&p.dashTimer<=0){
     let dx=(keys['d']?1:0)-(keys['a']?1:0);let dy=(keys['s']?1:0)-(keys['w']?1:0);
     if(dx===0&&dy===0){dx=p.facing.x;dy=p.facing.y;}
-    const len=Math.hypot(dx,dy);if(len>0){p.isDashing=true;p.dashDuration=200;p.dashDirX=dx/len;p.dashDirY=dy/len;p.dashTimer=p.dashMaxCd;}
+    const len=Math.hypot(dx,dy);if(len>0){p.isDashing=true;p.dashDuration=200;p.dashDirX=dx/len;p.dashDirY=dy/len;p.dashTimer=p.dashMaxCd;playDashSound();}
     ev.preventDefault();return;
   }
   const inv2=document.getElementById('inv-panel');const shop2=document.getElementById('shop-panel');
