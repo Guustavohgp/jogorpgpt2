@@ -1527,20 +1527,28 @@ function checkCentralBossProximity() {
     if (dist < 200) {
       centralBoss.aggroRange = 200;
       // Tocar música do boss ao entrar no alcance
-      if (!bossActive) {
+      if (!centralBossActive) {
+        centralBossActive = true;
         bossActive = true;
         // Para música atual e toca boss.mp3
         if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
           musicTracks[currentTrackIdx].pause();
           musicTracks[currentTrackIdx].currentTime = 0;
         }
-        if (musicTracks[2]) {
+        const bt = musicTracks[2];
+        if (bt && !bt._failed) {
           currentTrackIdx = 2;
-          musicTracks[2].volume = musicVolume;
-          musicTracks[2].play().catch(() => {});
-          addLog('🎵 Música do boss tocando!', 'lboss');
-        } else {
-          addLog('⚠ boss.mp3 não carregou — verifique a pasta musica/', 'ldmg');
+          bt.volume = musicVolume;
+          bt.currentTime = 0;
+          bt.play().then(() => {
+            addLog('🎵 Música do Guardião!', 'lboss');
+          }).catch(err => {
+            addLog('⚠ Erro ao tocar boss.mp3: ' + err.message, 'ldmg');
+            console.error('[Music boss]', err);
+          });
+        } else if (bt && bt._failed) {
+          addLog('⚠ boss.mp3 não encontrado em musica/', 'ldmg');
+          console.error('[Music] boss.mp3 falhou ao carregar');
         }
         updateMusicStatus();
       }
@@ -1566,6 +1574,7 @@ const musicTracks = [null, null, null]; // Audio objects
 let currentTrackIdx = -1;
 let musicVolume = 0.5;
 let bossActive = false;
+let centralBossActive = false; // flag separada para o Guardião Eterno
 let musicEnabled = true; // player can toggle with the button
 
 /** Create an Audio element for a given path and wire it up */
@@ -1573,7 +1582,13 @@ function buildTrack(idx, path) {
   const audio = new Audio(path);
   audio.loop = true;
   audio.volume = musicVolume;
-  // Fallback: if loop doesn't fire (some browsers), manually restart
+  audio._loaded = false;
+  audio._failed = false;
+  audio.addEventListener('canplaythrough', () => { audio._loaded = true; });
+  audio.addEventListener('error', () => {
+    audio._failed = true;
+    console.warn('[Music] Falhou ao carregar: ' + path);
+  });
   audio.addEventListener('ended', () => {
     if (!musicEnabled) return;
     if (idx < 2 && !bossActive) switchExploreTrack();
@@ -1634,6 +1649,8 @@ function onBossSpawned() {
 }
 
 function onBossDied() {
+  // Se o Guardião Eterno ainda está ativo, não trocar música
+  if (centralBossActive) return;
   bossActive = false;
   if (!musicEnabled) { updateMusicStatus(); return; }
   const available = [0, 1].filter(i => musicTracks[i]);
@@ -2065,7 +2082,7 @@ function killEnemy(e){
   spawnDeathParticles(e.x,e.y,e.color);
   addLog(`${e.isBoss?'💀 BOSS':'💀'} ${e.name}! +${xpGain}xp`,e.isBoss?'lboss':'ldmg');
   if(e.guardingChest){e.guardingChest.bossKilled=true;addLog('🎁 Baú liberado! Pressione F para abrir.','lchest');}
-  if(e.isCentralBoss){ centralBoss = null; document.getElementById('central-boss-bar').classList.remove('visible'); addLog('🏆 O GUARDIÃO ETERNO foi derrotado! Lenda!','lboss'); }
+  if(e.isCentralBoss){ centralBoss = null; centralBossActive = false; document.getElementById('central-boss-bar').classList.remove('visible'); addLog('🏆 O GUARDIÃO ETERNO foi derrotado! Lenda!','lboss'); onBossDied(); }
   checkLevelUp();
 }
 
