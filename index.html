@@ -644,11 +644,22 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .rarity-common  { color:#aaa; }
 .rarity-rare    { color:#5dade2; }
 .rarity-epic    { color:#bb8fce; }
+.rarity-mythic  { color:#ffe066; text-shadow:0 0 8px rgba(255,200,40,.7); animation:mythicGlow 1.6s ease-in-out infinite alternate; }
+@keyframes mythicGlow {
+  from { text-shadow:0 0 6px rgba(255,200,40,.6), 0 0 14px rgba(255,160,0,.3); }
+  to   { text-shadow:0 0 14px rgba(255,220,60,1), 0 0 30px rgba(255,180,20,.6); }
+}
 .inv-cell.rarity-common { border-color:#3a3a3a; }
 .inv-cell.rarity-rare   { border-color:#2a4a7a; box-shadow:inset 0 0 6px rgba(93,173,226,.15); }
 .inv-cell.rarity-epic   { border-color:#5a2a7a; box-shadow:inset 0 0 6px rgba(187,143,206,.2); }
-.inv-cell.is-equipped.rarity-rare { border-color:#5dade2; }
-.inv-cell.is-equipped.rarity-epic { border-color:#bb8fce; }
+.inv-cell.rarity-mythic { border-color:#b08800; box-shadow:inset 0 0 10px rgba(255,200,40,.25), 0 0 8px rgba(255,200,40,.2); animation:mythicCellGlow 1.6s ease-in-out infinite alternate; }
+@keyframes mythicCellGlow {
+  from { box-shadow:inset 0 0 8px rgba(255,200,40,.2), 0 0 6px rgba(255,180,0,.15); }
+  to   { box-shadow:inset 0 0 16px rgba(255,220,60,.4), 0 0 14px rgba(255,200,40,.3); }
+}
+.inv-cell.is-equipped.rarity-rare   { border-color:#5dade2; }
+.inv-cell.is-equipped.rarity-epic   { border-color:#bb8fce; }
+.inv-cell.is-equipped.rarity-mythic { border-color:#ffe066; box-shadow:inset 0 0 14px rgba(255,220,60,.5); }
 
 /* ITEM POPUP */
 #item-popup {
@@ -9949,6 +9960,833 @@ window._getPlayerDmgReduce = function() {
 };
 
 console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ENDGAME SYSTEM — Dragon Shards · Mythic Items · Final Boss · Victory
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- Victory Screen -->
+<div id="screen-victory" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:radial-gradient(ellipse at center, #1a1000 0%, #080600 60%, #000 100%);
+  flex-direction:column; align-items:center; justify-content:center; gap:20px;
+  font-family:'Cinzel',serif; text-align:center;
+">
+  <div id="victory-stars" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"></div>
+  <div style="font-size:clamp(36px,8vw,72px);animation:victoryPulse 1.4s ease-in-out infinite alternate;">⚔️👑⚔️</div>
+  <div style="font-size:clamp(22px,5vw,44px);color:#ffe066;text-shadow:0 0 30px rgba(255,200,40,.8),0 0 60px rgba(255,160,0,.4);font-weight:700;letter-spacing:.15em;">O ABISMO FOI SELADO</div>
+  <div style="font-size:clamp(13px,2.5vw,18px);color:#c8a040;letter-spacing:.08em;font-family:'Crimson Text',serif;font-style:italic;">O Abismo Eterno foi derrotado. A luz retorna ao mundo.</div>
+  <div id="victory-stats" style="font-size:14px;color:#a08030;line-height:2.2;font-family:'Crimson Text',serif;margin-top:8px;"></div>
+  <button onclick="location.reload()" style="font-family:'Cinzel',serif;font-size:16px;background:linear-gradient(160deg,#2a1e04,#1a1204);border:2px solid #ffe066;color:#ffe066;padding:12px 36px;cursor:pointer;border-radius:6px;letter-spacing:.1em;margin-top:10px;transition:all .2s;" onmouseover="this.style.boxShadow='0 0 24px rgba(255,200,40,.5)'" onmouseout="this.style.boxShadow=''">↩ Jogar Novamente</button>
+</div>
+@keyframes victoryPulse {
+  from { filter:drop-shadow(0 0 20px rgba(255,200,40,.6)); transform:scale(.96); }
+  to   { filter:drop-shadow(0 0 40px rgba(255,220,60,1)); transform:scale(1.04); }
+}
+
+<style>
+/* Dragon Shard HUD badge */
+#shard-hud {
+  position:absolute; top:10px; right:210px;
+  background:rgba(8,10,13,.88); border:1px solid #b08800;
+  border-radius:6px; padding:4px 10px;
+  font-family:'VT323',monospace; font-size:16px; color:#ffe066;
+  display:none; align-items:center; gap:5px;
+  box-shadow:0 0 10px rgba(255,200,40,.2);
+}
+#shard-hud.visible { display:flex; }
+
+/* Void Merchant panel */
+#void-merchant-panel {
+  display:none; position:fixed; inset:0; z-index:320;
+  align-items:center; justify-content:center;
+  background:rgba(2,2,6,.88); backdrop-filter:blur(4px);
+}
+#void-merchant-panel.open { display:flex; }
+.vm-win {
+  width:500px; max-width:96vw;
+  background:linear-gradient(160deg,#0a0808,#060406);
+  border:1px solid #b08800;
+  border-radius:14px; overflow:hidden;
+  font-family:'Cinzel',serif;
+  box-shadow:0 0 60px rgba(255,200,40,.25), 0 0 0 1px #3a2800;
+}
+.vm-header {
+  background:linear-gradient(90deg,#1c1404,#100c02,#1c1404);
+  border-bottom:1px solid #3a2800;
+  padding:13px 18px 11px; display:flex; align-items:center; gap:12px;
+}
+.vm-portrait {
+  width:52px; height:52px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#1e1604,#0a0802);
+  border:2px solid #b08800; box-shadow:0 0 16px rgba(255,200,40,.4);
+  display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;
+}
+.vm-name { font-size:15px; font-weight:700; color:#ffe066; text-shadow:0 0 12px rgba(255,200,40,.5); letter-spacing:.08em; }
+.vm-title { font-size:10px; color:#7a6020; font-family:'Crimson Text',serif; margin-top:2px; }
+.vm-quote { font-size:11px; color:#9a8030; font-family:'Crimson Text',serif; font-style:italic; margin-top:4px; }
+.vm-close { cursor:pointer; color:#5a4010; font-size:18px; padding:4px 6px; border-radius:4px; transition:color .15s; }
+.vm-close:hover { color:#ffe066; }
+.vm-body { padding:16px 18px 18px; }
+.vm-currency-row {
+  display:flex; align-items:center; gap:8px; margin-bottom:14px;
+  background:#0e0c04; border:1px solid #3a2800; border-radius:7px; padding:7px 12px;
+  font-family:'VT323',monospace; font-size:17px; color:#ffe066;
+}
+.vm-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.vm-item {
+  background:#0a0804; border:1px solid #3a2800; border-radius:8px;
+  padding:11px 12px; cursor:pointer; transition:all .15s;
+  position:relative;
+}
+.vm-item:hover { border-color:#b08800; background:#100e04; box-shadow:0 0 10px rgba(255,200,40,.15); }
+.vm-item.cant-afford { opacity:.45; cursor:not-allowed; }
+.vm-item-icon { font-size:26px; margin-bottom:5px; }
+.vm-item-name { font-size:12px; font-weight:700; color:#ffe066; letter-spacing:.05em; margin-bottom:2px; }
+.vm-item-desc { font-size:10px; color:#9a8030; font-family:'Crimson Text',serif; line-height:1.5; }
+.vm-item-cost { font-size:13px; font-family:'VT323',monospace; color:#c09028; margin-top:5px; }
+.vm-item-rarity { font-size:9px; font-family:'VT323',monospace; color:#ffe066; letter-spacing:.06em; margin-top:2px; }
+.vm-set-banner {
+  background:linear-gradient(135deg,#1a1404,#100c02); border:1px solid #b08800;
+  border-radius:8px; padding:10px 14px; margin-top:10px;
+  font-size:11px; color:#c09028; font-family:'Crimson Text',serif; text-align:center;
+}
+.vm-msg { text-align:center; padding:5px; font-size:11px; font-family:'Crimson Text',serif; border-radius:5px; margin-top:8px; display:none; }
+.vm-msg.ok  { background:rgba(255,200,40,.1); color:#ffe066; border:1px solid rgba(255,200,40,.25); }
+.vm-msg.err { background:rgba(231,76,60,.10); color:#e74c3c; border:1px solid rgba(231,76,60,.2); }
+
+/* Set bonus notification */
+#set-bonus-toast {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:linear-gradient(135deg,#1c1404,#0e0a02);
+  border:2px solid #ffe066; border-radius:12px; padding:20px 30px;
+  text-align:center; font-family:'Cinzel',serif; z-index:8000;
+  box-shadow:0 0 40px rgba(255,200,40,.5); display:none;
+  animation:setToastAnim .4s ease-out;
+}
+@keyframes setToastAnim { from{opacity:0;transform:translate(-50%,-60%) scale(.8)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+</style>
+
+<div id="shard-hud"><span>🔮</span><span id="shard-count">0</span> Fragmentos</div>
+<div id="void-merchant-panel">
+  <div class="vm-win">
+    <div class="vm-header">
+      <div class="vm-portrait">🌑</div>
+      <div style="flex:1;min-width:0;">
+        <div class="vm-name">⚜️ Valdris, o Sem-Forma</div>
+        <div class="vm-title">Comerciante do Vazio · Além do Tempo</div>
+        <div class="vm-quote" id="vm-quote">"Sobreviveu ao que a maioria não ousa encarar…"</div>
+      </div>
+      <span class="vm-close" onclick="closeVoidMerchant()">✕</span>
+    </div>
+    <div class="vm-body" id="vm-body"></div>
+  </div>
+</div>
+<div id="set-bonus-toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ENDGAME SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+// ── Dragon Shard (special currency) ─────────────────────
+const SHARD_ICON = '🔮';
+const SHARD_NAME = 'Fragmento do Vazio';
+
+function addShards(amount) {
+  if (!player) return;
+  player.craftCurrency = (player.craftCurrency || 0) + amount;
+  updateShardHUD();
+  addLog(`${SHARD_ICON} +${amount} ${SHARD_NAME}!`, 'llvl');
+}
+
+function updateShardHUD() {
+  const hud = document.getElementById('shard-hud');
+  const cnt = document.getElementById('shard-count');
+  if (!hud || !cnt || !player) return;
+  const shards = player.craftCurrency || 0;
+  cnt.textContent = shards;
+  if (shards > 0 || endgameState.dragonEverSpawned) {
+    hud.classList.add('visible');
+  }
+}
+
+// ── Mythic Item Definitions ───────────────────────────────
+// The set pieces needed for the final boss unlock
+const MYTHIC_SET_IDS = ['void_blade', 'void_bow', 'void_staff', 'void_plate', 'void_mantle', 'void_amulet'];
+
+Object.assign(ITEM_DB, {
+  // ── MYTHIC WEAPONS (1 per class) ─────────────────────────
+  void_blade: {
+    name:'Lâmina do Vazio',   icon:'⚔', type:'weapon', slot:'weapon',
+    effect:{atk:50, critBonus:.12}, desc:'+50 ATK +12% CRIT',
+    rarity:'mythic', forClass:['warrior'],
+    setId:'void_set',
+  },
+  void_bow: {
+    name:'Arco do Vazio',     icon:'🌑', type:'weapon', slot:'weapon',
+    effect:{atk:44, critBonus:.18}, desc:'+44 ATK +18% CRIT',
+    rarity:'mythic', forClass:['archer'],
+    setId:'void_set',
+  },
+  void_staff: {
+    name:'Cajado do Vazio',   icon:'🔮', type:'weapon', slot:'weapon',
+    effect:{atk:42, mp:120}, desc:'+42 ATK +120 MP',
+    rarity:'mythic', forClass:['mage'],
+    setId:'void_set',
+  },
+  // ── MYTHIC ARMOR ─────────────────────────────────────────
+  void_plate: {
+    name:'Armadura do Vazio', icon:'🌑', type:'armor', slot:'chest',
+    effect:{def:30, hp:120}, desc:'+30 DEF +120 HP',
+    rarity:'mythic', forClass:['warrior'],
+    setId:'void_set',
+  },
+  void_mantle: {
+    name:'Manto do Vazio',    icon:'⭐', type:'armor', slot:'chest',
+    effect:{def:20, spd:30, mp:80}, desc:'+20 DEF +30 SPD +80 MP',
+    rarity:'mythic', forClass:['archer','mage'],
+    setId:'void_set',
+  },
+  void_amulet: {
+    name:'Colar do Vazio',    icon:'💫', type:'armor', slot:'amulet',
+    effect:{atk:18, def:12, hp:80, mp:60}, desc:'+18 ATK +12 DEF +80 HP +60 MP',
+    rarity:'mythic', forClass:null,
+    setId:'void_set',
+  },
+});
+
+// ── SET BONUS DEFINITION ──────────────────────────────────
+const VOID_SET_BONUS = {
+  name: 'Poder do Vazio',
+  // Minimum pieces for bonus
+  pieces2: { desc:'+20% ATK total',       apply: p => { p.art.atkMult = Math.max(p.art.atkMult, 1.20); } },
+  pieces3: { desc:'+40 DEF, +200 HP',     apply: p => { p.def += 40; p.maxHp += 200; p.hp = Math.min(p.hp+200, p.maxHp); } },
+  pieces4: { desc:'+30% dano de skills',  apply: p => { p.skillDmgMult = Math.max(p.skillDmgMult, 1.30); } },
+  fullSet: { desc:'👑 Poder do Vazio Completo — Desbloqueia o Abismo Eterno!', apply: p => {
+    p.art.atkMult    = Math.max(p.art.atkMult, 1.50);
+    p.skillDmgMult   = Math.max(p.skillDmgMult, 1.60);
+    p.art.dmgReduce  = Math.max(p.art.dmgReduce, 0.25);
+    p.critChance    += 0.15;
+    p._voidSetActive = true;
+  }},
+};
+
+function countEquippedSetPieces() {
+  if (!player?.equippedSlots) return 0;
+  let count = 0;
+  for (const entry of Object.values(player.equippedSlots)) {
+    if (!entry) continue;
+    const itemId = entry.itemId || entry;
+    const db = ITEM_DB[itemId];
+    if (db?.setId === 'void_set') count++;
+  }
+  return count;
+}
+
+function applySetBonuses() {
+  if (!player) return;
+  // Reset previous set bonuses
+  player._voidSetActive = false;
+  const pieces = countEquippedSetPieces();
+  if (pieces >= 2) VOID_SET_BONUS.pieces2.apply(player);
+  if (pieces >= 3) VOID_SET_BONUS.pieces3.apply(player);
+  if (pieces >= 4) VOID_SET_BONUS.pieces4.apply(player);
+  if (pieces >= MYTHIC_SET_IDS.length) {
+    VOID_SET_BONUS.fullSet.apply(player);
+    checkFinalBossUnlock();
+  }
+}
+
+// ── Void Merchant State ───────────────────────────────────
+const voidMerchantState = { open: false, x: 0, y: 0, nearPlayer: false };
+
+// ── Shop prices (in Dragon Shards) ────────────────────────
+const VOID_SHOP = [
+  { id:'void_blade',  cost:8,  preview:'+50 ATK +12% CRIT · Guerreiro' },
+  { id:'void_bow',    cost:8,  preview:'+44 ATK +18% CRIT · Arqueiro'  },
+  { id:'void_staff',  cost:8,  preview:'+42 ATK +120 MP · Mago'        },
+  { id:'void_plate',  cost:6,  preview:'+30 DEF +120 HP · Guerreiro'   },
+  { id:'void_mantle', cost:6,  preview:'+20 DEF +30 SPD +80 MP · Arq/Mago'},
+  { id:'void_amulet', cost:5,  preview:'+18 ATK +12 DEF +80 HP +60 MP · Todos'},
+];
+
+function placeVoidMerchant() {
+  voidMerchantState.x = (MAP_W / 2 + 8) * T + T / 2;
+  voidMerchantState.y = (MAP_H / 2 + 6) * T + T / 2;
+}
+
+function openVoidMerchant() {
+  if (typeof closeAllPanels === 'function') closeAllPanels();
+  voidMerchantState.open = true;
+  document.getElementById('void-merchant-panel').classList.add('open');
+  renderVoidMerchant();
+}
+function closeVoidMerchant() {
+  voidMerchantState.open = false;
+  document.getElementById('void-merchant-panel').classList.remove('open');
+}
+
+function buyVoidItem(itemId) {
+  const shop = VOID_SHOP.find(s => s.id === itemId);
+  if (!shop) return;
+  const shards = player.craftCurrency || 0;
+  if (shards < shop.cost) { showVmMsg('❌ Fragmentos insuficientes!', 'err'); return; }
+  if (player.inventory.filter(Boolean).length >= 60) { showVmMsg('❌ Inventário cheio!', 'err'); return; }
+  player.craftCurrency -= shop.cost;
+  addItemToInventory(itemId);
+  if (typeof playRareItemSound === 'function') playRareItemSound();
+  addLog(`👑 ${ITEM_DB[itemId].icon} ${ITEM_DB[itemId].name} adquirido!`, 'llvl');
+  showVmMsg(`✓ ${ITEM_DB[itemId].name} obtido!`, 'ok');
+  updateShardHUD();
+  renderVoidMerchant();
+}
+
+function renderVoidMerchant() {
+  const body = document.getElementById('vm-body');
+  if (!body || !player) return;
+  const shards = player.craftCurrency || 0;
+  const setPieces = countEquippedSetPieces();
+
+  const currencyRow = `<div class="vm-currency-row">${SHARD_ICON} <span style="font-weight:700">${shards}</span> Fragmentos do Vazio disponíveis</div>`;
+
+  const itemsHtml = VOID_SHOP.map(shop => {
+    const db = ITEM_DB[shop.id];
+    if (!db) return '';
+    const owned = player.inventory.some(it => it?.id === shop.id);
+    const equipped = (() => { for (const e of Object.values(player.equippedSlots||{})) { if ((e?.itemId||e) === shop.id) return true; } return false; })();
+    const canAfford = shards >= shop.cost && !owned && !equipped;
+    const status = equipped ? '✓ Equipado' : owned ? '📦 No inventário' : canAfford ? '' : '';
+    return `<div class="vm-item ${canAfford?'':'cant-afford'}" onclick="${canAfford?`buyVoidItem('${shop.id}')`:''}" title="${db.desc}">
+      <div class="vm-item-icon">${db.icon}</div>
+      <div class="vm-item-name">${db.name}</div>
+      <div class="vm-item-rarity">MÍTICO</div>
+      <div class="vm-item-desc">${shop.preview}</div>
+      <div class="vm-item-cost">${owned||equipped ? `<span style="color:#40c870">${status}</span>` : `${SHARD_ICON} ${shop.cost} Fragmentos`}</div>
+    </div>`;
+  }).join('');
+
+  const setStatus = setPieces > 0
+    ? `<div class="vm-set-banner">🌑 Set do Vazio: <strong style="color:#ffe066">${setPieces}/${MYTHIC_SET_IDS.length}</strong> peças equipadas
+      ${setPieces >= 2 ? '<br>✦ ' + VOID_SET_BONUS.pieces2.desc : ''}
+      ${setPieces >= 3 ? ' &nbsp; ✦ ' + VOID_SET_BONUS.pieces3.desc : ''}
+      ${setPieces >= 4 ? ' &nbsp; ✦ ' + VOID_SET_BONUS.pieces4.desc : ''}
+      ${setPieces >= MYTHIC_SET_IDS.length ? '<br><strong style="color:#ffe066">👑 ' + VOID_SET_BONUS.fullSet.desc + '</strong>' : ''}
+    </div>` : '';
+
+  body.innerHTML = currencyRow + `<div class="vm-grid">${itemsHtml}</div>` + setStatus + `<div id="vm-msg" class="vm-msg"></div>`;
+}
+
+function showVmMsg(text, type) {
+  const el = document.getElementById('vm-msg');
+  if (!el) return;
+  el.textContent = text; el.className = 'vm-msg ' + type; el.style.display = 'block';
+  clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+// ── Draw Void Merchant ────────────────────────────────────
+function drawVoidMerchant() {
+  if (!ctx || !player || !voidMerchantState.x) return;
+  const nx = voidMerchantState.x, ny = voidMerchantState.y;
+  if (nx < cam.x-100 || nx > cam.x+W+100 || ny < cam.y-100 || ny > cam.y+H+100) return;
+  const now = Date.now();
+
+  // Void rift aura
+  const pulse = Math.sin(now/800)*0.4+0.6;
+  for (let ring = 2; ring >= 0; ring--) {
+    const r = 30 + ring*18 + Math.sin(now/600+ring)*5;
+    const a = (0.08 + pulse*0.1) * (1-ring*0.2);
+    const aura = ctx.createRadialGradient(nx, ny-5, r*0.2, nx, ny-5, r);
+    aura.addColorStop(0, `rgba(180,140,20,${a*1.5})`);
+    aura.addColorStop(1, 'rgba(100,60,0,0)');
+    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(nx, ny-5, r, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,.4)';
+  ctx.beginPath(); ctx.ellipse(nx, ny+20, 20, 6, 0, 0, Math.PI*2); ctx.fill();
+
+  // Robe — shifting void dark
+  const robeShift = Math.sin(now/1200)*10;
+  const robe = ctx.createLinearGradient(nx-15, ny-10, nx+15, ny+14);
+  robe.addColorStop(0, `hsl(${260+robeShift},40%,8%)`);
+  robe.addColorStop(1, `hsl(${280+robeShift},30%,5%)`);
+  ctx.fillStyle = robe;
+  ctx.beginPath(); ctx.roundRect(nx-15, ny-10, 30, 28, [4,4,6,6]); ctx.fill();
+  ctx.strokeStyle = `rgba(180,140,20,${0.3+pulse*0.3})`; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(nx-15, ny-10, 30, 28, [4,4,6,6]); ctx.stroke();
+
+  // Rune glyphs on robe
+  ctx.fillStyle = `rgba(255,200,40,${0.2+pulse*0.3})`;
+  ctx.font = '8px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⚜', nx-6, ny+4); ctx.fillText('✦', nx+6, ny+9); ctx.fillText('◈', nx, ny-2);
+
+  // Head — featureless void face with mask
+  ctx.fillStyle = '#0a0808';
+  ctx.beginPath(); ctx.arc(nx, ny-23, 12, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = `rgba(180,140,20,${0.4+pulse*0.3})`; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(nx, ny-23, 12, 0, Math.PI*2); ctx.stroke();
+  // Golden mask markings
+  ctx.strokeStyle = `rgba(255,200,40,${0.6+pulse*0.4})`; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(nx-4, ny-25, 3, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(nx+4, ny-25, 3, 0, Math.PI*2); ctx.stroke();
+  // Eyes — glowing gold
+  ctx.fillStyle = `rgba(255,220,40,${0.7+pulse*0.3})`;
+  ctx.beginPath(); ctx.arc(nx-4, ny-25, 1.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(nx+4, ny-25, 1.5, 0, Math.PI*2); ctx.fill();
+
+  // Hood
+  ctx.fillStyle = '#0c0a14';
+  ctx.beginPath(); ctx.arc(nx, ny-28, 13, Math.PI, 0); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(nx-14, ny-28); ctx.lineTo(nx-18, ny-12); ctx.lineTo(nx-14, ny-12); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(nx+14, ny-28); ctx.lineTo(nx+18, ny-12); ctx.lineTo(nx+14, ny-12); ctx.closePath(); ctx.fill();
+
+  // Orb held aloft
+  const orbY = ny-38 + Math.sin(now/700)*4;
+  ctx.strokeStyle='#1a1208'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(nx+16, orbY+10); ctx.lineTo(nx+12, ny-8); ctx.stroke();
+  // Orb glow
+  const og = ctx.createRadialGradient(nx+16, orbY, 2, nx+16, orbY, 10);
+  og.addColorStop(0, `rgba(255,220,40,${0.7+pulse*0.3})`);
+  og.addColorStop(0.5, `rgba(200,140,20,${0.3+pulse*0.2})`);
+  og.addColorStop(1, 'rgba(100,60,0,0)');
+  ctx.fillStyle=og; ctx.beginPath(); ctx.arc(nx+16, orbY, 10, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle=`rgba(255,230,60,${0.8+pulse*0.2})`;
+  ctx.beginPath(); ctx.arc(nx+16, orbY, 5, 0, Math.PI*2); ctx.fill();
+
+  // Floating void particles
+  for (let i=0; i<5; i++) {
+    const ang = (now/1600+i*Math.PI*2/5);
+    const r = 32 + Math.sin(now/900+i)*6;
+    const px2 = nx + Math.cos(ang)*r, py2 = ny-5 + Math.sin(ang)*r*0.4;
+    const fp = Math.sin(now/400+i*1.3)*0.5+0.5;
+    ctx.fillStyle = `rgba(255,200,40,${0.15+fp*0.35})`;
+    ctx.beginPath(); ctx.arc(px2, py2, 2+fp, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Name tag
+  const dist = Math.hypot(player.x-nx, player.y-ny);
+  const alpha = dist<140 ? Math.min(1,(140-dist)/70) : 0;
+  if (alpha > 0) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle='rgba(4,3,1,.95)';
+    ctx.beginPath(); ctx.roundRect(nx-52, ny-56, 104, 17, [4]); ctx.fill();
+    ctx.strokeStyle=`rgba(180,140,20,.4)`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(nx-52, ny-56, 104, 17, [4]); ctx.stroke();
+    ctx.fillStyle='#ffe066'; ctx.font='bold 10px Cinzel, serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⚜️ Valdris', nx, ny-48);
+    ctx.globalAlpha=1;
+  }
+}
+
+// ── Dragon Event ──────────────────────────────────────────
+let dragonEventTimer = 0;
+const DRAGON_EVENT_INTERVAL = 120000; // every 2 min check
+const DRAGON_EVENT_CHANCE = 0.35;     // 35% chance per check
+
+const endgameState = {
+  dragonEverSpawned: false,
+  finalBossUnlocked: false,
+  finalBossDefeated: false,
+  setToastShown: false,
+  lastSetPieces: 0,
+};
+
+function updateDragonEvent(dt) {
+  if (!player || gameState !== 'playing') return;
+  dragonEventTimer += dt;
+  if (dragonEventTimer < DRAGON_EVENT_INTERVAL) return;
+  dragonEventTimer = 0;
+  if (Math.random() < DRAGON_EVENT_CHANCE) spawnDragonEvent();
+}
+
+function spawnDragonEvent() {
+  // Spawn a flying dragon that crosses the map — killing it drops shards
+  const def = ENEMY_DEF.find(e => e.id === 'boss'); // use dragon base
+  if (!def) return;
+  const scale = 1.5 + (worldLevel-1)*0.2;
+  const dragon = {
+    ...def,
+    uid: 'dragon_event_' + Date.now(),
+    defId: 'boss',
+    id: 'boss',
+    name: '🐉 DRAGÃO LENDÁRIO 🐉',
+    color: '#c0a000',
+    hp:  Math.floor(800 * scale),
+    maxHp: Math.floor(800 * scale),
+    atk: Math.floor(50 * scale),
+    def: 20,
+    spd: 130,
+    xp: 600,
+    atkRange: 60,
+    atkSpeed: 2000,
+    goldRange: [80, 160],
+    size: 36,
+    isBoss: true,
+    isDragonEvent: true,
+    drops: [
+      {id:'shard_drop', chance:1},  // guaranteed shards
+      {id:'big_potion', chance:1},
+    ],
+    x: Math.random() < 0.5 ? 0 : WORLD_W,
+    y: 100 + Math.random() * (WORLD_H - 200),
+    vx:0, vy:0, atkTimer:0,
+    isAlive: true, hitFlash:0, deathTimer:0,
+    roamTimer:0, roamDX:0, roamDY:0,
+    spawnX:0, spawnY:0,
+    guardingChest:null, poisonTimer:0, poisonStacks:0, frozenTimer:0,
+    aggroRange: 240,
+  };
+  dragon.spawnX = dragon.x; dragon.spawnY = dragon.y;
+  enemies.push(dragon);
+  endgameState.dragonEverSpawned = true;
+  updateShardHUD();
+  addLog('🐉 Um DRAGÃO LENDÁRIO surgiu! Derrote-o para obter Fragmentos do Vazio!', 'lboss');
+  if (typeof playRareItemSound === 'function') playRareItemSound();
+  // Show world banner
+  if (typeof showWorldLevelBanner === 'function') {
+    const b = document.getElementById('wl-banner');
+    if (b) {
+      b.textContent = '🐉 DRAGÃO LENDÁRIO AVISTADO!';
+      b.style.cssText += ';color:#ffe066;text-shadow:0 0 20px rgba(255,200,40,.8)';
+      b.classList.add('visible');
+      setTimeout(() => b.classList.remove('visible'), 3500);
+    }
+  }
+}
+
+// Fake item ID to trigger shard drops
+Object.assign(ITEM_DB, {
+  shard_drop: { name: SHARD_NAME, icon: SHARD_ICON, type:'shard', effect:{}, desc:'Moeda especial', rarity:'mythic', forClass:null },
+});
+
+// ── Final Boss — The Eternal Abyss ────────────────────────
+const FINAL_BOSS_DEF = {
+  id:'abyssal_void', name:'☯ ABISMO ETERNO ☯',
+  color:'#0a0014', hp:12000, atk:150, def:80, spd:65,
+  xp:5000, atkRange:65, atkSpeed:1200, goldRange:[500,1000],
+  size:52, isBoss:true, isCentralBoss:false, isFinalBoss:true,
+  drops:[{id:'shard_drop',chance:1},{id:'art_atk',chance:1},{id:'art_hp',chance:1}],
+  minLevel:15,
+};
+
+function checkFinalBossUnlock() {
+  if (endgameState.finalBossUnlocked || endgameState.finalBossDefeated) return;
+  const pieces = countEquippedSetPieces();
+  if (pieces < MYTHIC_SET_IDS.length) return;
+  endgameState.finalBossUnlocked = true;
+  // Spawn the final boss at a dramatic location (north of map center)
+  const fx = (MAP_W / 2) * T + T / 2;
+  const fy = (MAP_H / 2 - 10) * T + T / 2;
+  const boss = {
+    ...FINAL_BOSS_DEF,
+    uid: 'final_boss_' + Date.now(),
+    defId: 'abyssal_void',
+    x: fx, y: fy, spawnX: fx, spawnY: fy,
+    vx:0, vy:0, atkTimer:0,
+    isAlive:true, hitFlash:0, deathTimer:0,
+    roamTimer:0, roamDX:0, roamDY:0,
+    guardingChest:null, poisonTimer:0, poisonStacks:0, frozenTimer:0,
+    aggroRange:280,
+    drawFn: drawAbyssalBoss,
+  };
+  enemies.push(boss);
+  addLog('☯ O ABISMO ETERNO foi invocado! O fim está próximo!', 'lboss');
+  addLog('⚠ Enfrente-o ao norte do centro do mapa!', 'lboss');
+  showSetBonusToast('☯ ABISMO ETERNO INVOCADO!\nDerrote-o para zerar o jogo!', '#ffe066');
+  if (typeof playRareItemSound === 'function') { playRareItemSound(); setTimeout(playRareItemSound, 600); }
+}
+
+function drawAbyssalBoss(ctx, e) {
+  if (!e.isAlive && e.deathTimer <= 0) return;
+  const now = Date.now();
+  const pulse = Math.sin(now/300)*0.15+0.85;
+  const t = e.size;
+
+  // Massive void aura
+  for (let ring=3; ring>=0; ring--) {
+    const aura = ctx.createRadialGradient(e.x, e.y, t, e.x, e.y, t*(2+ring*0.7));
+    aura.addColorStop(0, `rgba(60,0,120,${(0.15+pulse*0.1)*(1-ring*0.18)})`);
+    aura.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle=aura; ctx.beginPath(); ctx.arc(e.x,e.y,t*(2+ring*0.7),0,Math.PI*2); ctx.fill();
+  }
+  // Rotating void rings
+  for (let r=0;r<3;r++) {
+    const ang = now/1200*(r%2===0?1:-1) + r*Math.PI/3;
+    ctx.strokeStyle=`rgba(${100+r*30},0,${180+r*25},${0.4+pulse*0.2})`;
+    ctx.lineWidth=2+r;
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,t*(1.2+r*0.3),t*(0.8+r*0.2),ang,0,Math.PI*2); ctx.stroke();
+  }
+  // Core body
+  const bodyGrad = ctx.createRadialGradient(e.x,e.y,t*0.3,e.x,e.y,t);
+  bodyGrad.addColorStop(0, e.hitFlash>0?'#ffffff':'#2a0060');
+  bodyGrad.addColorStop(0.6, e.hitFlash>0?'#cccccc':'#0a0014');
+  bodyGrad.addColorStop(1, '#000000');
+  ctx.fillStyle=bodyGrad;
+  ctx.beginPath(); ctx.arc(e.x,e.y,t,0,Math.PI*2); ctx.fill();
+  // Eyes — two void eyes
+  const eyeGlow = 0.7+pulse*0.3;
+  ctx.fillStyle=`rgba(255,200,40,${eyeGlow})`;
+  ctx.beginPath(); ctx.arc(e.x-t*.35, e.y-t*.2, t*.18, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(e.x+t*.35, e.y-t*.2, t*.18, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.arc(e.x-t*.35, e.y-t*.2, t*.08, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(e.x+t*.35, e.y-t*.2, t*.08, 0, Math.PI*2); ctx.fill();
+  // Void tendrils
+  for (let i=0;i<8;i++) {
+    const ta=now/800+i*Math.PI/4, len=t*(1.2+Math.sin(now/500+i)*.4);
+    ctx.strokeStyle=`rgba(120,0,200,${0.3+pulse*0.2})`;
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(e.x+Math.cos(ta)*t*.6, e.y+Math.sin(ta)*t*.6);
+    ctx.quadraticCurveTo(
+      e.x+Math.cos(ta+0.4)*len*0.7, e.y+Math.sin(ta+0.4)*len*0.7,
+      e.x+Math.cos(ta+0.8)*len, e.y+Math.sin(ta+0.8)*len
+    );
+    ctx.stroke();
+  }
+}
+
+// ── Set bonus toast & checks ──────────────────────────────
+function showSetBonusToast(msg, color) {
+  const toast = document.getElementById('set-bonus-toast');
+  if (!toast) return;
+  toast.innerHTML = msg.replace(/\n/g,'<br>');
+  toast.style.display = 'block';
+  toast.style.borderColor = color || '#ffe066';
+  toast.style.color = color || '#ffe066';
+  setTimeout(() => { toast.style.display = 'none'; }, 4000);
+}
+
+function checkSetBonusChanges() {
+  if (!player) return;
+  const pieces = countEquippedSetPieces();
+  if (pieces === endgameState.lastSetPieces) return;
+  endgameState.lastSetPieces = pieces;
+  if (pieces === 0) return;
+  applySetBonuses();
+  let msg = `🌑 Set do Vazio: ${pieces}/${MYTHIC_SET_IDS.length} peças\n`;
+  if (pieces >= 2) msg += '✦ ' + VOID_SET_BONUS.pieces2.desc + '\n';
+  if (pieces >= 3) msg += '✦ ' + VOID_SET_BONUS.pieces3.desc + '\n';
+  if (pieces >= 4) msg += '✦ ' + VOID_SET_BONUS.pieces4.desc + '\n';
+  if (pieces >= MYTHIC_SET_IDS.length) msg += '👑 PODER TOTAL ATIVADO!';
+  showSetBonusToast(msg, '#ffe066');
+  addLog(`🌑 Set do Vazio: ${pieces}/${MYTHIC_SET_IDS.length} peças — ${pieces >= MYTHIC_SET_IDS.length ? 'BÔNUS TOTAL!' : 'Bônus parcial ativado'}`, 'llvl');
+}
+
+// ── Victory Screen ────────────────────────────────────────
+function triggerVictory() {
+  gameState = 'victory';
+  endgameState.finalBossDefeated = true;
+  const screen = document.getElementById('screen-victory');
+  const stats = document.getElementById('victory-stats');
+  if (screen) {
+    screen.style.display = 'flex';
+    // Spawn star particles in DOM
+    const container = document.getElementById('victory-stars');
+    if (container) {
+      for (let i=0; i<60; i++) {
+        const star = document.createElement('div');
+        const size = 2 + Math.random()*4;
+        star.style.cssText = `position:absolute;border-radius:50%;background:rgba(255,${180+Math.floor(Math.random()*75)},40,${0.4+Math.random()*0.6});
+          width:${size}px;height:${size}px;
+          left:${Math.random()*100}%;top:${Math.random()*100}%;
+          animation:victoryStarAnim ${2+Math.random()*3}s ease-in-out infinite alternate;
+          animation-delay:${Math.random()*2}s`;
+        container.appendChild(star);
+      }
+    }
+  }
+  if (stats) stats.innerHTML = `
+    Nível <strong style="color:#ffe066">${player.level}</strong> ·
+    ${kills} eliminados ·
+    ${player.gold} 🪙<br>
+    ${SHARD_ICON} ${player.craftCurrency||0} Fragmentos do Vazio restantes<br>
+    Set do Vazio: ${countEquippedSetPieces()}/${MYTHIC_SET_IDS.length} peças<br>
+    <em style="color:#9a8030">${player.subclass || CLASS_DEF[player.classId]?.name || ''}</em>`;
+  // Add CSS for star animation
+  if (!document.getElementById('victory-star-css')) {
+    const s = document.createElement('style');
+    s.id = 'victory-star-css';
+    s.textContent = '@keyframes victoryStarAnim{from{opacity:.2;transform:scale(.5)}to{opacity:1;transform:scale(1.5)}}';
+    document.head.appendChild(s);
+  }
+  addLog('🏆 VITÓRIA! O Abismo Eterno foi derrotado! O jogo foi zerado!', 'lboss');
+}
+
+// ── Override killEnemy to handle shard drops & final boss ─
+const _egOrigKillEnemy = typeof killEnemy === 'function' ? killEnemy : null;
+if (_egOrigKillEnemy) {
+  killEnemy = function(e) {
+    // Handle shard drops for boss chest bosses
+    if (e.isBoss && !e.isCentralBoss && !e.isFinalBoss) {
+      const shardAmt = 1 + Math.floor(worldLevel * 0.5);
+      addShards(shardAmt);
+    }
+    // Dragon event — extra shards
+    if (e.isDragonEvent) {
+      addShards(3 + Math.floor(worldLevel));
+      addLog(`🐉 Dragão derrotado! +${3+Math.floor(worldLevel)} ${SHARD_NAME}!`, 'llvl');
+    }
+    // Final boss victory
+    if (e.isFinalBoss) {
+      setTimeout(triggerVictory, 1200);
+    }
+    _egOrigKillEnemy.apply(this, arguments);
+  };
+}
+
+// ── Hook into update loop for dragon event and set checks ─
+const _egOrigUpdate = typeof update === 'function' ? update : null;
+if (_egOrigUpdate) {
+  update = function(dt) {
+    _egOrigUpdate.apply(this, arguments);
+    updateDragonEvent(dt);
+    checkSetBonusChanges();
+    // Reapply set bonuses every 5s (in case equipments changed)
+    if (!update._setTimer) update._setTimer = 0;
+    update._setTimer += dt;
+    if (update._setTimer > 5000) { update._setTimer = 0; if (countEquippedSetPieces() > 0) applySetBonuses(); }
+  };
+}
+
+// ── Hook render for void merchant draw ────────────────────
+const _egOrigRender = typeof render === 'function' ? render : null;
+if (_egOrigRender) {
+  render = function(...a) {
+    _egOrigRender.apply(this, a);
+    if (ctx) {
+      ctx.save();
+      ctx.translate(-(cam?.x||0), -(cam?.y||0));
+      drawVoidMerchant();
+      ctx.restore();
+    }
+  };
+}
+
+// ── Hook generateMap to place void merchant ───────────────
+const _egOrigGenerateMap = typeof generateMap === 'function' ? generateMap : null;
+if (_egOrigGenerateMap) {
+  generateMap = function(...a) {
+    _egOrigGenerateMap.apply(this, a);
+    placeVoidMerchant();
+    // Make area around void merchant walkable
+    const tx = Math.floor(voidMerchantState.x / T);
+    const ty = Math.floor(voidMerchantState.y / T);
+    if (typeof mapTiles !== 'undefined') {
+      for (let dy=-3; dy<=3; dy++) for (let dx=-3; dx<=3; dx++) {
+        const nx2=tx+dx, ny2=ty+dy;
+        if (nx2>0&&nx2<MAP_W-1&&ny2>0&&ny2<MAP_H-1) mapTiles[ny2][nx2] = typeof TILE !== 'undefined' ? TILE.STONE : 1;
+      }
+    }
+  };
+}
+
+// ── Hook proximity / F key ────────────────────────────────
+const _egOrigUpdateNpcProx = typeof updateNpcProximity === 'function' ? updateNpcProximity : null;
+if (_egOrigUpdateNpcProx) {
+  updateNpcProximity = function() {
+    _egOrigUpdateNpcProx.apply(this, arguments);
+    if (!player || !voidMerchantState.x) return;
+    const dist = Math.hypot(player.x-voidMerchantState.x, player.y-voidMerchantState.y);
+    voidMerchantState.nearPlayer = dist < 70;
+    if (dist < 70) {
+      const nearChest = typeof chests!=='undefined' && chests.find(c=>!c.open&&Math.hypot(c.x-player.x,c.y-player.y)<55);
+      const nearNpc   = typeof npcObj!=='undefined'&&npcObj&&Math.hypot(player.x-npcObj.x,player.y-npcObj.y)<60;
+      const nearPT    = typeof petTrainerState!=='undefined'&&petTrainerState.nearPlayer;
+      const nearSm    = typeof smithyState!=='undefined'&&smithyState.nearPlayer;
+      const nearAl    = typeof alchemistState!=='undefined'&&alchemistState.nearPlayer;
+      const prompt    = document.getElementById('chest-prompt');
+      if (!nearChest&&!nearNpc&&!nearPT&&!nearSm&&!nearAl&&prompt) {
+        prompt.style.display='block'; prompt.textContent='[F] Falar com Valdris'; prompt.style.color='#ffe066';
+      }
+    }
+  };
+}
+
+const _egOrigTryOpen = typeof tryOpenChest === 'function' ? tryOpenChest : null;
+if (_egOrigTryOpen) {
+  tryOpenChest = function() {
+    if (player && voidMerchantState.nearPlayer) { openVoidMerchant(); return; }
+    _egOrigTryOpen.apply(this, arguments);
+  };
+}
+
+// ── ESC / closeAllPanels ──────────────────────────────────
+document.addEventListener('keydown', function(ev) {
+  if (ev.key==='Escape' && voidMerchantState.open) {
+    closeVoidMerchant(); ev.preventDefault(); ev.stopImmediatePropagation();
+  }
+}, true);
+
+const _egOrigCloseAll = typeof closeAllPanels === 'function' ? closeAllPanels : null;
+if (_egOrigCloseAll) {
+  closeAllPanels = function() {
+    _egOrigCloseAll.apply(this, arguments);
+    if (voidMerchantState.open) closeVoidMerchant();
+  };
+}
+
+// ── Minimap dot (gold star) ───────────────────────────────
+const _egOrigMinimap = typeof updateMinimapCanvas === 'function' ? updateMinimapCanvas : null;
+if (_egOrigMinimap) {
+  updateMinimapCanvas = function(...a) {
+    _egOrigMinimap.apply(this, a);
+    const mmEl=document.getElementById('mm-canvas');
+    if (!mmEl||typeof mmCtx==='undefined'||!mmCtx) return;
+    const mW=mmEl.width||120, mH=mmEl.height||80;
+    const wW=typeof WORLD_W!=='undefined'?WORLD_W:3840;
+    const wH=typeof WORLD_H!=='undefined'?WORLD_H:2560;
+    if (voidMerchantState.x) {
+      mmCtx.fillStyle='#ffe066';
+      mmCtx.beginPath();
+      const sx=voidMerchantState.x/wW*mW, sy=voidMerchantState.y/wH*mH;
+      mmCtx.arc(sx,sy,4,0,Math.PI*2); mmCtx.fill();
+    }
+  };
+}
+
+// ── Patch createPlayer to include shard HUD init ─────────
+const _egOrigCreatePlayer = typeof createPlayer === 'function' ? createPlayer : null;
+if (_egOrigCreatePlayer) {
+  createPlayer = function(classId) {
+    const p = _egOrigCreatePlayer.apply(this, arguments);
+    if (typeof p.craftCurrency === 'undefined') p.craftCurrency = 0;
+    return p;
+  };
+}
+
+// ── Patch applyEquipBonuses to recheck set bonus ──────────
+const _egOrigApplyEquip = typeof applyEquipBonuses === 'function' ? applyEquipBonuses : null;
+if (_egOrigApplyEquip) {
+  applyEquipBonuses = function() {
+    _egOrigApplyEquip.apply(this, arguments);
+    // Defer to avoid recursion
+    setTimeout(() => { if (typeof countEquippedSetPieces==='function') checkSetBonusChanges(); }, 50);
+  };
+}
+
+// ── Show shard HUD when game starts ──────────────────────
+const _egOrigStartGame = typeof startGame === 'function' ? startGame : null;
+if (_egOrigStartGame) {
+  startGame = function(...a) {
+    _egOrigStartGame.apply(this, a);
+    placeVoidMerchant();
+    updateShardHUD();
+  };
+}
+
+// ── Update hint row ───────────────────────────────────────
+(function patchHintRow() {
+  const hint = document.querySelector('.hud-info-row[style*="font-size:10px"]');
+  if (hint && !hint.textContent.includes('Fragmentos')) {
+    hint.textContent += ' [F] Mercador do Vazio ⚜';
+  }
+})();
+
+console.log('[Endgame] Sistema de endgame carregado ✓');
 </script>
 </body>
 </html>
