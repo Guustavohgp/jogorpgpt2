@@ -2167,6 +2167,7 @@ function autoAttack(p){
   for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<closestDist){closestDist=d;closest=e;}}
   if(!closest)return;
   p.atkTimer=p.atkSpeed;
+  playAttackSound();
   let dmg=Math.floor(p.atk*(0.85+Math.random()*.3));
   const isCrit=Math.random()<p.critChance;
   if(isCrit)dmg=Math.floor(dmg*p.critMult);
@@ -2209,7 +2210,7 @@ function updateEnemies(dt){
         } else {
           dmg=Math.max(1,dmg-Math.floor(p.def*.5));
           if(p.subSkill==='defensive' || p._subSkillLogic==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
-          if(p.isAlive){p.hp-=dmg;p.hitFlash=200;spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}
+          if(p.isAlive){p.hp-=dmg;p.hitFlash=200;playHurtSound();spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}
         }
       }
     }else{e.roamTimer-=dt;if(e.roamTimer<=0){e.roamTimer=1200+Math.random()*2000;const ang=Math.random()*Math.PI*2;e.roamDX=Math.cos(ang);e.roamDY=Math.sin(ang);}if(Math.random()<.5)moveEntity(e,e.roamDX*e.spd*.4*dt/1000,e.roamDY*e.spd*.4*dt/1000);}
@@ -2249,6 +2250,7 @@ function killEnemy(e){
   const[gmin,gmax]=e.goldRange;
   const goldGain = Math.floor((gmin+Math.random()*(gmax-gmin)) * (player.art?.goldMult || 1));
   player.gold += goldGain;
+  if(goldGain > 0) playCoinSound();
   // Auto-collect: skip loot spawning, pick up instantly
   const autoCollect = player.art?.autoCollect || false;
   for(const drop of e.drops){
@@ -2274,16 +2276,16 @@ function collectLootDirect(itemId) {
   if (itemId === 'gold_coin') { const g=1+Math.floor(Math.random()*5); player.gold+=g; return; }
   const item = ITEM_DB[itemId]; if (!item) return;
   if (item.type === 'consumable' || item.type === 'artifact') { addItemToInventory(itemId); addLog(`${item.icon} Auto-coletou: ${item.name}`,'ldrop'); }
-  else { addItemToInventory(itemId); addLog(`${item.icon} Auto-coletou: ${item.name} [${item.rarity}]`,'ldrop'); }
+  else { addItemToInventory(itemId); if(item.rarity==='rare'||item.rarity==='epic')playRareItemSound(); addLog(`${item.icon} Auto-coletou: ${item.name} [${item.rarity}]`,'ldrop'); }
 }
 function updateLoot(dt){for(let i=lootItems.length-1;i>=0;i--){lootItems[i].life-=dt;lootItems[i].bob+=dt*.003;if(lootItems[i].life<=0)lootItems.splice(i,1);}}
 
 function collectLoot(loot){
   if(loot.id==='gold_coin'){const g=1+Math.floor(Math.random()*5);player.gold+=Math.floor(g*(player.art?.goldMult||1));addLog(`🪙 +${g} ouro`,'');return;}
   const item=ITEM_DB[loot.id];if(!item)return;
-  if(item.type==='consumable'){addItemToInventory(loot.id);addLog(`${item.icon} Coletou ${item.name}`,'ldrop');}
-  else if(item.type==='artifact'){addItemToInventory(loot.id);addLog(`💎 Artefato encontrado: ${item.icon} ${item.name}! (Abra inventário [I] para ver)`,'llvl');}
-  else{addItemToInventory(loot.id);const curr=item.type==='weapon'?player.equippedWeapon:player.equippedArmor;const currBonus=curr?(ITEM_DB[curr].effect.atk||ITEM_DB[curr].effect.def||0):0;const newBonus=item.effect.atk||item.effect.def||0;const canEquip=!item.forClass||item.forClass.includes(player.classId);if(newBonus>currBonus&&canEquip){equipItem(loot.id);addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`,'ldrop');}else addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`,'ldrop');}
+  if(item.type==='consumable'){addItemToInventory(loot.id);playPickupSound();addLog(`${item.icon} Coletou ${item.name}`,'ldrop');}
+  else if(item.type==='artifact'){addItemToInventory(loot.id);playRareItemSound();addLog(`💎 Artefato encontrado: ${item.icon} ${item.name}! (Abra inventário [I] para ver)`,'llvl');}
+  else{addItemToInventory(loot.id);if(item.rarity==='rare'||item.rarity==='epic')playRareItemSound();else playPickupSound();const curr=item.type==='weapon'?player.equippedWeapon:player.equippedArmor;const currBonus=curr?(ITEM_DB[curr].effect.atk||ITEM_DB[curr].effect.def||0):0;const newBonus=item.effect.atk||item.effect.def||0;const canEquip=!item.forClass||item.forClass.includes(player.classId);if(newBonus>currBonus&&canEquip){equipItem(loot.id);addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`,'ldrop');}else addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`,'ldrop');}
 }
 
 function addItemToInventory(itemId){
@@ -2360,6 +2362,7 @@ function tryOpenChest(){
     const guardOk=!nearChest.isBossChest||nearChest.guard==null||!nearChest.guard.isAlive;
     if(!guardOk){addLog('⚠ Derrote o boss para abrir!','ldmg');return;}
     nearChest.open=true;
+    playChestOpenSound(nearChest.rarity);
     const pool=nearChest.rarity==='epic'?CHEST_LOOT.epic:nearChest.rarity==='rare'?[...CHEST_LOOT.rare,...CHEST_LOOT.epic]:CHEST_LOOT.common;
     const item=pool[Math.floor(Math.random()*pool.length)];
     const gold=nearChest.rarity==='epic'?60+Math.floor(Math.random()*80):nearChest.rarity==='rare'?20+Math.floor(Math.random()*30):5+Math.floor(Math.random()*15);
@@ -2383,6 +2386,7 @@ function checkLevelUp(){
     for(let i=0;i<3;i++)enemies.push(spawnEnemy());
     if(player.level%5===0)enemies.push(spawnEnemy('boss'));
     addLog(`⬆ LEVEL ${player.level}! +HP +ATK +MP`,'llvl');
+    playLevelUpSound();
     showLevelUpBanner(player.level);
     if(player.level===6&&!player.subclassChosen)setTimeout(()=>showSubclassScreen(),1500);
   }
@@ -4000,6 +4004,196 @@ function renderBigMap() {
   bigMapRaf = requestAnimationFrame(renderBigMap);
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// SFX ENGINE  — Web Audio API, sem arquivos externos
+// ═══════════════════════════════════════════════════════════
+const SFX = (() => {
+  let _ctx = null;
+
+  function ctx() {
+    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // resume if browser suspended it before a user gesture
+    if (_ctx.state === 'suspended') _ctx.resume();
+    return _ctx;
+  }
+
+  // ── helper: cria oscilador + gain e toca imediatamente ──
+  function tone({ type='sine', freq=440, freqEnd=null, vol=0.12,
+                  attack=0.005, decay=0.08, sustain=0, release=0.06,
+                  start=0, duration=null }) {
+    const ac   = ctx();
+    const now  = ac.currentTime + start;
+    const dur  = duration ?? (attack + decay + release + 0.01);
+    const end  = now + dur;
+
+    const osc  = ac.createOscillator();
+    const gain = ac.createGain();
+
+    osc.connect(gain);
+    gain.connect(ac.destination);
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    if (freqEnd !== null)
+      osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), end);
+
+    // ADSR
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(vol,        now + attack);
+    gain.gain.linearRampToValueAtTime(vol * sustain, now + attack + decay);
+    gain.gain.linearRampToValueAtTime(0,           end);
+
+    osc.start(now);
+    osc.stop(end + 0.01);
+  }
+
+  // ── helper: ruído branco filtrado ──
+  function noise({ vol=0.06, freq=1200, q=1, start=0, duration=0.06 }) {
+    const ac  = ctx();
+    const now = ac.currentTime + start;
+    const end = now + duration;
+
+    const bufSize = ac.sampleRate * duration;
+    const buf     = ac.createBuffer(1, bufSize, ac.sampleRate);
+    const data    = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+
+    const src    = ac.createBufferSource();
+    const filter = ac.createBiquadFilter();
+    const gain   = ac.createGain();
+
+    src.buffer = buf;
+    filter.type      = 'bandpass';
+    filter.frequency.value = freq;
+    filter.Q.value         = q;
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(ac.destination);
+
+    gain.gain.setValueAtTime(0,   now);
+    gain.gain.linearRampToValueAtTime(vol, now + 0.003);
+    gain.gain.linearRampToValueAtTime(0,   end);
+
+    src.start(now);
+    src.stop(end + 0.01);
+  }
+
+  // ── 1. ATAQUE ─────────────────────────────────────────────
+  // Impacto seco: click de ruído curto + blip descendente suave
+  function playAttack() {
+    // Snap de impacto
+    noise({ vol:0.07, freq:1800, q:0.8, duration:0.03 });
+    // Tom curto descendente
+    tone({ type:'triangle', freq:320, freqEnd:180,
+           vol:0.07, attack:0.003, decay:0.04, release:0.025 });
+  }
+
+  // ── 2. ITEM RARO ─────────────────────────────────────────
+  // Três notas ascendentes brilhantes — sensação de recompensa
+  function playRareItem() {
+    const notes = [523, 659, 784]; // C5 E5 G5
+    notes.forEach((freq, i) => {
+      tone({ type:'sine', freq, freqEnd: freq * 1.04,
+             vol:0.10, attack:0.008, decay:0.07, release:0.10,
+             start: i * 0.10 });
+    });
+    // Brilho de harmônico suave no final
+    tone({ type:'sine', freq:1568, freqEnd:1400,
+           vol:0.04, attack:0.01, decay:0.05, release:0.12,
+           start: 0.22 });
+  }
+
+  // ── 3. LEVEL UP ──────────────────────────────────────────
+  // Fanfarra curta: quatro notas ascendentes com reverb sintético
+  function playLevelUp() {
+    const notes = [392, 523, 659, 784]; // G4 C5 E5 G5
+    notes.forEach((freq, i) => {
+      tone({ type:'sine', freq, freqEnd: freq * 1.02,
+             vol:0.11, attack:0.010, decay:0.06, sustain:0.2, release:0.15,
+             start: i * 0.12 });
+      // Oitava suave junto
+      tone({ type:'sine', freq: freq * 2,
+             vol:0.04, attack:0.012, decay:0.05, release:0.10,
+             start: i * 0.12 + 0.01 });
+    });
+    // Shimmer final
+    tone({ type:'sine', freq:1760, freqEnd:2093,
+           vol:0.05, attack:0.02, decay:0.08, release:0.18,
+           start: 0.50 });
+  }
+
+
+  // ── 4. ABRIR BAÚ ──────────────────────────────────────────
+  // Tom grave de "destrancar" + clink metálico + harmônico dourado
+  function playChestOpen(rarity='common') {
+    // Clank metálico
+    noise({ vol:0.09, freq:rarity==='epic'?2800:rarity==='rare'?2000:1400, q:1.2, duration:0.05 });
+    // Tom grave de trava
+    tone({ type:'triangle', freq:rarity==='epic'?180:rarity==='rare'?140:110, freqEnd:rarity==='epic'?80:60,
+           vol:0.10, attack:0.005, decay:0.10, release:0.08, start:0.01 });
+    // Brilho de recompensa (só rare/epic)
+    if (rarity === 'rare' || rarity === 'epic') {
+      const base = rarity === 'epic' ? 880 : 660;
+      tone({ type:'sine', freq:base, freqEnd:base*1.5,
+             vol:0.08, attack:0.01, decay:0.06, release:0.12, start:0.08 });
+      tone({ type:'sine', freq:base*2, freqEnd:base*2.5,
+             vol:0.04, attack:0.015, decay:0.05, release:0.10, start:0.16 });
+    }
+  }
+
+  // ── 5. PEGAR ITEM (comum) ─────────────────────────────────
+  // Pop leve e suave — não irritante mesmo repetindo
+  function playPickup() {
+    tone({ type:'sine', freq:660, freqEnd:880,
+           vol:0.07, attack:0.004, decay:0.04, release:0.05 });
+  }
+
+  // ── 6. TOMAR DANO ─────────────────────────────────────────
+  // Impacto surdo + queda de tom — dor sem ser estridente
+  function playHurt() {
+    noise({ vol:0.08, freq:600, q:0.7, duration:0.04 });
+    tone({ type:'sawtooth', freq:220, freqEnd:90,
+           vol:0.08, attack:0.003, decay:0.06, release:0.05, start:0.01 });
+  }
+
+  // ── 7. HABILIDADE ─────────────────────────────────────────
+  // Whoosh mágico energético — único para não repetir cansativo
+  function playSkill() {
+    // Sweep ascendente brilhante
+    tone({ type:'sine', freq:300, freqEnd:900,
+           vol:0.09, attack:0.008, decay:0.07, release:0.10 });
+    // Harmônico de poder
+    tone({ type:'triangle', freq:600, freqEnd:1200,
+           vol:0.05, attack:0.010, decay:0.06, release:0.08, start:0.02 });
+    // Click de disparo
+    noise({ vol:0.05, freq:3000, q:0.5, duration:0.02, start:0.005 });
+  }
+
+  // ── 8. MOEDA ────────────────────────────────────────────
+  // Clink metálico leve e brilhante
+  function playCoin() {
+    tone({ type:'sine', freq:1046, freqEnd:1318,
+           vol:0.07, attack:0.003, decay:0.035, release:0.055 });
+    tone({ type:'sine', freq:1568,
+           vol:0.03, attack:0.005, decay:0.025, release:0.040, start:0.015 });
+  }
+
+  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin };
+})();
+
+function playAttackSound()        { try { SFX.playAttack();              } catch(e){} }
+function playRareItemSound()      { try { SFX.playRareItem();            } catch(e){} }
+function playLevelUpSound()       { try { SFX.playLevelUp();             } catch(e){} }
+function playChestOpenSound(r)    { try { SFX.playChestOpen(r);          } catch(e){} }
+function playPickupSound()        { try { SFX.playPickup();              } catch(e){} }
+function playHurtSound()          { try { SFX.playHurt();                } catch(e){} }
+function playSkillSound()         { try { SFX.playSkill();               } catch(e){} }
+function playCoinSound()          { try { SFX.playCoin();                } catch(e){} }
+
+
+
 document.addEventListener('keydown', ev => {
   keys[ev.key]=true;
   if(ev.key==='Escape'){
@@ -4058,7 +4252,7 @@ document.addEventListener('keydown', ev => {
   const sm={'q':0,'Q':0,'e':1,'E':1,'r':2,'R':2};
   if(sm[ev.key]!==undefined){
     const si=sm[ev.key],sk=p.skills[si];
-    if(p.skillCds[si]<=0&&p.mp>=sk.mpCost){p.mp-=sk.mpCost;p.skillCds[si]=sk.cd;sk.use(p,{});}
+    if(p.skillCds[si]<=0&&p.mp>=sk.mpCost){p.mp-=sk.mpCost;p.skillCds[si]=sk.cd;playSkillSound();sk.use(p,{});}
     ev.preventDefault();
   }
 });
@@ -4549,20 +4743,25 @@ function collectLoot(loot) {
   if (loot.id === 'gold_coin') {
     const g = 1 + Math.floor(Math.random() * 5);
     player.gold += Math.floor(g * (player.art?.goldMult || 1));
+    playCoinSound();
     addLog(`🪙 +${g} ouro`, ''); return;
   }
   const item = ITEM_DB[loot.id]; if (!item) return;
   if (item.type === 'consumable') {
     addItemToInventory(loot.id);
+    playPickupSound();
     addLog(`${item.icon} Coletou ${item.name}`, 'ldrop');
   } else if (item.type === 'artifact') {
     addItemToInventory(loot.id);
+    playRareItemSound();
     addLog(`💎 Artefato: ${item.icon} ${item.name}! [J] para equipar`, 'llvl');
   } else if (item.type === 'pet') {
     addItemToInventory(loot.id);
+    playPickupSound();
     addLog(`🐾 Pet: ${item.icon} ${item.name}!`, 'llvl');
   } else if (item.type === 'weapon' || item.type === 'armor') {
     addItemToInventory(loot.id);
+    if (item.rarity === 'rare' || item.rarity === 'epic') playRareItemSound(); else playPickupSound();
     const canEquip = !item.forClass || item.forClass.includes(player.classId);
     if (canEquip) {
       const targetSlot = resolveEquipSlot(loot.id);
