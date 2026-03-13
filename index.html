@@ -1522,10 +1522,30 @@ function checkCentralBossProximity() {
       centralBoss.aggroRange = 0;
     }
   } else {
-    // Nível 8+: boss pode agredir normalmente, sem empurrão
+    // Nível 8+: sem empurrão
     centralBossWarned = false;
     if (dist < 200) {
       centralBoss.aggroRange = 200;
+      // Tocar música do boss ao entrar no alcance
+      if (!bossActive) {
+        bossActive = true;
+        // Para música atual e toca boss.mp3
+        if (currentTrackIdx >= 0 && musicTracks[currentTrackIdx]) {
+          musicTracks[currentTrackIdx].pause();
+          musicTracks[currentTrackIdx].currentTime = 0;
+        }
+        if (musicTracks[2]) {
+          currentTrackIdx = 2;
+          musicTracks[2].volume = musicVolume;
+          musicTracks[2].play().catch(() => {});
+          addLog('🎵 Música do boss tocando!', 'lboss');
+        } else {
+          addLog('⚠ boss.mp3 não carregou — verifique a pasta musica/', 'ldmg');
+        }
+        updateMusicStatus();
+      }
+    } else if (dist >= 200 && bossActive && !centralBoss.isAlive === false) {
+      // Saiu do alcance mas boss ainda vivo — manter música
     }
   }
 }
@@ -1963,7 +1983,6 @@ function updateEnemies(dt){
   for(const e of enemies){
     if(!e.isAlive){e.deathTimer-=dt;continue;}
     if((e.isBoss || e.isCentralBoss) && e.isAlive) anyBossAlive = true;
-    if(e.isCentralBoss && e.isAlive && e.aggroRange > 0 && !bossActive) { bossActive=true; if(musicEnabled && musicTracks[2]) playTrack(2); updateMusicStatus(); }
     if(e.hitFlash>0)e.hitFlash-=dt;
     if(e.poisonStacks>0){e.poisonTimer-=dt;if(e.poisonTimer<=0){e.poisonTimer=800;const pdmg=Math.floor(e.poisonStacks*3);e.hp-=pdmg;spawnDmgNumber(e.x,e.y-e.size,'☠'+pdmg,'#8e44ad');e.poisonStacks=Math.max(0,e.poisonStacks-1);if(e.hp<=0)killEnemy(e);}}
     if(e.frozenTimer>0){e.frozenTimer-=dt;continue;}
