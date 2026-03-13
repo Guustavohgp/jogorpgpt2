@@ -154,22 +154,136 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 /* SUBCLASS */
 #screen-subclass {
   display:none; position:fixed; inset:0; z-index:400;
-  background:rgba(0,0,0,.92); align-items:center; justify-content:center; flex-direction:column; gap:24px;
+  align-items:center; justify-content:center; flex-direction:column; gap:24px;
+  background:radial-gradient(ellipse at 50% 20%, #1a1020 0%, #050508 100%);
 }
 #screen-subclass.active { display:flex; }
-.sub-title { font-family:'Cinzel',serif; font-size:clamp(22px,4vw,42px); color:var(--amber); text-shadow:0 0 20px rgba(232,160,32,.5); text-align:center; }
-.sub-subtitle { font-style:italic; color:var(--text-dim); font-size:15px; }
-.sub-row { display:flex; gap:18px; flex-wrap:wrap; justify-content:center; padding:0 20px; }
+.sub-title { font-family:'Cinzel',serif; font-size:clamp(22px,4vw,42px); color:var(--amber); text-shadow:0 0 20px rgba(232,160,32,.5),0 0 60px rgba(232,160,32,.2); text-align:center; letter-spacing:.1em; }
+.sub-subtitle { font-style:italic; color:var(--text-dim); font-size:15px; letter-spacing:.05em; }
+.sub-row { display:flex; gap:22px; flex-wrap:wrap; justify-content:center; padding:0 20px; }
+
+/* ── Base sub-card ── */
 .sub-card {
-  width:200px; background:linear-gradient(160deg,#1a1510,#0e0b07); border:2px solid #2a2010;
-  border-radius:8px; padding:20px 16px; cursor:pointer; text-align:center;
-  transition:transform .2s, border-color .2s, box-shadow .2s;
+  width:215px; border-radius:14px; padding:0; cursor:pointer; text-align:center;
+  transition:transform .25s, box-shadow .25s;
+  position:relative; overflow:hidden;
+  background:#0e0b12; border:2px solid #2a2040;
 }
-.sub-card:hover { transform:translateY(-5px); border-color:var(--amber); box-shadow:0 10px 30px rgba(232,160,32,.25); }
-.sub-icon { font-size:36px; display:block; margin-bottom:10px; }
-.sub-name { font-family:'Cinzel',serif; font-size:16px; color:var(--amber); margin-bottom:8px; }
-.sub-desc { font-size:12px; color:var(--text-dim); line-height:1.5; font-style:italic; }
-.sub-bonuses { margin-top:10px; font-size:11px; color:#5dade2; }
+.sub-card:hover { transform:translateY(-8px); }
+.sub-card-banner {
+  width:100%; height:90px; display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+}
+.sub-card-orb {
+  width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:36px; position:relative; z-index:1;
+  box-shadow:0 0 0 3px rgba(255,255,255,.07), 0 0 32px currentColor;
+}
+.sub-card-body { padding:14px 16px 18px; }
+.sub-name { font-family:'Cinzel',serif; font-size:15px; margin-bottom:6px; letter-spacing:.04em; }
+.sub-card-divider { height:1px; margin:8px 0; opacity:.35; }
+.sub-desc { font-size:12px; color:var(--text-dim); line-height:1.55; font-style:italic; margin-bottom:8px; }
+.sub-bonuses { font-size:11px; font-family:'VT323',monospace; letter-spacing:.04em; line-height:1.7; }
+.sub-card-tag {
+  display:inline-block; font-size:9px; letter-spacing:.1em; text-transform:uppercase;
+  border-radius:20px; padding:2px 9px; margin-top:10px; font-family:'VT323',monospace;
+  border:1px solid currentColor; opacity:.8;
+}
+.sub-card::after {
+  content:''; position:absolute; inset:0; border-radius:14px; pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 55%,rgba(255,255,255,.02) 100%);
+}
+.sub-card[data-sub="defensive"] { border-color:#2a4080; background:linear-gradient(160deg,#0d1420,#08101c); }
+.sub-card[data-sub="defensive"] .sub-card-banner { background:linear-gradient(180deg,#0a1830,#060e1c); }
+.sub-card[data-sub="defensive"] .sub-card-orb { color:#3498db; background:radial-gradient(circle,#0a1e3a,#061228); }
+.sub-card[data-sub="defensive"] .sub-name { color:#5dade2; text-shadow:0 0 12px rgba(93,173,226,.4); }
+.sub-card[data-sub="defensive"] .sub-card-divider { background:linear-gradient(90deg,transparent,#3498db,transparent); }
+.sub-card[data-sub="defensive"] .sub-bonuses { color:#5dade2; }
+.sub-card[data-sub="defensive"] .sub-card-tag { color:#3498db; }
+.sub-card[data-sub="defensive"]:hover { box-shadow:0 12px 40px rgba(52,152,219,.35), 0 0 0 1px #3498db; border-color:#5dade2; }
+.sub-card[data-sub="berserker"] { border-color:#5a1010; background:linear-gradient(160deg,#180808,#0e0505); }
+.sub-card[data-sub="berserker"] .sub-card-banner { background:linear-gradient(180deg,#240808,#120404); }
+.sub-card[data-sub="berserker"] .sub-card-orb { color:#e74c3c; background:radial-gradient(circle,#2a0808,#180404); }
+.sub-card[data-sub="berserker"] .sub-name { color:#e74c3c; text-shadow:0 0 14px rgba(231,76,60,.5); }
+.sub-card[data-sub="berserker"] .sub-card-divider { background:linear-gradient(90deg,transparent,#c0392b,transparent); }
+.sub-card[data-sub="berserker"] .sub-bonuses { color:#ff6b6b; }
+.sub-card[data-sub="berserker"] .sub-card-tag { color:#e74c3c; }
+.sub-card[data-sub="berserker"]:hover { box-shadow:0 12px 40px rgba(192,57,43,.4), 0 0 0 1px #e74c3c; border-color:#e74c3c; }
+.sub-card[data-sub="holy"] { border-color:#5a5010; background:linear-gradient(160deg,#1a1808,#100f05); }
+.sub-card[data-sub="holy"] .sub-card-banner { background:linear-gradient(180deg,#261e06,#161208); }
+.sub-card[data-sub="holy"] .sub-card-orb { color:#f0c060; background:radial-gradient(circle,#241c06,#141004); }
+.sub-card[data-sub="holy"] .sub-name { color:#f0c060; text-shadow:0 0 16px rgba(240,192,96,.6); }
+.sub-card[data-sub="holy"] .sub-card-divider { background:linear-gradient(90deg,transparent,#e8a020,transparent); }
+.sub-card[data-sub="holy"] .sub-bonuses { color:#f0c060; }
+.sub-card[data-sub="holy"] .sub-card-tag { color:#e8a020; }
+.sub-card[data-sub="holy"]:hover { box-shadow:0 12px 40px rgba(240,192,96,.35), 0 0 0 1px #f0c060; border-color:#f0c060; }
+.sub-card[data-sub="ice"] { border-color:#1a3a5a; background:linear-gradient(160deg,#091420,#050c18); }
+.sub-card[data-sub="ice"] .sub-card-banner { background:linear-gradient(180deg,#0a1e30,#060e1e); }
+.sub-card[data-sub="ice"] .sub-card-orb { color:#a8d8f0; background:radial-gradient(circle,#081828,#041018); }
+.sub-card[data-sub="ice"] .sub-name { color:#a8d8f0; text-shadow:0 0 14px rgba(168,216,240,.5); }
+.sub-card[data-sub="ice"] .sub-card-divider { background:linear-gradient(90deg,transparent,#5dade2,transparent); }
+.sub-card[data-sub="ice"] .sub-bonuses { color:#a8d8f0; }
+.sub-card[data-sub="ice"] .sub-card-tag { color:#5dade2; }
+.sub-card[data-sub="ice"]:hover { box-shadow:0 12px 40px rgba(93,173,226,.35), 0 0 0 1px #a8d8f0; border-color:#a8d8f0; }
+.sub-card[data-sub="arcane"] { border-color:#3a1a6a; background:linear-gradient(160deg,#120820,#0a0514); }
+.sub-card[data-sub="arcane"] .sub-card-banner { background:linear-gradient(180deg,#1a0a2e,#0e061c); }
+.sub-card[data-sub="arcane"] .sub-card-orb { color:#c070ff; background:radial-gradient(circle,#1a0830,#0e041e); }
+.sub-card[data-sub="arcane"] .sub-name { color:#c070ff; text-shadow:0 0 14px rgba(192,112,255,.5); }
+.sub-card[data-sub="arcane"] .sub-card-divider { background:linear-gradient(90deg,transparent,#9b59b6,transparent); }
+.sub-card[data-sub="arcane"] .sub-bonuses { color:#c070ff; }
+.sub-card[data-sub="arcane"] .sub-card-tag { color:#9b59b6; }
+.sub-card[data-sub="arcane"]:hover { box-shadow:0 12px 40px rgba(155,89,182,.4), 0 0 0 1px #c070ff; border-color:#c070ff; }
+.sub-card[data-sub="fire_mage"] { border-color:#5a2008; background:linear-gradient(160deg,#1c0a04,#100604); }
+.sub-card[data-sub="fire_mage"] .sub-card-banner { background:linear-gradient(180deg,#2a1004,#180802); }
+.sub-card[data-sub="fire_mage"] .sub-card-orb { color:#ff8040; background:radial-gradient(circle,#2a0e04,#180804); }
+.sub-card[data-sub="fire_mage"] .sub-name { color:#ff8040; text-shadow:0 0 14px rgba(255,128,64,.5); }
+.sub-card[data-sub="fire_mage"] .sub-card-divider { background:linear-gradient(90deg,transparent,#e67e22,transparent); }
+.sub-card[data-sub="fire_mage"] .sub-bonuses { color:#ff8040; }
+.sub-card[data-sub="fire_mage"] .sub-card-tag { color:#e67e22; }
+.sub-card[data-sub="fire_mage"]:hover { box-shadow:0 12px 40px rgba(230,126,34,.4), 0 0 0 1px #ff8040; border-color:#ff8040; }
+.sub-card[data-sub="poison"] { border-color:#2a4a1a; background:linear-gradient(160deg,#081408,#050d05); }
+.sub-card[data-sub="poison"] .sub-card-banner { background:linear-gradient(180deg,#0e2008,#081406); }
+.sub-card[data-sub="poison"] .sub-card-orb { color:#6dde60; background:radial-gradient(circle,#0a1e08,#061206); }
+.sub-card[data-sub="poison"] .sub-name { color:#6dde60; text-shadow:0 0 12px rgba(109,222,96,.4); }
+.sub-card[data-sub="poison"] .sub-card-divider { background:linear-gradient(90deg,transparent,#27ae60,transparent); }
+.sub-card[data-sub="poison"] .sub-bonuses { color:#6dde60; }
+.sub-card[data-sub="poison"] .sub-card-tag { color:#27ae60; }
+.sub-card[data-sub="poison"]:hover { box-shadow:0 12px 40px rgba(39,174,96,.35), 0 0 0 1px #6dde60; border-color:#6dde60; }
+.sub-card[data-sub="wind"] { border-color:#1a4a4a; background:linear-gradient(160deg,#071414,#050e0e); }
+.sub-card[data-sub="wind"] .sub-card-banner { background:linear-gradient(180deg,#0a2020,#060e10); }
+.sub-card[data-sub="wind"] .sub-card-orb { color:#7ae8e8; background:radial-gradient(circle,#081e1e,#041212); }
+.sub-card[data-sub="wind"] .sub-name { color:#7ae8e8; text-shadow:0 0 12px rgba(122,232,232,.45); }
+.sub-card[data-sub="wind"] .sub-card-divider { background:linear-gradient(90deg,transparent,#1abc9c,transparent); }
+.sub-card[data-sub="wind"] .sub-bonuses { color:#7ae8e8; }
+.sub-card[data-sub="wind"] .sub-card-tag { color:#1abc9c; }
+.sub-card[data-sub="wind"]:hover { box-shadow:0 12px 40px rgba(26,188,156,.35), 0 0 0 1px #7ae8e8; border-color:#7ae8e8; }
+.sub-card[data-sub="fire_archer"] { border-color:#5a3008; background:linear-gradient(160deg,#1a0c04,#0e0804); }
+.sub-card[data-sub="fire_archer"] .sub-card-banner { background:linear-gradient(180deg,#261006,#160a04); }
+.sub-card[data-sub="fire_archer"] .sub-card-orb { color:#ffb040; background:radial-gradient(circle,#281004,#180a02); }
+.sub-card[data-sub="fire_archer"] .sub-name { color:#ffb040; text-shadow:0 0 14px rgba(255,176,64,.5); }
+.sub-card[data-sub="fire_archer"] .sub-card-divider { background:linear-gradient(90deg,transparent,#e67e22,transparent); }
+.sub-card[data-sub="fire_archer"] .sub-bonuses { color:#ffb040; }
+.sub-card[data-sub="fire_archer"] .sub-card-tag { color:#e67e22; }
+.sub-card[data-sub="fire_archer"]:hover { box-shadow:0 12px 40px rgba(255,176,64,.35), 0 0 0 1px #ffb040; border-color:#ffb040; }
+@keyframes subOrbPulse {
+  0%,100% { box-shadow:0 0 0 3px rgba(255,255,255,.07), 0 0 28px currentColor; }
+  50%      { box-shadow:0 0 0 6px rgba(255,255,255,.1), 0 0 48px currentColor; }
+}
+.sub-card:hover .sub-card-orb { animation:subOrbPulse 1.6s ease-in-out infinite; }
+@keyframes subParticle {
+  0%   { opacity:.7; transform:translateY(0) scale(1); }
+  100% { opacity:0;  transform:translateY(-30px) scale(0.4); }
+}
+.sub-banner-particle { position:absolute; width:4px; height:4px; border-radius:50%; pointer-events:none; animation:subParticle 2s ease-in infinite; }
+.sub-card[data-sub="defensive"] .sub-banner-particle { background:#5dade2; box-shadow:0 0 6px #3498db; }
+.sub-card[data-sub="berserker"] .sub-banner-particle { background:#e74c3c; box-shadow:0 0 6px #c0392b; }
+.sub-card[data-sub="holy"] .sub-banner-particle { background:#f0c060; box-shadow:0 0 6px #e8a020; }
+.sub-card[data-sub="ice"] .sub-banner-particle { background:#a8d8f0; box-shadow:0 0 6px #5dade2; }
+.sub-card[data-sub="arcane"] .sub-banner-particle { background:#c070ff; box-shadow:0 0 6px #9b59b6; }
+.sub-card[data-sub="fire_mage"] .sub-banner-particle { background:#ff8040; box-shadow:0 0 6px #e67e22; }
+.sub-card[data-sub="poison"] .sub-banner-particle { background:#6dde60; box-shadow:0 0 6px #27ae60; }
+.sub-card[data-sub="wind"] .sub-banner-particle { background:#7ae8e8; box-shadow:0 0 6px #1abc9c; }
+.sub-card[data-sub="fire_archer"] .sub-banner-particle { background:#ffb040; box-shadow:0 0 6px #e67e22; }
 
 /* GAME SCREEN */
 #screen-game { display:none; position:fixed; inset:0; }
@@ -372,6 +486,24 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 }
 .npc-sub-card:hover { border-color:var(--amber-dim); background:#14110a; }
 .npc-sub-card.selected { border-color:var(--amber); background:#1a1408; }
+.npc-sub-card[data-sub="defensive"]:hover,.npc-sub-card[data-sub="defensive"].selected { border-color:#5dade2; background:#081018; box-shadow:0 0 14px rgba(93,173,226,.2); }
+.npc-sub-card[data-sub="berserker"]:hover,.npc-sub-card[data-sub="berserker"].selected { border-color:#e74c3c; background:#140606; box-shadow:0 0 14px rgba(231,76,60,.2); }
+.npc-sub-card[data-sub="holy"]:hover,.npc-sub-card[data-sub="holy"].selected { border-color:#f0c060; background:#141006; box-shadow:0 0 14px rgba(240,192,96,.25); }
+.npc-sub-card[data-sub="ice"]:hover,.npc-sub-card[data-sub="ice"].selected { border-color:#a8d8f0; background:#060e14; box-shadow:0 0 14px rgba(168,216,240,.2); }
+.npc-sub-card[data-sub="arcane"]:hover,.npc-sub-card[data-sub="arcane"].selected { border-color:#c070ff; background:#0e0618; box-shadow:0 0 14px rgba(192,112,255,.25); }
+.npc-sub-card[data-sub="fire_mage"]:hover,.npc-sub-card[data-sub="fire_mage"].selected { border-color:#ff8040; background:#120604; box-shadow:0 0 14px rgba(255,128,64,.2); }
+.npc-sub-card[data-sub="poison"]:hover,.npc-sub-card[data-sub="poison"].selected { border-color:#6dde60; background:#060e06; box-shadow:0 0 14px rgba(109,222,96,.2); }
+.npc-sub-card[data-sub="wind"]:hover,.npc-sub-card[data-sub="wind"].selected { border-color:#7ae8e8; background:#060e0e; box-shadow:0 0 14px rgba(122,232,232,.2); }
+.npc-sub-card[data-sub="fire_archer"]:hover,.npc-sub-card[data-sub="fire_archer"].selected { border-color:#ffb040; background:#100804; box-shadow:0 0 14px rgba(255,176,64,.2); }
+.npc-sub-card[data-sub="defensive"] .nsc-name { color:#5dade2; }
+.npc-sub-card[data-sub="berserker"] .nsc-name { color:#e74c3c; }
+.npc-sub-card[data-sub="holy"] .nsc-name { color:#f0c060; }
+.npc-sub-card[data-sub="ice"] .nsc-name { color:#a8d8f0; }
+.npc-sub-card[data-sub="arcane"] .nsc-name { color:#c070ff; }
+.npc-sub-card[data-sub="fire_mage"] .nsc-name { color:#ff8040; }
+.npc-sub-card[data-sub="poison"] .nsc-name { color:#6dde60; }
+.npc-sub-card[data-sub="wind"] .nsc-name { color:#7ae8e8; }
+.npc-sub-card[data-sub="fire_archer"] .nsc-name { color:#ffb040; }
 .nsc-icon { font-size:22px; display:block; margin-bottom:4px; }
 .nsc-name { font-family:'Cinzel',serif; font-size:10px; color:var(--amber); margin-bottom:3px; line-height:1.3; }
 .nsc-desc { font-size:10px; color:var(--text-dim); font-style:italic; line-height:1.3; }
@@ -1036,8 +1168,8 @@ const SUBCLASS_CHANGE_COST = 200;
 
 const SUBCLASS_DEF = {
   warrior:[
-    {id:'defensive',name:'Cavaleiro Defensivo',icon:'🛡',desc:'Fortaleza ambulante.',bonuses:'+20 DEF, +40 HP',apply:(p)=>{ p.def+=20; p.maxHp+=40; p.hp+=40; p.subSkill='reflect'; }},
-    {id:'berserker',name:'Cavaleiro Berserker',icon:'🩸',desc:'Rage insana.',bonuses:'+15 ATK, +Rage',apply:(p)=>{ p.atk+=15; p.baseAtk+=15; p.subSkill='rage'; }},
+    {id:'defensive',name:'Cavaleiro Defensivo',icon:'🛡',desc:'Fortaleza ambulante.',bonuses:'+20 DEF, +40 HP',apply:(p)=>{ p.def+=20; p.maxHp+=40; p.hp+=40; p.subSkill='defensive'; p._subSkillLogic='reflect'; }},
+    {id:'berserker',name:'Cavaleiro Berserker',icon:'🩸',desc:'Rage insana.',bonuses:'+15 ATK, +Rage',apply:(p)=>{ p.atk+=15; p.baseAtk+=15; p.subSkill='berserker'; p._subSkillLogic='rage'; }},
     {id:'holy',name:'Cavaleiro Sagrado',icon:'✨',desc:'Bênção divina.',bonuses:'+10 ATK, Cura passiva',apply:(p)=>{ p.atk+=10; p.baseAtk+=10; p.subSkill='holy'; p.holyRegen=true; }},
   ],
   mage:[
@@ -1782,7 +1914,7 @@ function findFreePos(minDist=0,fromX=0,fromY=0){for(let tries=0;tries<400;tries+
 // ─────────────────────────────────────────────────────────
 function createPlayer(classId){
   const def=CLASS_DEF[classId];
-  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,
+  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,_subSkillLogic:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,
     activePetType:null,
     art:{xpMult:1,goldMult:1,atkMult:1,maxHpFlat:0,dmgReduce:0,poisonMult:1,fireMult:1,iceMult:1,swordMult:1,bowMult:1,autoCollect:false,hpApplied:0}};
 }
@@ -1954,7 +2086,7 @@ function updatePlayer(dt){
   p.mp=Math.min(p.maxMp,p.mp+dt*0.005);
   if(p.holyRegen){p.holyRegenTimer=(p.holyRegenTimer||0)+dt;if(p.holyRegenTimer>2000){p.holyRegenTimer=0;p.hp=Math.min(p.maxHp,p.hp+5);addLog('✨ Cura Sagrada +5 HP','lheal');}}
   if(p.fireAura){p.fireAuraTimer=(p.fireAuraTimer||0)+dt;if(p.fireAuraTimer>1000){p.fireAuraTimer=0;for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-p.x,e.y-p.y)<60)applyDamageToEnemy(e,Math.floor(p.atk*0.3),false);}}}
-  if(p.subSkill==='rage'){const hpPct=p.hp/p.maxHp;p.rageBonus=Math.floor((1-hpPct)*20);p.atk=p.baseAtk+p.rageBonus+(p.equippedWeapon?(ITEM_DB[p.equippedWeapon].effect.atk||0):0);}
+  if(p.subSkill==='berserker' || p._subSkillLogic==='rage'){const hpPct=p.hp/p.maxHp;p.rageBonus=Math.floor((1-hpPct)*20);p.atk=p.baseAtk+p.rageBonus+(p.equippedWeapon?(ITEM_DB[p.equippedWeapon].effect.atk||0):0);}
   if(p.isDashing){p.dashDuration-=dt;if(p.dashDuration<=0)p.isDashing=false;else{moveEntity(p,p.dashDirX*600*dt/1000,p.dashDirY*600*dt/1000);return;}}
   let mx=0,my=0;
   if(keys['w']||keys['ArrowUp'])my-=1;if(keys['s']||keys['ArrowDown'])my+=1;if(keys['a']||keys['ArrowLeft'])mx-=1;if(keys['d']||keys['ArrowRight'])mx+=1;
@@ -2026,7 +2158,7 @@ function updateEnemies(dt){
           if(tankPet.hp<=0){tankPet.hp=0;tankPet.isAlive=false;addLog('💔 Golem caiu! Reaparecerá em 15s...','ldmg');const st=tankPet.petType;setTimeout(()=>{if(player&&player.isAlive){pet=createPet(player,st);addLog('🗿 Golem voltou!','lheal');}},15000);}
         } else {
           dmg=Math.max(1,dmg-Math.floor(p.def*.5));
-          if(p.subSkill==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
+          if(p.subSkill==='defensive' || p._subSkillLogic==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
           if(p.isAlive){p.hp-=dmg;p.hitFlash=200;spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}
         }
       }
@@ -2438,51 +2570,115 @@ function drawWarriorPlayer(ctx, p) {
   const t = p.size || 14;
   const now = Date.now();
   const angle = Math.atan2(p.facing.y, p.facing.x);
+  const sub = p.subSkill || 'none';
+
+  // ── SUBCLASS PALETTE ──────────────────────────────────
+  // defensive: blue steel  |  berserker: blood red  |  holy: gold/white
+  const pal = sub === 'defensive' ? {
+    tabard:'#1a3a6a', tabardTrim:'#5dade2', tabardTrimAlpha:0.9,
+    backPlate:'#2a3a50', plateLo:'#6888b0', plateMid:'#90b0d8', plateHi:'#5a7898', plateShadow:'#304860',
+    plateEdge:'rgba(160,210,255,.55)', ridge:'#5080a0',
+    emblem:'#5dade2',
+    pauldron:'#4870a0', pauldronEdge:'#a0c8e8',
+    helmLo:'#304870', helmMid:'#5888b8', helmHi:'#304870',
+    helmEdge:'#90bce0',
+    visorGlow:'rgba(100,200,255,.9)',
+    plumeA:'#2060c0', plumeB:'#1040a0',
+    greaves:'#2a3a54', boots:'#1a2a3a',
+    aura: {color:'rgba(80,160,255,0.18)', shadow:'rgba(80,160,255,0.7)'},
+  } : sub === 'berserker' ? {
+    tabard:'#6a0a0a', tabardTrim:'#e74c3c', tabardTrimAlpha:1,
+    backPlate:'#501010', plateLo:'#8a3030', plateMid:'#b04040', plateHi:'#8a2828', plateShadow:'#601818',
+    plateEdge:'rgba(255,100,80,.55)', ridge:'#a03030',
+    emblem:'#e74c3c',
+    pauldron:'#903030', pauldronEdge:'#f08070',
+    helmLo:'#501010', helmMid:'#902020', helmHi:'#501010',
+    helmEdge:'#e06050',
+    visorGlow:'rgba(255,80,60,.9)',
+    plumeA:'#ff3030', plumeB:'#8a0000',
+    greaves:'#5a2020', boots:'#3a1010',
+    aura: {color:'rgba(220,40,40,0.22)', shadow:'rgba(220,40,40,0.8)'},
+  } : sub === 'holy' ? {
+    tabard:'#7a6a20', tabardTrim:'#f0c060', tabardTrimAlpha:1,
+    backPlate:'#6a6020', plateLo:'#c0b870', plateMid:'#e8e090', plateHi:'#b0a860', plateShadow:'#807828',
+    plateEdge:'rgba(255,240,160,.65)', ridge:'#c0a030',
+    emblem:'#f0c060',
+    pauldron:'#c0b060', pauldronEdge:'#fff0a0',
+    helmLo:'#706010', helmMid:'#c0b050', helmHi:'#706010',
+    helmEdge:'#ffe898',
+    visorGlow:'rgba(255,240,140,.95)',
+    plumeA:'#fff090', plumeB:'#c8a020',
+    greaves:'#7a7030', boots:'#4a4010',
+    aura: {color:'rgba(255,240,80,0.22)', shadow:'rgba(255,240,80,0.8)'},
+  } : { // default steel
+    tabard:'#8a2020', tabardTrim:'#e8a020', tabardTrimAlpha:1,
+    backPlate:'#5a6070', plateLo:'#b0b8c8', plateMid:'#d0d8e8', plateHi:'#9aa8b8', plateShadow:'#607080',
+    plateEdge:'rgba(220,230,255,.55)', ridge:'#8090a0',
+    emblem:'#e8a020',
+    pauldron:'#a0a8b8', pauldronEdge:'#d0d8e8',
+    helmLo:'#606878', helmMid:'#b0b8c8', helmHi:'#606878',
+    helmEdge:'#d0d8e8',
+    visorGlow:'rgba(255,200,80,.7)',
+    plumeA:'#e84040', plumeB:'#a02020',
+    greaves:'#5a4a3a', boots:'#3a2a1a',
+    aura: null,
+  };
+
   // Idle breath: subtle vertical bob
   const breath = Math.sin(now / 520) * 0.9;
   ctx.save();
   ctx.translate(p.x, p.y + breath);
   ctx.rotate(angle - Math.PI / 2);
 
+  // ── SUBCLASS AURA (drawn under body) ──────────────────
+  if (pal.aura) {
+    const auraPulse = Math.sin(now / 400) * 0.4 + 0.6;
+    ctx.save();
+    ctx.shadowColor = pal.aura.shadow;
+    ctx.shadowBlur = 18 * auraPulse;
+    const auraGrd = ctx.createRadialGradient(0, 0, t * .2, 0, 0, t * 1.4);
+    auraGrd.addColorStop(0, pal.aura.color.replace('0.', (0.35 * auraPulse).toFixed(2) + '').replace('0.18', (0.35 * auraPulse).toFixed(2)).replace('0.22', (0.38 * auraPulse).toFixed(2)));
+    auraGrd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = auraGrd;
+    ctx.beginPath(); ctx.ellipse(0, t * .3, t * 1.3, t * .5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
   // ── LEGS ──────────────────────────────────────────────
-  // Left leg
   const legSwing = Math.sin(now / 260) * 0.08;
   ctx.save();
   ctx.rotate(legSwing);
-  ctx.fillStyle = '#5a4a3a'; // dark greaves
+  ctx.fillStyle = pal.greaves;
   ctx.beginPath();
   ctx.roundRect(-t * .42, t * .38, t * .36, t * .72, [2, 2, 3, 3]);
   ctx.fill();
-  // Boot left
-  ctx.fillStyle = '#3a2a1a';
+  ctx.fillStyle = pal.boots;
   ctx.beginPath();
   ctx.roundRect(-t * .44, t * .92, t * .4, t * .22, [2]);
   ctx.fill();
   ctx.restore();
-  // Right leg
   ctx.save();
   ctx.rotate(-legSwing);
-  ctx.fillStyle = '#5a4a3a';
+  ctx.fillStyle = pal.greaves;
   ctx.beginPath();
   ctx.roundRect(t * .06, t * .38, t * .36, t * .72, [2, 2, 3, 3]);
   ctx.fill();
-  // Boot right
-  ctx.fillStyle = '#3a2a1a';
+  ctx.fillStyle = pal.boots;
   ctx.beginPath();
   ctx.roundRect(t * .04, t * .92, t * .4, t * .22, [2]);
   ctx.fill();
   ctx.restore();
 
   // ── TABARD / SKIRT ────────────────────────────────────
-  ctx.fillStyle = '#8a2020';
+  ctx.fillStyle = pal.tabard;
   ctx.beginPath();
   ctx.moveTo(-t * .5, t * .28);
   ctx.lineTo(-t * .6, t * .82);
   ctx.lineTo(t * .6, t * .82);
   ctx.lineTo(t * .5, t * .28);
   ctx.fill();
-  // Gold trim on tabard
-  ctx.strokeStyle = '#e8a020'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = pal.tabardTrim; ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(-t * .5, t * .28); ctx.lineTo(-t * .6, t * .82);
   ctx.moveTo(t * .5, t * .28); ctx.lineTo(t * .6, t * .82);
@@ -2490,67 +2686,72 @@ function drawWarriorPlayer(ctx, p) {
   ctx.stroke();
 
   // ── BODY / PLATE ARMOUR ───────────────────────────────
-  // Back plate (slightly larger, darker)
-  ctx.fillStyle = '#5a6070';
+  ctx.fillStyle = pal.backPlate;
   ctx.beginPath();
   ctx.roundRect(-t * .7, -t * .52, t * 1.4, t * .88, [5, 5, 3, 3]);
   ctx.fill();
-  // Front chest plate
   const plateGrad = ctx.createLinearGradient(-t * .6, -t * .48, t * .6, t * .3);
-  plateGrad.addColorStop(0, '#b0b8c8');
-  plateGrad.addColorStop(0.35, '#d0d8e8');
-  plateGrad.addColorStop(0.65, '#9aa8b8');
-  plateGrad.addColorStop(1, '#607080');
+  plateGrad.addColorStop(0, pal.plateLo);
+  plateGrad.addColorStop(0.35, pal.plateMid);
+  plateGrad.addColorStop(0.65, pal.plateHi);
+  plateGrad.addColorStop(1, pal.plateShadow);
   ctx.fillStyle = plateGrad;
   ctx.beginPath();
   ctx.roundRect(-t * .6, -t * .48, t * 1.2, t * .84, [4, 4, 2, 2]);
   ctx.fill();
-  // Plate highlight edge
-  ctx.strokeStyle = 'rgba(220,230,255,.55)'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = pal.plateEdge; ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(-t * .6, -t * .48, t * 1.2, t * .84, [4, 4, 2, 2]);
   ctx.stroke();
-  // Breastplate centre ridge
-  ctx.strokeStyle = '#8090a0'; ctx.lineWidth = 2;
+  ctx.strokeStyle = pal.ridge; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0, -t * .44); ctx.lineTo(0, t * .28); ctx.stroke();
-  // Gold cross emblem
-  ctx.fillStyle = '#e8a020';
-  ctx.fillRect(-t * .07, -t * .28, t * .14, t * .46);
-  ctx.fillRect(-t * .3, -t * .10, t * .6, t * .14);
-  // Pauldrons (shoulder guards)
-  const pauldronGrad = ctx.createLinearGradient(-t * .82, -t * .52, -t * .52, -t * .1);
-  pauldronGrad.addColorStop(0, '#c8d0e0'); pauldronGrad.addColorStop(1, '#708090');
-  ctx.fillStyle = '#a0a8b8';
+  // Emblem (cross or subclass symbol)
+  ctx.fillStyle = pal.emblem;
+  if (sub === 'berserker') {
+    // Skull-like X symbol
+    ctx.lineWidth = 3; ctx.strokeStyle = pal.emblem;
+    ctx.beginPath(); ctx.moveTo(-t*.18,-t*.28); ctx.lineTo(t*.18,t*.18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(t*.18,-t*.28); ctx.lineTo(-t*.18,t*.18); ctx.stroke();
+  } else if (sub === 'holy') {
+    // Radiant cross with glow
+    ctx.shadowColor = pal.emblem; ctx.shadowBlur = 10;
+    ctx.fillRect(-t * .07, -t * .28, t * .14, t * .46);
+    ctx.fillRect(-t * .3, -t * .10, t * .6, t * .14);
+    ctx.shadowBlur = 0;
+  } else {
+    ctx.fillRect(-t * .07, -t * .28, t * .14, t * .46);
+    ctx.fillRect(-t * .3, -t * .10, t * .6, t * .14);
+  }
+  // Pauldrons
+  ctx.fillStyle = pal.pauldron;
   ctx.beginPath(); ctx.ellipse(-t * .76, -t * .32, t * .26, t * .34, .3, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(t * .76, -t * .32, t * .26, t * .34, -.3, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#d0d8e8'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.pauldronEdge; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.ellipse(-t * .76, -t * .32, t * .26, t * .34, .3, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath(); ctx.ellipse(t * .76, -t * .32, t * .26, t * .34, -.3, 0, Math.PI * 2); ctx.stroke();
 
   // ── HEAD / HELMET ─────────────────────────────────────
-  // Neck
   ctx.fillStyle = '#c8a080';
   ctx.beginPath(); ctx.roundRect(-t * .16, -t * .56, t * .32, t * .14, [2]); ctx.fill();
-  // Helmet dome
   const helmGrad = ctx.createRadialGradient(-t * .12, -t * .96, t * .05, 0, -t * .8, t * .55);
-  helmGrad.addColorStop(0, '#e0e8f8');
-  helmGrad.addColorStop(0.5, '#b0b8c8');
-  helmGrad.addColorStop(1, '#606878');
+  helmGrad.addColorStop(0, pal.helmMid);
+  helmGrad.addColorStop(0.5, pal.helmMid);
+  helmGrad.addColorStop(1, pal.helmLo);
   ctx.fillStyle = helmGrad;
   ctx.beginPath(); ctx.ellipse(0, -t * .88, t * .42, t * .38, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#d0d8e8'; ctx.lineWidth = 1.2;
+  ctx.strokeStyle = pal.helmEdge; ctx.lineWidth = 1.2;
   ctx.beginPath(); ctx.ellipse(0, -t * .88, t * .42, t * .38, 0, 0, Math.PI * 2); ctx.stroke();
-  // Visor / face opening
   ctx.fillStyle = '#1a1a2a';
   ctx.beginPath();
   ctx.roundRect(-t * .26, -t * .98, t * .52, t * .24, [3, 3, 5, 5]);
   ctx.fill();
-  // Visor slit highlight
-  ctx.fillStyle = 'rgba(255,200,80,.7)';
+  ctx.fillStyle = pal.visorGlow;
+  if (sub === 'holy') ctx.shadowColor = pal.visorGlow, ctx.shadowBlur = 10;
   ctx.beginPath(); ctx.roundRect(-t * .22, -t * .95, t * .44, t * .06, [2]); ctx.fill();
-  // Crest / plume on helmet
+  ctx.shadowBlur = 0;
+  // Crest / plume
   const plumeGrad = ctx.createLinearGradient(0, -t * 1.5, 0, -t * 1.05);
-  plumeGrad.addColorStop(0, '#e84040'); plumeGrad.addColorStop(1, '#a02020');
+  plumeGrad.addColorStop(0, pal.plumeA); plumeGrad.addColorStop(1, pal.plumeB);
   ctx.fillStyle = plumeGrad;
   ctx.beginPath();
   ctx.moveTo(-t * .12, -t * 1.1);
@@ -2558,49 +2759,63 @@ function drawWarriorPlayer(ctx, p) {
   ctx.bezierCurveTo(t * .05, -t * 1.0, -t * .05, -t * 1.0, -t * .12, -t * 1.1);
   ctx.fill();
 
+
   // ── SWORD (right side, held forward) ─────────────────
-  const swordBob = Math.sin(now / 520) * 1.2; // matches breath
+  const swordBob = Math.sin(now / 520) * 1.2;
   ctx.save();
   ctx.translate(t * .88, -t * .12 + swordBob * .06);
   // Grip
   ctx.fillStyle = '#5a3a18';
   ctx.beginPath(); ctx.roundRect(-t * .1, t * .1, t * .2, t * .58, [3]); ctx.fill();
-  ctx.fillStyle = '#e8a020';
+  ctx.fillStyle = pal.emblem;
   ctx.fillRect(-t * .1, t * .28, t * .2, t * .08);
   ctx.fillRect(-t * .1, t * .44, t * .2, t * .08);
-  // Guard (crossguard)
-  ctx.fillStyle = '#c8a020';
+  // Guard
+  ctx.fillStyle = sub==='berserker'?'#801010':sub==='holy'?'#c8a020':sub==='defensive'?'#2060a0':'#c8a020';
   ctx.beginPath(); ctx.roundRect(-t * .42, t * .06, t * .84, t * .14, [3]); ctx.fill();
-  ctx.strokeStyle = '#f0c040'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.emblem; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.roundRect(-t * .42, t * .06, t * .84, t * .14, [3]); ctx.stroke();
-  // Blade
+  // Blade — subclass tinted
   const bladeGrad = ctx.createLinearGradient(-t * .1, -t * 1.1, t * .1, 0);
-  bladeGrad.addColorStop(0, '#f0f4ff');
-  bladeGrad.addColorStop(0.4, '#d8dce8');
-  bladeGrad.addColorStop(1, '#9098a8');
+  if (sub === 'berserker') {
+    bladeGrad.addColorStop(0, '#ff9090'); bladeGrad.addColorStop(0.4, '#e05050'); bladeGrad.addColorStop(1, '#901818');
+    ctx.shadowColor = '#ff4040'; ctx.shadowBlur = 8;
+  } else if (sub === 'holy') {
+    bladeGrad.addColorStop(0, '#fffff0'); bladeGrad.addColorStop(0.4, '#f0f0c0'); bladeGrad.addColorStop(1, '#c0b050');
+    ctx.shadowColor = '#fff8a0'; ctx.shadowBlur = 10;
+  } else if (sub === 'defensive') {
+    bladeGrad.addColorStop(0, '#d0e8ff'); bladeGrad.addColorStop(0.4, '#90b8e0'); bladeGrad.addColorStop(1, '#4070a0');
+  } else {
+    bladeGrad.addColorStop(0, '#f0f4ff'); bladeGrad.addColorStop(0.4, '#d8dce8'); bladeGrad.addColorStop(1, '#9098a8');
+  }
   ctx.fillStyle = bladeGrad;
   ctx.beginPath();
-  ctx.moveTo(-t * .1, t * .06);
-  ctx.lineTo(t * .1, t * .06);
-  ctx.lineTo(t * .04, -t * 1.12);
-  ctx.lineTo(0, -t * 1.22);
-  ctx.lineTo(-t * .04, -t * 1.12);
+  ctx.moveTo(-t * .1, t * .06); ctx.lineTo(t * .1, t * .06);
+  ctx.lineTo(t * .04, -t * 1.12); ctx.lineTo(0, -t * 1.22); ctx.lineTo(-t * .04, -t * 1.12);
   ctx.fill();
-  // Blade edge glint
+  ctx.shadowBlur = 0;
   ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(-t * .02, t * .04); ctx.lineTo(0, -t * 1.18); ctx.stroke();
   // Pommel
-  ctx.fillStyle = '#d0a030';
+  ctx.fillStyle = sub==='berserker'?'#c02020':sub==='holy'?'#d0c050':sub==='defensive'?'#4080c0':'#d0a030';
   ctx.beginPath(); ctx.arc(0, t * .7, t * .14, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // ── SHIELD (left arm, slightly ahead) ────────────────
+  // ── SHIELD (left arm) ────────────────────────────────
   ctx.save();
   ctx.translate(-t * .82, -t * .1);
   const shieldGrad = ctx.createLinearGradient(-t * .32, -t * .44, t * .32, t * .44);
-  shieldGrad.addColorStop(0, '#5068a0');
-  shieldGrad.addColorStop(0.5, '#3a5090');
-  shieldGrad.addColorStop(1, '#2a3870');
+  if (sub === 'defensive') {
+    shieldGrad.addColorStop(0, '#2060a0'); shieldGrad.addColorStop(0.5, '#1848a0'); shieldGrad.addColorStop(1, '#102878');
+    ctx.shadowColor = '#5dade2'; ctx.shadowBlur = 10;
+  } else if (sub === 'berserker') {
+    shieldGrad.addColorStop(0, '#7a1010'); shieldGrad.addColorStop(0.5, '#601010'); shieldGrad.addColorStop(1, '#400808');
+  } else if (sub === 'holy') {
+    shieldGrad.addColorStop(0, '#a09030'); shieldGrad.addColorStop(0.5, '#c0a840'); shieldGrad.addColorStop(1, '#706010');
+    ctx.shadowColor = '#fff8a0'; ctx.shadowBlur = 8;
+  } else {
+    shieldGrad.addColorStop(0, '#5068a0'); shieldGrad.addColorStop(0.5, '#3a5090'); shieldGrad.addColorStop(1, '#2a3870');
+  }
   ctx.fillStyle = shieldGrad;
   ctx.beginPath();
   ctx.moveTo(0, -t * .48);
@@ -2609,8 +2824,8 @@ function drawWarriorPlayer(ctx, p) {
   ctx.lineTo(-t * .28, t * .28);
   ctx.bezierCurveTo(-t * .34, -t * .1, -t * .3, -t * .48, 0, -t * .48);
   ctx.fill();
-  // Shield rim
-  ctx.strokeStyle = '#e8c060'; ctx.lineWidth = 2;
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = pal.emblem; ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, -t * .48);
   ctx.bezierCurveTo(t * .3, -t * .48, t * .34, -t * .1, t * .28, t * .28);
@@ -2618,10 +2833,21 @@ function drawWarriorPlayer(ctx, p) {
   ctx.lineTo(-t * .28, t * .28);
   ctx.bezierCurveTo(-t * .34, -t * .1, -t * .3, -t * .48, 0, -t * .48);
   ctx.stroke();
-  // Shield emblem: lion silhouette cross
-  ctx.fillStyle = '#e8c060';
-  ctx.fillRect(-t * .04, -t * .28, t * .08, t * .5);
-  ctx.fillRect(-t * .22, -t * .06, t * .44, t * .08);
+  // Shield emblem
+  ctx.fillStyle = pal.emblem;
+  if (sub === 'berserker') {
+    ctx.lineWidth = 2.5; ctx.strokeStyle = pal.emblem;
+    ctx.beginPath(); ctx.moveTo(-t*.12,-t*.22); ctx.lineTo(t*.12,t*.22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(t*.12,-t*.22); ctx.lineTo(-t*.12,t*.22); ctx.stroke();
+  } else if (sub === 'holy') {
+    ctx.shadowColor = pal.emblem; ctx.shadowBlur = 12;
+    ctx.fillRect(-t * .04, -t * .28, t * .08, t * .5);
+    ctx.fillRect(-t * .22, -t * .06, t * .44, t * .08);
+    ctx.shadowBlur = 0;
+  } else {
+    ctx.fillRect(-t * .04, -t * .28, t * .08, t * .5);
+    ctx.fillRect(-t * .22, -t * .06, t * .44, t * .08);
+  }
   ctx.restore();
 
   ctx.restore();
@@ -2630,18 +2856,83 @@ function drawMagePlayer(ctx, p) {
   const t = p.size || 14;
   const now = Date.now();
   const angle = Math.atan2(p.facing.y, p.facing.x);
-  const breath = Math.sin(now / 600) * 0.8; // slower, calmer breath
+  const breath = Math.sin(now / 600) * 0.8;
   const orbPulse = Math.sin(now / 280) * 0.35 + 0.7;
+  const sub = p.subSkill || 'none';
+
+  // ── SUBCLASS PALETTE ──────────────────────────────────
+  // ice: icy blues  |  arcane: deep purple (default)  |  fire_mage: red/orange
+  const pal = sub === 'ice' ? {
+    robeLo0:'#102848', robeLo1:'#1c3c60', robeLo2:'#0c1e38',
+    robeHem:'#4880b0', runicAlpha: orbPulse*.5,
+    robeBody0:'#1a3a60', robeBody1:'#2a5080', robeBody2:'#102848',
+    robeSeam:'#80c0e8',
+    belt:'#1a3050', beltBuckle:'#80c0e8',
+    sleeve:'#1a3860',
+    eyeColor:`rgba(140,220,255,${orbPulse})`,
+    hatBrim:'#0a1e38', hatBrimEdge:'#4080c0',
+    hat0:'#1840a0', hat1:'#102870', hat2:'#081840',
+    hatEdge:'#5090d0',
+    hatStar:`rgba(180,230,255,${orbPulse})`,
+    crystalGlow0:`rgba(140,220,255,${orbPulse*.55})`, crystalGlow1:'rgba(30,100,200,0)',
+    crystal0:`rgba(200,240,255,${orbPulse})`, crystal1:`rgba(80,180,255,${orbPulse*.9})`, crystal2:`rgba(20,80,180,${orbPulse*.6})`,
+    crystalFacet:`rgba(200,240,255,${orbPulse*.6})`,
+    aura:{color:'rgba(80,160,255,0.20)', shadow:'rgba(80,200,255,0.7)'},
+    snowflakes: true,
+  } : sub === 'fire_mage' ? {
+    robeLo0:'#481008', robeLo1:'#6a1808', robeLo2:'#380a04',
+    robeHem:'#c04020', runicAlpha: orbPulse*.5,
+    robeBody0:'#6a1808', robeBody1:'#902010', robeBody2:'#4a0e06',
+    robeSeam:'#ff8040',
+    belt:'#4a1808', beltBuckle:'#ff8040',
+    sleeve:'#6a1808',
+    eyeColor:`rgba(255,160,60,${orbPulse})`,
+    hatBrim:'#381008', hatBrimEdge:'#c04020',
+    hat0:'#901810', hat1:'#601008', hat2:'#380806',
+    hatEdge:'#d04020',
+    hatStar:`rgba(255,200,80,${orbPulse})`,
+    crystalGlow0:`rgba(255,120,40,${orbPulse*.55})`, crystalGlow1:'rgba(200,40,0,0)',
+    crystal0:`rgba(255,200,120,${orbPulse})`, crystal1:`rgba(255,80,20,${orbPulse*.9})`, crystal2:`rgba(160,20,0,${orbPulse*.6})`,
+    crystalFacet:`rgba(255,180,100,${orbPulse*.6})`,
+    aura:{color:'rgba(220,80,20,0.22)', shadow:'rgba(255,100,30,0.8)'},
+    fireParticles: true,
+  } : { // arcane default
+    robeLo0:'#3a1a60', robeLo1:'#4e2680', robeLo2:'#2a1248',
+    robeHem:'#8850c0', runicAlpha: orbPulse*.5,
+    robeBody0:'#5a2898', robeBody1:'#6e34b0', robeBody2:'#3e1870',
+    robeSeam:'#c088f0',
+    belt:'#8a5820', beltBuckle:'#e8c060',
+    sleeve:'#7040b8',
+    eyeColor:`rgba(200,120,255,${orbPulse})`,
+    hatBrim:'#22104a', hatBrimEdge:'#8840d0',
+    hat0:'#6028c0', hat1:'#4820a0', hat2:'#2a1060',
+    hatEdge:'#9050e0',
+    hatStar:`rgba(240,200,80,${orbPulse})`,
+    crystalGlow0:`rgba(180,80,255,${orbPulse*.55})`, crystalGlow1:'rgba(100,30,200,0)',
+    crystal0:`rgba(240,200,255,${orbPulse})`, crystal1:`rgba(180,80,255,${orbPulse*.9})`, crystal2:`rgba(80,20,160,${orbPulse*.6})`,
+    crystalFacet:`rgba(255,200,255,${orbPulse*.6})`,
+    aura: null,
+  };
+
   ctx.save();
   ctx.translate(p.x, p.y + breath);
   ctx.rotate(angle - Math.PI / 2);
 
+  // ── SUBCLASS AURA ──────────────────────────────────────
+  if (pal.aura) {
+    const auraPulse = Math.sin(now / 380) * 0.4 + 0.6;
+    ctx.save();
+    ctx.shadowColor = pal.aura.shadow; ctx.shadowBlur = 20 * auraPulse;
+    const auraGrd = ctx.createRadialGradient(0, 0, t*.2, 0, 0, t*1.5);
+    auraGrd.addColorStop(0, pal.aura.color); auraGrd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = auraGrd;
+    ctx.beginPath(); ctx.ellipse(0, t*.3, t*1.4, t*.55, 0, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+
   // ── ROBE LOWER / LEGS ────────────────────────────────
-  // Wide flowing robe bottom — two panels suggesting legs
   const robeLo = ctx.createLinearGradient(-t * .72, t * .3, t * .72, t * 1.1);
-  robeLo.addColorStop(0, '#3a1a60');
-  robeLo.addColorStop(0.5, '#4e2680');
-  robeLo.addColorStop(1, '#2a1248');
+  robeLo.addColorStop(0, pal.robeLo0); robeLo.addColorStop(0.5, pal.robeLo1); robeLo.addColorStop(1, pal.robeLo2);
   ctx.fillStyle = robeLo;
   ctx.beginPath();
   ctx.moveTo(-t * .52, t * .28);
@@ -2649,129 +2940,128 @@ function drawMagePlayer(ctx, p) {
   ctx.lineTo(t * .48, t * 1.08);
   ctx.bezierCurveTo(t * .68, t * .85, t * .72, t * .55, t * .52, t * .28);
   ctx.fill();
-  // Robe hem detail
-  ctx.strokeStyle = '#8850c0'; ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(-t * .48, t * 1.08); ctx.lineTo(t * .48, t * 1.08);
-  ctx.stroke();
-  // Runic glyphs on hem
-  ctx.fillStyle = `rgba(180,100,255,${orbPulse * .5})`;
+  ctx.strokeStyle = pal.robeHem; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-t * .48, t * 1.08); ctx.lineTo(t * .48, t * 1.08); ctx.stroke();
+  ctx.fillStyle = pal.robeHem.replace('#','rgba(').replace(')',',').slice(0,-1); // fall back
+  // runic glyphs on hem
+  ctx.fillStyle = sub==='ice'?`rgba(140,220,255,${orbPulse*.5})`:sub==='fire_mage'?`rgba(255,140,60,${orbPulse*.5})`:`rgba(180,100,255,${orbPulse * .5})`;
   ctx.font = `${Math.floor(t * .35)}px serif`; ctx.textAlign = 'center';
   ctx.fillText('✦', -t * .22, t * 1.06);
   ctx.fillText('✧', t * .22, t * 1.06);
 
   // ── ROBE BODY / TORSO ────────────────────────────────
   const robeBody = ctx.createLinearGradient(-t * .62, -t * .5, t * .62, t * .4);
-  robeBody.addColorStop(0, '#5a2898');
-  robeBody.addColorStop(0.4, '#6e34b0');
-  robeBody.addColorStop(1, '#3e1870');
+  robeBody.addColorStop(0, pal.robeBody0); robeBody.addColorStop(0.4, pal.robeBody1); robeBody.addColorStop(1, pal.robeBody2);
   ctx.fillStyle = robeBody;
-  ctx.beginPath();
-  ctx.roundRect(-t * .62, -t * .48, t * 1.24, t * .84, [6, 6, 2, 2]);
-  ctx.fill();
-  // Robe front seam / trim
-  ctx.strokeStyle = '#c088f0'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(-t * .62, -t * .48, t * 1.24, t * .84, [6, 6, 2, 2]); ctx.fill();
+  ctx.strokeStyle = pal.robeSeam; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(0, -t * .44); ctx.lineTo(0, t * .28); ctx.stroke();
-  // Belt
-  ctx.fillStyle = '#8a5820';
+  ctx.fillStyle = pal.belt;
   ctx.beginPath(); ctx.roundRect(-t * .62, t * .06, t * 1.24, t * .17, [2]); ctx.fill();
-  ctx.fillStyle = '#e8c060';
+  ctx.fillStyle = pal.beltBuckle;
   ctx.beginPath(); ctx.roundRect(-t * .12, t * .04, t * .24, t * .2, [3]); ctx.fill();
-  // Robe shoulders, flowing sleeves
-  ctx.fillStyle = '#7040b8';
+  ctx.fillStyle = pal.sleeve;
   ctx.beginPath(); ctx.ellipse(-t * .7, -t * .28, t * .28, t * .38, .2, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(t * .7, -t * .28, t * .28, t * .38, -.2, 0, Math.PI * 2); ctx.fill();
 
   // ── HEAD ─────────────────────────────────────────────
-  // Neck
   ctx.fillStyle = '#c8a080';
   ctx.beginPath(); ctx.roundRect(-t * .14, -t * .56, t * .28, t * .14, [2]); ctx.fill();
-  // Head / face
   const skinGrad = ctx.createRadialGradient(-t * .08, -t * .78, t * .05, 0, -t * .76, t * .36);
   skinGrad.addColorStop(0, '#e8c098'); skinGrad.addColorStop(1, '#c89870');
   ctx.fillStyle = skinGrad;
   ctx.beginPath(); ctx.ellipse(0, -t * .78, t * .32, t * .3, 0, 0, Math.PI * 2); ctx.fill();
-  // Eyes — glowing arcane
-  ctx.fillStyle = `rgba(200,120,255,${orbPulse})`;
+  // Eyes
+  if (sub==='ice') ctx.shadowColor='#a0d8ff', ctx.shadowBlur=8;
+  else if (sub==='fire_mage') ctx.shadowColor='#ff8030', ctx.shadowBlur=8;
+  ctx.fillStyle = pal.eyeColor;
   ctx.beginPath(); ctx.ellipse(-t * .12, -t * .80, t * .08, t * .07, .1, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(t * .12, -t * .80, t * .08, t * .07, -.1, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
   ctx.fillStyle = '#fff';
   ctx.beginPath(); ctx.arc(-t * .11, -t * .81, t * .025, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(t * .13, -t * .81, t * .025, 0, Math.PI * 2); ctx.fill();
-  // Beard / chin stubble (small)
   ctx.fillStyle = 'rgba(90,60,30,.5)';
   ctx.beginPath(); ctx.ellipse(0, -t * .62, t * .2, t * .1, 0, 0, Math.PI * 2); ctx.fill();
 
   // ── POINTED HAT ──────────────────────────────────────
-  const hatSwayX = Math.sin(now / 800) * t * .06; // hat sways gently
-  // Hat brim
-  ctx.fillStyle = '#22104a';
+  const hatSwayX = Math.sin(now / 800) * t * .06;
+  ctx.fillStyle = pal.hatBrim;
   ctx.beginPath(); ctx.ellipse(hatSwayX * .3, -t * .96, t * .44, t * .1, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#8840d0'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.hatBrimEdge; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.ellipse(hatSwayX * .3, -t * .96, t * .44, t * .1, 0, 0, Math.PI * 2); ctx.stroke();
-  // Hat cone
   const hatGrad = ctx.createLinearGradient(-t * .3 + hatSwayX, -t * 1.9, t * .1 + hatSwayX, -t * .96);
-  hatGrad.addColorStop(0, '#6028c0');
-  hatGrad.addColorStop(0.5, '#4820a0');
-  hatGrad.addColorStop(1, '#2a1060');
+  hatGrad.addColorStop(0, pal.hat0); hatGrad.addColorStop(0.5, pal.hat1); hatGrad.addColorStop(1, pal.hat2);
   ctx.fillStyle = hatGrad;
   ctx.beginPath();
   ctx.moveTo(hatSwayX, -t * 1.88);
   ctx.lineTo(-t * .36 + hatSwayX * .5, -t * .96);
   ctx.lineTo(t * .36 + hatSwayX * .5, -t * .96);
   ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#9050e0'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.hatEdge; ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(hatSwayX, -t * 1.88);
-  ctx.lineTo(-t * .36 + hatSwayX * .5, -t * .96);
-  ctx.moveTo(hatSwayX, -t * 1.88);
-  ctx.lineTo(t * .36 + hatSwayX * .5, -t * .96);
+  ctx.moveTo(hatSwayX, -t * 1.88); ctx.lineTo(-t * .36 + hatSwayX * .5, -t * .96);
+  ctx.moveTo(hatSwayX, -t * 1.88); ctx.lineTo(t * .36 + hatSwayX * .5, -t * .96);
   ctx.stroke();
-  // Star on hat
-  ctx.fillStyle = `rgba(240,200,80,${orbPulse})`;
+  // Hat symbol — unique per subclass
+  if (sub === 'ice') ctx.shadowColor = '#a0d8ff', ctx.shadowBlur = 10;
+  else if (sub === 'fire_mage') ctx.shadowColor = '#ff8040', ctx.shadowBlur = 12;
+  ctx.fillStyle = pal.hatStar;
   ctx.font = `${Math.floor(t * .38)}px serif`; ctx.textAlign = 'center';
-  ctx.fillText('✦', hatSwayX, -t * 1.42);
+  ctx.fillText(sub==='ice'?'❄':sub==='fire_mage'?'🔥':'✦', hatSwayX, -t * 1.42);
+  ctx.shadowBlur = 0;
 
-  // ── STAFF (left hand, raised forward) ────────────────
+  // ── STAFF (left hand) ────────────────────────────────
   ctx.save();
   const staffBob = Math.sin(now / 600) * 0.8;
   ctx.translate(-t * .78, -t * .24 + staffBob * .04);
-  // Staff pole
   const staffGrad = ctx.createLinearGradient(-t * .07, -t * 1.5, t * .07, t * .72);
   staffGrad.addColorStop(0, '#8a5825'); staffGrad.addColorStop(0.5, '#a07030'); staffGrad.addColorStop(1, '#6a4018');
   ctx.fillStyle = staffGrad;
   ctx.beginPath(); ctx.roundRect(-t * .07, -t * 1.38, t * .14, t * 2.1, [4]); ctx.fill();
   ctx.strokeStyle = '#c09050'; ctx.lineWidth = .8;
   ctx.beginPath(); ctx.moveTo(-t * .01, -t * 1.35); ctx.lineTo(-t * .01, t * .68); ctx.stroke();
-  // Staff windings
   ctx.strokeStyle = '#c08030'; ctx.lineWidth = 1.5;
   for (let wr = 0; wr < 3; wr++) {
     const wy = -t * .6 + wr * t * .36;
     ctx.beginPath(); ctx.moveTo(-t * .08, wy); ctx.lineTo(t * .08, wy + t * .1); ctx.stroke();
   }
-  // Crystal orb at top
+  // Crystal orb — subclass colored
   const crystalPulse = Math.sin(now / 220) * 0.4 + 0.7;
-  // Outer glow
   const glowGrd = ctx.createRadialGradient(0, -t * 1.56, 0, 0, -t * 1.56, t * .62);
-  glowGrd.addColorStop(0, `rgba(180,80,255,${crystalPulse * .55})`);
-  glowGrd.addColorStop(1, 'rgba(100,30,200,0)');
+  glowGrd.addColorStop(0, pal.crystalGlow0); glowGrd.addColorStop(1, pal.crystalGlow1);
   ctx.fillStyle = glowGrd;
+  if (sub==='ice') ctx.shadowColor='#80d0ff', ctx.shadowBlur=16;
+  else if (sub==='fire_mage') ctx.shadowColor='#ff6020', ctx.shadowBlur=18;
   ctx.beginPath(); ctx.arc(0, -t * 1.56, t * .62, 0, Math.PI * 2); ctx.fill();
-  // Crystal body
+  ctx.shadowBlur = 0;
   const crystalGrd = ctx.createRadialGradient(-t * .1, -t * 1.62, t * .04, 0, -t * 1.58, t * .34);
-  crystalGrd.addColorStop(0, `rgba(240,200,255,${crystalPulse})`);
-  crystalGrd.addColorStop(0.4, `rgba(180,80,255,${crystalPulse * .9})`);
-  crystalGrd.addColorStop(1, `rgba(80,20,160,${crystalPulse * .6})`);
+  crystalGrd.addColorStop(0, pal.crystal0); crystalGrd.addColorStop(0.4, pal.crystal1); crystalGrd.addColorStop(1, pal.crystal2);
   ctx.fillStyle = crystalGrd;
   ctx.beginPath(); ctx.arc(0, -t * 1.58, t * .32, 0, Math.PI * 2); ctx.fill();
-  // Crystal facet lines
-  ctx.strokeStyle = `rgba(255,200,255,${crystalPulse * .6})`; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.crystalFacet; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(-t * .18, -t * 1.58); ctx.lineTo(t * .18, -t * 1.58); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(0, -t * 1.82); ctx.lineTo(0, -t * 1.34); ctx.stroke();
-  // Crystal sparkle
   if (Math.sin(now / 150) > 0.6) {
     ctx.fillStyle = 'rgba(255,255,255,.9)';
     ctx.beginPath(); ctx.arc(-t * .08, -t * 1.66, t * .06, 0, Math.PI * 2); ctx.fill();
+  }
+  // Ice: extra snowflake crystals around orb
+  if (sub === 'ice' && Math.sin(now/400) > 0.3) {
+    ctx.strokeStyle = `rgba(180,230,255,${0.4+Math.sin(now/300)*0.3})`; ctx.lineWidth = 1;
+    const sAngle = (now / 800) % (Math.PI * 2);
+    for (let i=0;i<6;i++) {
+      const a = sAngle + i * Math.PI / 3;
+      const r = t * .52;
+      ctx.beginPath(); ctx.moveTo(0, -t*1.58); ctx.lineTo(Math.cos(a)*r, -t*1.58+Math.sin(a)*r); ctx.stroke();
+    }
+  }
+  // Fire: ember sparks around orb
+  if (sub === 'fire_mage') {
+    const sp = Math.sin(now/120)*0.5+0.5;
+    ctx.fillStyle = `rgba(255,200,60,${sp*.7})`;
+    ctx.beginPath(); ctx.arc(Math.sin(now/300)*t*.3, -t*1.58+Math.cos(now/250)*t*.3-t*.3, t*.06, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(Math.sin(now/400+1)*t*.35, -t*1.58+Math.cos(now/350+1)*t*.25-t*.2, t*.05, 0, Math.PI*2); ctx.fill();
   }
   ctx.restore();
 
@@ -2782,48 +3072,118 @@ function drawArcherPlayer(ctx, p) {
   const now = Date.now();
   const angle = Math.atan2(p.facing.y, p.facing.x);
   const breath = Math.sin(now / 480) * 0.9;
-  // Subtle draw-bow arm pulse
-  const drawPulse = Math.sin(now / 700) * 0.5 + 0.5; // 0..1
+  const drawPulse = Math.sin(now / 700) * 0.5 + 0.5;
+  const sub = p.subSkill || 'none';
+
+  // ── SUBCLASS PALETTE ──────────────────────────────────
+  // poison: dark green/purple  |  wind: teal/cyan  |  fire_archer: orange/red
+  const pal = sub === 'poison' ? {
+    legging:'#162810', boot:'#1a1408',
+    tunic0:'#1a3010', tunic1:'#223818', tunic2:'#141e0c',
+    tunicEdge:'#2a5020',
+    shoulder:'#2a2010', shoulderEdge:'#4a3820',
+    belt:'#2a1808', buckle:'#6dde60',
+    cape0:'rgba(12,28,8,.9)', cape1:'rgba(6,18,4,.3)',
+    hood0:'#0e2008', hood1:'#122610', hood2:'#0c1c06',
+    hoodEdge:'#1c3814',
+    eye:`rgba(80,220,60,${Math.sin(now/320)*.15+.82})`,
+    bowLimb:'#3a2810', bowHi:'#6a4020',
+    bowString:'#90e060',
+    arrowShaft:'#a0e060', arrowHead:'#80ff40', arrowFletch:'#50c020',
+    aura:{color:'rgba(60,200,40,0.18)', shadow:'rgba(80,220,60,0.7)'},
+    drip: true,
+  } : sub === 'wind' ? {
+    legging:'#0e2838', boot:'#081c28',
+    tunic0:'#102838', tunic1:'#184060', tunic2:'#0c1e30',
+    tunicEdge:'#2060a0',
+    shoulder:'#1a3050', shoulderEdge:'#4080c0',
+    belt:'#0e2038', buckle:'#7ae8e8',
+    cape0:'rgba(8,20,34,.85)', cape1:'rgba(4,12,22,.25)',
+    hood0:'#081830', hood1:'#0c2040', hood2:'#061428',
+    hoodEdge:'#1840a0',
+    eye:`rgba(120,230,230,${Math.sin(now/320)*.15+.82})`,
+    bowLimb:'#1840a0', bowHi:'#4090d0',
+    bowString:'#80e8e8',
+    arrowShaft:'#80d8e8', arrowHead:'#c0f0f8', arrowFletch:'#40c0c8',
+    aura:{color:'rgba(60,180,220,0.18)', shadow:'rgba(80,220,230,0.65)'},
+    streamers: true,
+  } : sub === 'fire_archer' ? {
+    legging:'#381008', boot:'#220a04',
+    tunic0:'#502010', tunic1:'#6a2c14', tunic2:'#381808',
+    tunicEdge:'#904020',
+    shoulder:'#5a2810', shoulderEdge:'#c05020',
+    belt:'#3a1808', buckle:'#ffb040',
+    cape0:'rgba(40,10,4,.9)', cape1:'rgba(22,6,2,.3)',
+    hood0:'#3a1008', hood1:'#4a1810', hood2:'#2a0c06',
+    hoodEdge:'#802010',
+    eye:`rgba(255,140,40,${Math.sin(now/320)*.15+.82})`,
+    bowLimb:'#602010', bowHi:'#c04020',
+    bowString:'#ff8040',
+    arrowShaft:'#ff9030', arrowHead:'#ffcc60', arrowFletch:'#ff4010',
+    aura:{color:'rgba(220,80,20,0.20)', shadow:'rgba(255,120,40,0.7)'},
+    embers: true,
+  } : { // default green
+    legging:'#1e3818', boot:'#2a1e0e',
+    tunic0:'#2e5228', tunic1:'#3a6030', tunic2:'#223820',
+    tunicEdge:'#4a7838',
+    shoulder:'#5a4020', shoulderEdge:'#8a6030',
+    belt:'#4a3018', buckle:'#e8c060',
+    cape0:'rgba(18,48,16,.9)', cape1:'rgba(10,28,8,.3)',
+    hood0:'#163014', hood1:'#1a3818', hood2:'#122810',
+    hoodEdge:'#2a4a26',
+    eye:`rgba(46,204,113,${Math.sin(now/320)*.15+.82})`,
+    bowLimb:'#7a4818', bowHi:'#a06828',
+    bowString:'#d4c070',
+    arrowShaft:'#c8b860', arrowHead:'#d0d8e8', arrowFletch:'#e84040',
+    aura: null,
+  };
+
   ctx.save();
   ctx.translate(p.x, p.y + breath);
   ctx.rotate(angle - Math.PI / 2);
+
+  // ── SUBCLASS AURA ──────────────────────────────────────
+  if (pal.aura) {
+    const auraPulse = Math.sin(now / 350) * 0.4 + 0.6;
+    ctx.save();
+    ctx.shadowColor = pal.aura.shadow; ctx.shadowBlur = 16 * auraPulse;
+    const auraGrd = ctx.createRadialGradient(0, 0, t*.2, 0, 0, t*1.4);
+    auraGrd.addColorStop(0, pal.aura.color); auraGrd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = auraGrd;
+    ctx.beginPath(); ctx.ellipse(0, t*.3, t*1.2, t*.45, 0, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.restore();
+  }
 
   // ── LEGS ─────────────────────────────────────────────
   const legSwing = Math.sin(now / 280) * 0.09;
   ctx.save();
   ctx.rotate(legSwing);
-  // Legging left
-  ctx.fillStyle = '#1e3818';
+  ctx.fillStyle = pal.legging;
   ctx.beginPath(); ctx.roundRect(-t * .42, t * .36, t * .34, t * .7, [2, 2, 3, 3]); ctx.fill();
-  // Boot left
-  ctx.fillStyle = '#2a1e0e';
+  ctx.fillStyle = pal.boot;
   ctx.beginPath(); ctx.roundRect(-t * .44, t * .88, t * .38, t * .24, [2]); ctx.fill();
   ctx.restore();
   ctx.save();
   ctx.rotate(-legSwing);
-  // Legging right
-  ctx.fillStyle = '#1e3818';
+  ctx.fillStyle = pal.legging;
   ctx.beginPath(); ctx.roundRect(t * .08, t * .36, t * .34, t * .7, [2, 2, 3, 3]); ctx.fill();
-  // Boot right
-  ctx.fillStyle = '#2a1e0e';
+  ctx.fillStyle = pal.boot;
   ctx.beginPath(); ctx.roundRect(t * .06, t * .88, t * .38, t * .24, [2]); ctx.fill();
   ctx.restore();
 
-  // ── QUIVER (back, right side) ─────────────────────────
+  // ── QUIVER ─────────────────────────────────────────────
   ctx.save();
   ctx.translate(t * .52, -t * .18);
   ctx.rotate(.25);
-  ctx.fillStyle = '#5a3a18';
+  ctx.fillStyle = sub==='fire_archer'?'#5a2010':sub==='wind'?'#1a3050':'#5a3a18';
   ctx.beginPath(); ctx.roundRect(-t * .12, -t * .52, t * .24, t * .68, [3, 3, 2, 2]); ctx.fill();
-  ctx.strokeStyle = '#8a5828'; ctx.lineWidth = 1;
+  ctx.strokeStyle = sub==='fire_archer'?'#904020':sub==='wind'?'#4080c0':'#8a5828'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.roundRect(-t * .12, -t * .52, t * .24, t * .68, [3, 3, 2, 2]); ctx.stroke();
-  // Arrows peeking out
-  ctx.strokeStyle = '#c8b870'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+  ctx.strokeStyle = pal.arrowShaft; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(-t * .04, -t * .54); ctx.lineTo(-t * .04, -t * .78); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(t * .04, -t * .56); ctx.lineTo(t * .04, -t * .82); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(0, -t * .52); ctx.lineTo(0, -t * .72); ctx.stroke();
-  // Arrow tips
-  ctx.fillStyle = '#e8c060';
+  ctx.fillStyle = pal.arrowHead;
   ctx.beginPath(); ctx.arc(-t * .04, -t * .78, t * .05, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(t * .04, -t * .82, t * .05, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(0, -t * .72, t * .05, 0, Math.PI * 2); ctx.fill();
@@ -2831,30 +3191,25 @@ function drawArcherPlayer(ctx, p) {
 
   // ── TUNIC / BODY ─────────────────────────────────────
   const tunicGrad = ctx.createLinearGradient(-t * .6, -t * .5, t * .6, t * .3);
-  tunicGrad.addColorStop(0, '#2e5228');
-  tunicGrad.addColorStop(0.45, '#3a6030');
-  tunicGrad.addColorStop(1, '#223820');
+  tunicGrad.addColorStop(0, pal.tunic0); tunicGrad.addColorStop(0.45, pal.tunic1); tunicGrad.addColorStop(1, pal.tunic2);
   ctx.fillStyle = tunicGrad;
   ctx.beginPath(); ctx.roundRect(-t * .6, -t * .5, t * 1.2, t * .86, [5, 5, 3, 3]); ctx.fill();
-  ctx.strokeStyle = '#4a7838'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.tunicEdge; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.roundRect(-t * .6, -t * .5, t * 1.2, t * .86, [5, 5, 3, 3]); ctx.stroke();
-  // Leather shoulder guards
-  ctx.fillStyle = '#5a4020';
+  ctx.fillStyle = pal.shoulder;
   ctx.beginPath(); ctx.ellipse(-t * .68, -t * .3, t * .22, t * .32, .25, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(t * .68, -t * .3, t * .22, t * .32, -.25, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#8a6030'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.shoulderEdge; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.ellipse(-t * .68, -t * .3, t * .22, t * .32, .25, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath(); ctx.ellipse(t * .68, -t * .3, t * .22, t * .32, -.25, 0, Math.PI * 2); ctx.stroke();
-  // Belt
-  ctx.fillStyle = '#4a3018';
+  ctx.fillStyle = pal.belt;
   ctx.beginPath(); ctx.roundRect(-t * .6, t * .2, t * 1.2, t * .15, [2]); ctx.fill();
-  ctx.fillStyle = '#e8c060';
+  ctx.fillStyle = pal.buckle;
   ctx.beginPath(); ctx.roundRect(-t * .1, t * .18, t * .2, t * .18, [2]); ctx.fill();
 
   // ── CAPE ─────────────────────────────────────────────
   const capeGrad = ctx.createLinearGradient(0, -t * .4, 0, t * 1.0);
-  capeGrad.addColorStop(0, 'rgba(18,48,16,.9)');
-  capeGrad.addColorStop(1, 'rgba(10,28,8,.3)');
+  capeGrad.addColorStop(0, pal.cape0); capeGrad.addColorStop(1, pal.cape1);
   ctx.fillStyle = capeGrad;
   ctx.beginPath();
   ctx.moveTo(-t * .22, -t * .38);
@@ -2864,28 +3219,28 @@ function drawArcherPlayer(ctx, p) {
   ctx.fill();
 
   // ── HEAD / HOOD ───────────────────────────────────────
-  // Neck
   ctx.fillStyle = '#c8a070';
   ctx.beginPath(); ctx.roundRect(-t * .14, -t * .56, t * .28, t * .14, [2]); ctx.fill();
-  // Face
   const faceGrad = ctx.createRadialGradient(-t * .06, -t * .78, t * .04, 0, -t * .76, t * .3);
   faceGrad.addColorStop(0, '#e0b888'); faceGrad.addColorStop(1, '#c89868');
   ctx.fillStyle = faceGrad;
   ctx.beginPath(); ctx.ellipse(0, -t * .78, t * .28, t * .26, 0, 0, Math.PI * 2); ctx.fill();
-  // Determined eyes (narrow, focused)
-  const eyeGlow = Math.sin(now / 320) * .15 + .82;
-  ctx.fillStyle = `rgba(46,204,113,${eyeGlow})`;
+  // Eyes — subclass colored
+  if (sub==='poison') ctx.shadowColor='#40e020', ctx.shadowBlur=7;
+  else if (sub==='wind') ctx.shadowColor='#60d8e8', ctx.shadowBlur=7;
+  else if (sub==='fire_archer') ctx.shadowColor='#ff8030', ctx.shadowBlur=8;
+  ctx.fillStyle = pal.eye;
   ctx.beginPath(); ctx.ellipse(-t * .11, -t * .80, t * .07, t * .055, .12, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(t * .11, -t * .80, t * .07, t * .055, -.12, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
   ctx.fillStyle = '#000';
   ctx.beginPath(); ctx.ellipse(-t * .11, -t * .80, t * .035, t * .03, 0, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(t * .11, -t * .80, t * .035, t * .03, 0, 0, Math.PI * 2); ctx.fill();
-  // Nose
   ctx.fillStyle = 'rgba(160,100,60,.5)';
   ctx.beginPath(); ctx.arc(0, -t * .74, t * .04, 0, Math.PI * 2); ctx.fill();
-  // Hood — drawn over forehead
+  // Hood
   const hoodGrad = ctx.createLinearGradient(-t * .34, -t * 1.5, t * .34, -t * .62);
-  hoodGrad.addColorStop(0, '#163014'); hoodGrad.addColorStop(0.5, '#1a3818'); hoodGrad.addColorStop(1, '#122810');
+  hoodGrad.addColorStop(0, pal.hood0); hoodGrad.addColorStop(0.5, pal.hood1); hoodGrad.addColorStop(1, pal.hood2);
   ctx.fillStyle = hoodGrad;
   ctx.beginPath();
   ctx.moveTo(-t * .3, -t * .68);
@@ -2893,76 +3248,63 @@ function drawArcherPlayer(ctx, p) {
   ctx.bezierCurveTo(t * .28, -t * 1.48, t * .42, -t * 1.0, t * .3, -t * .68);
   ctx.bezierCurveTo(t * .26, -t * .58, -t * .26, -t * .58, -t * .3, -t * .68);
   ctx.fill();
-  // Hood edge highlight
-  ctx.strokeStyle = '#2a4a26'; ctx.lineWidth = 1;
+  ctx.strokeStyle = pal.hoodEdge; ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(-t * .3, -t * .68);
   ctx.bezierCurveTo(-t * .42, -t * 1.0, -t * .28, -t * 1.48, 0, -t * 1.62);
   ctx.bezierCurveTo(t * .28, -t * 1.48, t * .42, -t * 1.0, t * .3, -t * .68);
   ctx.stroke();
-  // Ear left
   ctx.fillStyle = '#c8a070';
   ctx.beginPath(); ctx.moveTo(-t * .28, -t * .78); ctx.lineTo(-t * .46, -t * .93); ctx.lineTo(-t * .22, -t * .7); ctx.fill();
 
-  // ── BOW (right side, pointing FORWARD = up in local space) ──
-  // In local space: "forward" is UP (negative Y). Bow is held in right hand.
-  // The bow arc opens toward the LEFT (negative X) so the string faces left
-  // and the arrow flies up (forward).
+  // ── BOW ──────────────────────────────────────────────
   ctx.save();
   ctx.translate(t * .88, -t * .12);
-  // Bow limbs — arc curves LEFT, opening toward the body side
-  const bowDraw = drawPulse * t * .08; // string drawn back slightly
-  ctx.strokeStyle = '#7a4818'; ctx.lineWidth = t * .22; ctx.lineCap = 'round';
+  const bowDraw = drawPulse * t * .08;
+  // Glow effect on bow for fire/wind
+  if (sub==='fire_archer') ctx.shadowColor='#ff6020', ctx.shadowBlur=8;
+  else if (sub==='wind') ctx.shadowColor='#60c8e8', ctx.shadowBlur=7;
+  ctx.strokeStyle = pal.bowLimb; ctx.lineWidth = t * .22; ctx.lineCap = 'round';
   ctx.beginPath();
-  // Top limb: from centre upward, curving left
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(-t * .55, -t * .55, -t * .18, -t * 1.05);
-  ctx.stroke();
-  // Bottom limb: from centre downward, curving left
+  ctx.moveTo(0, 0); ctx.quadraticCurveTo(-t * .55, -t * .55, -t * .18, -t * 1.05); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(-t * .55, t * .55, -t * .18, t * 1.05);
-  ctx.stroke();
-  // Outer bow highlight
-  ctx.strokeStyle = '#a06828'; ctx.lineWidth = t * .1;
+  ctx.moveTo(0, 0); ctx.quadraticCurveTo(-t * .55, t * .55, -t * .18, t * 1.05); ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = pal.bowHi; ctx.lineWidth = t * .1;
   ctx.beginPath();
-  ctx.moveTo(-t * .05, -t * .18);
-  ctx.quadraticCurveTo(-t * .44, -t * .52, -t * .16, -t * 1.02);
-  ctx.stroke();
+  ctx.moveTo(-t * .05, -t * .18); ctx.quadraticCurveTo(-t * .44, -t * .52, -t * .16, -t * 1.02); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(-t * .05, t * .18);
-  ctx.quadraticCurveTo(-t * .44, t * .52, -t * .16, t * 1.02);
-  ctx.stroke();
-  // Bowstring — stretches from tip to tip with draw-back
-  ctx.strokeStyle = '#d4c070'; ctx.lineWidth = 1.4;
+  ctx.moveTo(-t * .05, t * .18); ctx.quadraticCurveTo(-t * .44, t * .52, -t * .16, t * 1.02); ctx.stroke();
+  ctx.strokeStyle = pal.bowString; ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.moveTo(-t * .18, -t * 1.05);
-  ctx.quadraticCurveTo(bowDraw, 0, -t * .18, t * 1.05);
-  ctx.stroke();
-  // Nocked arrow
-  ctx.strokeStyle = '#c8b860'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.moveTo(-t * .18, -t * 1.05); ctx.quadraticCurveTo(bowDraw, 0, -t * .18, t * 1.05); ctx.stroke();
+  // Nocked arrow — subclass colored
+  ctx.strokeStyle = pal.arrowShaft; ctx.lineWidth = 2; ctx.lineCap = 'round';
   const arrowX = bowDraw * .35;
+  ctx.beginPath(); ctx.moveTo(arrowX, t * .22); ctx.lineTo(arrowX, -t * .98); ctx.stroke();
+  ctx.fillStyle = pal.arrowHead;
+  if (sub === 'fire_archer') ctx.shadowColor='#ffcc40', ctx.shadowBlur=8;
   ctx.beginPath();
-  ctx.moveTo(arrowX, t * .22); ctx.lineTo(arrowX, -t * .98); ctx.stroke();
-  // Arrowhead
-  ctx.fillStyle = '#d0d8e8';
+  ctx.moveTo(arrowX, -t * 1.0); ctx.lineTo(arrowX - t * .06, -t * .82); ctx.lineTo(arrowX + t * .06, -t * .82); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = pal.arrowFletch;
   ctx.beginPath();
-  ctx.moveTo(arrowX, -t * 1.0);
-  ctx.lineTo(arrowX - t * .06, -t * .82);
-  ctx.lineTo(arrowX + t * .06, -t * .82);
-  ctx.fill();
-  // Fletching
-  ctx.fillStyle = '#e84040';
+  ctx.moveTo(arrowX, t * .22); ctx.lineTo(arrowX - t * .1, t * .4); ctx.lineTo(arrowX, t * .3); ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(arrowX, t * .22);
-  ctx.lineTo(arrowX - t * .1, t * .4);
-  ctx.lineTo(arrowX, t * .3);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(arrowX, t * .22);
-  ctx.lineTo(arrowX + t * .1, t * .4);
-  ctx.lineTo(arrowX, t * .3);
-  ctx.fill();
+  ctx.moveTo(arrowX, t * .22); ctx.lineTo(arrowX + t * .1, t * .4); ctx.lineTo(arrowX, t * .3); ctx.fill();
+  // Poison: drip drops on arrow
+  if (sub === 'poison' && Math.sin(now/300) > 0.2) {
+    const drip = (Math.sin(now/400)+1)*0.5;
+    ctx.fillStyle = `rgba(80,220,40,${0.6+drip*0.4})`;
+    ctx.beginPath(); ctx.arc(arrowX, -t*.5 + drip*t*.3, t*.06, 0, Math.PI*2); ctx.fill();
+  }
+  // Wind: speed lines around bow
+  if (sub === 'wind') {
+    const wPhase = (now/300) % (Math.PI*2);
+    ctx.strokeStyle = `rgba(100,210,230,${0.3+Math.sin(wPhase)*0.2})`; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-t*.4, -t*.8); ctx.lineTo(-t*.8, -t*.8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-t*.35, 0); ctx.lineTo(-t*.75, 0); ctx.stroke();
+  }
   ctx.restore();
 
   ctx.restore();
@@ -3365,12 +3707,15 @@ function renderNpcPanel() {
 
   for (const sub of subOptions) {
     const card = document.createElement('div');
+    const vis = (typeof SUB_VISUAL !== 'undefined' && SUB_VISUAL[sub.id]) || {};
     card.className = 'npc-sub-card' + (npcSelectedSubclass === sub.id ? ' selected' : '');
+    card.setAttribute('data-sub', sub.id);
     card.innerHTML = `
       <span class="nsc-icon">${sub.icon}</span>
       <div class="nsc-name">${sub.name}</div>
-      <div class="nsc-desc">${sub.desc}</div>
+      <div class="nsc-desc">${vis.flavour || sub.desc}</div>
       <div class="nsc-bonus">${sub.bonuses}</div>
+      ${vis.tag ? `<div style="font-size:8px;margin-top:5px;opacity:.7;font-family:VT323,monospace;letter-spacing:.08em;">${vis.tag}</div>` : ''}
     `;
     card.addEventListener('click', () => {
       npcSelectedSubclass = sub.id;
@@ -3554,11 +3899,32 @@ document.addEventListener('click', ev => {
 // ─────────────────────────────────────────────────────────
 // SUBCLASSE (original level-up screen)
 // ─────────────────────────────────────────────────────────
+const SUB_VISUAL = {
+  defensive:{tag:'Proteção',flavour:'A muralha intransponível que nunca recua.'},
+  berserker:{tag:'Destruição',flavour:'A raiva é sua armadura, o caos é sua arma.'},
+  holy:{tag:'Sagrado',flavour:'Abençoado pelos deuses, temido pelos demônios.'},
+  ice:{tag:'Criomagia',flavour:'Congela o tempo e os corações dos inimigos.'},
+  arcane:{tag:'Arcano',flavour:'O poder bruto da criação em suas mãos.'},
+  fire_mage:{tag:'Piromancia',flavour:'Onde pisas, apenas cinzas permanecem.'},
+  poison:{tag:'Toxinologia',flavour:'A morte silenciosa que corrói por dentro.'},
+  wind:{tag:'Agilidade',flavour:'Mais rápido que o olho pode ver.'},
+  fire_archer:{tag:'Pirotecnia',flavour:'Cada flecha carrega a ira de um vulcão.'},
+};
+function _buildSubParticles(n=5){let h='';for(let i=0;i<n;i++){const x=10+Math.random()*80,y=20+Math.random()*60,d=(Math.random()*2).toFixed(2),dur=(1.5+Math.random()*1.5).toFixed(2),sz=3+Math.floor(Math.random()*4);h+=`<div class="sub-banner-particle" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;animation-delay:${d}s;animation-duration:${dur}s;"></div>`;}return h;}
+
 function showSubclassScreen(){
   if(gameState!=='playing')return;gameState='subclass';
   const screen=document.getElementById('screen-subclass');screen.classList.add('active');
-  const opts=SUBCLASS_DEF[player.classId];const row=document.getElementById('sub-options');row.innerHTML='';
-  for(const opt of opts){const card=document.createElement('div');card.className='sub-card';card.innerHTML=`<span class="sub-icon">${opt.icon}</span><div class="sub-name">${opt.name}</div><div class="sub-desc">${opt.desc}</div><div class="sub-bonuses">${opt.bonuses}</div>`;card.onclick=()=>chooseSubclass(opt);row.appendChild(card);}
+  const opts=SUBCLASS_DEF[player.classId];
+  const row=document.getElementById('sub-options');row.innerHTML='';
+  for(const opt of opts){
+    const vis=SUB_VISUAL[opt.id]||{};
+    const card=document.createElement('div');
+    card.className='sub-card';card.setAttribute('data-sub',opt.id);
+    const bonusLines=opt.bonuses.split(',').map(b=>`<div style="display:flex;align-items:center;gap:6px;justify-content:center;"><span style="opacity:.5;font-size:10px;">▸</span>${b.trim()}</div>`).join('');
+    card.innerHTML=`<div class="sub-card-banner">${_buildSubParticles(7)}<div class="sub-card-orb">${opt.icon}</div></div><div class="sub-card-body"><div class="sub-name">${opt.name}</div><div class="sub-card-divider"></div><div class="sub-desc">${vis.flavour||opt.desc}</div><div class="sub-bonuses">${bonusLines}</div><div class="sub-card-tag">${vis.tag||'Especialização'}</div></div>`;
+    card.onclick=()=>chooseSubclass(opt);row.appendChild(card);
+  }
 }
 
 function chooseSubclass(opt){
@@ -3964,7 +4330,7 @@ function createPlayer(classId) {
     atkTimer: 0, dashTimer: 0, dashMaxCd: 3000,
     isDashing: false, dashDuration: 0, dashDirX: 0, dashDirY: 0,
     skillCds: [0, 0, 0], hitFlash: 0, isAlive: true,
-    subclass: null, subSkill: null, subclassChosen: false,
+    subclass: null, subSkill: null, _subSkillLogic: null, subclassChosen: false,
     skillDmgMult: 1, arrowAoe: 0, holyRegen: false, fireAura: false,
     holyRegenTimer: 0, fireAuraTimer: 0, poisonProc: .25, rageBonus: 0,
     activePetType: null,
