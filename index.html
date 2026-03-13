@@ -456,7 +456,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .inv-main-title { font-family:'Cinzel',serif; font-size:12px; color:var(--amber); letter-spacing:.1em; margin-bottom:10px; border-bottom:1px solid #2a2010; padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
 .inv-close-btn { cursor:pointer; color:var(--text-dim); font-size:16px; font-family:'VT323',monospace; transition:color .2s; }
 .inv-close-btn:hover { color:var(--red-glow); }
-.inv-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
+.inv-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; }
 .inv-cell {
   aspect-ratio:1; background:#0d1018; border:1px solid #2a2010; border-radius:6px;
   display:flex; align-items:center; justify-content:center; font-size:22px;
@@ -1271,7 +1271,7 @@ function createPet(ownerPlayer, petType) {
   const CFG = {
     healer: {hp:100,maxHp:100, atkRange:0,    atkSpeed:99999, color:'#50e890', name:'Fada Curadora',   icon:'💚', healRate:2.0, size:9},
     attack: {hp:120,maxHp:120, atkRange:110,  atkSpeed:1200,  color:'#f0c060', name:'Lobo de Batalha', icon:'🐺', healRate:0,   size:10},
-    tank:   {hp:400,maxHp:400, atkRange:70,   atkSpeed:1800,  color:'#9090a8', name:'Golem de Pedra',  icon:'🗿', healRate:0,   size:14, isTank:true},
+    tank:   {hp:600,maxHp:600, atkRange:120,  atkSpeed:1800,  color:'#9090a8', name:'Golem de Pedra',  icon:'🗿', healRate:0,   size:14, isTank:true},
   };
   const c = CFG[type] || CFG.attack;
   return {
@@ -1293,8 +1293,18 @@ function updatePet(dt) {
   if (pet.hitFlash > 0) pet.hitFlash -= dt;
 
   // ── Follow player ────────────────────────────────────────
-  const targetX = p.x + Math.cos(pet.bobTimer * 0.5) * 34 - p.facing.x * 22;
-  const targetY = p.y + Math.sin(pet.bobTimer * 0.5) * 22 + 10;
+  // Tank fica na frente do player, outros orbitam ao lado
+  let targetX, targetY;
+  if (pet.petType === 'tank') {
+    // Posiciona 50px à frente do player na direção que ele enfrenta
+    targetX = p.x + p.facing.x * 50;
+    targetY = p.y + p.facing.y * 50;
+    // Se não há facing definido, fica à direita
+    if (p.facing.x === 0 && p.facing.y === 0) { targetX = p.x + 50; targetY = p.y; }
+  } else {
+    targetX = p.x + Math.cos(pet.bobTimer * 0.5) * 34 - p.facing.x * 22;
+    targetY = p.y + Math.sin(pet.bobTimer * 0.5) * 22 + 10;
+  }
   const dx = targetX - pet.x, dy = targetY - pet.y;
   const dist = Math.hypot(dx, dy);
   const speed = Math.min(dist * 5, 280) * dt / 1000;
@@ -1495,23 +1505,27 @@ function updateCentralBossBar() {
 function checkCentralBossProximity() {
   if (!centralBoss || !centralBoss.isAlive) return;
   const dist = Math.hypot(player.x - centralBoss.x, player.y - centralBoss.y);
-  if (dist < 140 && player.level < 10) {
-    // Push player away gently
-    const dx = player.x - centralBoss.x, dy = player.y - centralBoss.y;
-    const len = Math.hypot(dx, dy) || 1;
-    player.x += (dx / len) * 5;
-    player.y += (dy / len) * 5;
-    if (!centralBossWarned) {
-      centralBossWarned = true;
-      addLog('⚠ Você precisa estar no nível 10 para enfrentar este boss.', 'ldmg');
-      showLevelUpBanner('⚠ Nível 8 necessário!');
-      setTimeout(() => { centralBossWarned = false; }, 5000);
+  if (player.level < 8) {
+    // Abaixo do nível 8: empurra e bloqueia
+    if (dist < 140) {
+      const dx = player.x - centralBoss.x, dy = player.y - centralBoss.y;
+      const len = Math.hypot(dx, dy) || 1;
+      player.x += (dx / len) * 5;
+      player.y += (dy / len) * 5;
+      if (!centralBossWarned) {
+        centralBossWarned = true;
+        addLog('⚠ Você precisa estar no nível 8 para enfrentar o Guardião!', 'ldmg');
+        showLevelUpBanner('⚠ Nível 8 necessário!');
+        setTimeout(() => { centralBossWarned = false; }, 5000);
+      }
+      centralBoss.aggroRange = 0;
     }
-    // Disable enemy aggro for central boss against low-level player
-    centralBoss.aggroRange = 0;
-  } else if (dist < 200 && player.level >= 8) {
-    centralBoss.aggroRange = 200;
+  } else {
+    // Nível 8+: boss pode agredir normalmente, sem empurrão
     centralBossWarned = false;
+    if (dist < 200) {
+      centralBoss.aggroRange = 200;
+    }
   }
 }
 
@@ -1850,7 +1864,7 @@ function startGame(classId){
   generateMap();
   player=createPlayer(classId);
   equippedArtifacts = [];
-  pet = createPet(player);
+  pet = null; // Pet deve ser comprado na loja
   spawnInitialEnemies();
   spawnBossChestGuards();
   spawnCentralBoss();
@@ -1867,8 +1881,8 @@ function startGame(classId){
   addLog(`⚔ ${CLASS_DEF[classId].name} desperta!`,'llvl');
   addLog('WASD=mover | SHIFT=dash | Q/E/R=skills | I=inv | M=música','');
   addLog('🧙 Archimedes aguarda a W/NW do centro do mapa','lchest');
-  addLog('🐾 Companheiro leal ativado! Ataca inimigos automaticamente','lheal');
-  addLog('☠ Guardião Eterno dorme no centro — requer Nível 10!','lboss');
+  addLog('☠ Guardião Eterno dorme no centro — requer Nível 8!','lboss');
+  addLog('🐾 Compre um companheiro na loja (M=loja)','lheal');
 }
 
 function resizeCanvas(){if(!canvas)return;W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;}
@@ -1939,15 +1953,38 @@ function updateEnemies(dt){
   let anyBossAlive = false;
   for(const e of enemies){
     if(!e.isAlive){e.deathTimer-=dt;continue;}
-    if(e.isBoss && e.isAlive) anyBossAlive = true;
+    if((e.isBoss || e.isCentralBoss) && e.isAlive) anyBossAlive = true;
+    if(e.isCentralBoss && e.isAlive && e.aggroRange > 0 && !bossActive) { bossActive=true; if(musicEnabled && musicTracks[2]) playTrack(2); updateMusicStatus(); }
     if(e.hitFlash>0)e.hitFlash-=dt;
     if(e.poisonStacks>0){e.poisonTimer-=dt;if(e.poisonTimer<=0){e.poisonTimer=800;const pdmg=Math.floor(e.poisonStacks*3);e.hp-=pdmg;spawnDmgNumber(e.x,e.y-e.size,'☠'+pdmg,'#8e44ad');e.poisonStacks=Math.max(0,e.poisonStacks-1);if(e.hp<=0)killEnemy(e);}}
     if(e.frozenTimer>0){e.frozenTimer-=dt;continue;}
-    const p=player;const dist=Math.hypot(e.x-p.x,e.y-p.y);
+    const p=player;
+    // Tank golem: se existir e estiver vivo, inimigos preferem atacar ele
+    const tankPet = (pet && pet.isAlive && pet.petType==='tank') ? pet : null;
+    const distToPlayer=Math.hypot(e.x-p.x,e.y-p.y);
+    const distToTank=tankPet?Math.hypot(e.x-tankPet.x,e.y-tankPet.y):Infinity;
+    // Target: tank se dentro do aggroRange e mais perto que o player, senão player
+    const preferTank = tankPet && distToTank < e.aggroRange && distToTank < distToPlayer + 40;
+    const target = preferTank ? tankPet : p;
+    const dist = preferTank ? distToTank : distToPlayer;
     if(dist<e.aggroRange&&p.isAlive){
-      const dx=p.x-e.x,dy=p.y-e.y,len=Math.hypot(dx,dy);const spd=e.spd*dt/1000;moveEntity(e,(dx/len)*spd,(dy/len)*spd);
+      const dx=target.x-e.x,dy=target.y-e.y,len=Math.hypot(dx,dy)||1;const spd=e.spd*dt/1000;moveEntity(e,(dx/len)*spd,(dy/len)*spd);
       e.atkTimer=Math.max(0,e.atkTimer-dt);
-      if(e.atkTimer<=0&&dist<e.atkRange+10){e.atkTimer=e.atkSpeed;let dmg=Math.floor(e.atk*(0.8+Math.random()*.4));dmg=Math.max(1,dmg-Math.floor(p.def*.5));if(p.subSkill==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}if(p.isAlive){p.hp-=dmg;p.hitFlash=200;spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}}
+      if(e.atkTimer<=0&&dist<e.atkRange+10){
+        e.atkTimer=e.atkSpeed;
+        let dmg=Math.floor(e.atk*(0.8+Math.random()*.4));
+        if(preferTank){
+          // Atacar o pet golem
+          dmg=Math.max(1,dmg-2);
+          tankPet.hp-=dmg;tankPet.hitFlash=150;
+          spawnDmgNumber(tankPet.x,tankPet.y-tankPet.size,dmg,'#aaa');
+          if(tankPet.hp<=0){tankPet.hp=0;tankPet.isAlive=false;addLog('💔 Golem caiu! Reaparecerá em 15s...','ldmg');const st=tankPet.petType;setTimeout(()=>{if(player&&player.isAlive){pet=createPet(player,st);addLog('🗿 Golem voltou!','lheal');}},15000);}
+        } else {
+          dmg=Math.max(1,dmg-Math.floor(p.def*.5));
+          if(p.subSkill==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
+          if(p.isAlive){p.hp-=dmg;p.hitFlash=200;spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');if(p.hp<=0){p.hp=0;triggerGameOver();}}
+        }
+      }
     }else{e.roamTimer-=dt;if(e.roamTimer<=0){e.roamTimer=1200+Math.random()*2000;const ang=Math.random()*Math.PI*2;e.roamDX=Math.cos(ang);e.roamDY=Math.sin(ang);}if(Math.random()<.5)moveEntity(e,e.roamDX*e.spd*.4*dt/1000,e.roamDY*e.spd*.4*dt/1000);}
   }
   // Check boss music state
@@ -1974,7 +2011,7 @@ function fireProjectile(ox,oy,tx,ty,dmg,color,type,target=null,isCrit=false,targ
 
 function explodeProjectile(pr){spawnHitParticles(pr.x,pr.y,pr.color,8);}
 function aoeExplosion(x,y,radius,dmg,color){for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-x,e.y-y)<radius)applyDamageToEnemy(e,Math.floor(dmg),false);}particles.push({type:'explosion',x,y,r:radius,life:400,maxLife:400,color});}
-function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(e.hp<=0){e.hp=0;killEnemy(e);}}
+function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;if(e.isCentralBoss&&player&&player.level<8){spawnDmgNumber(e.x,e.y-e.size-4,'⚠ Nv.8!','#e74c3c');return;}e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(e.hp<=0){e.hp=0;killEnemy(e);}}
 
 function killEnemy(e){
   e.isAlive=false;e.deathTimer=600;kills++;player.kills++;
@@ -2022,7 +2059,7 @@ function collectLoot(loot){
   else{addItemToInventory(loot.id);const curr=item.type==='weapon'?player.equippedWeapon:player.equippedArmor;const currBonus=curr?(ITEM_DB[curr].effect.atk||ITEM_DB[curr].effect.def||0):0;const newBonus=item.effect.atk||item.effect.def||0;const canEquip=!item.forClass||item.forClass.includes(player.classId);if(newBonus>currBonus&&canEquip){equipItem(loot.id);addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`,'ldrop');}else addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`,'ldrop');}
 }
 
-function addItemToInventory(itemId){if(player.inventory.length>=20){addLog('🎒 Inventário cheio!','');return;}player.inventory.push({id:itemId,uid:Date.now()+Math.random()});if(document.getElementById('inv-panel').classList.contains('open'))renderInventory();}
+function addItemToInventory(itemId){if(player.inventory.length>=40){addLog('🎒 Inventário cheio! (40/40)','');return;}player.inventory.push({id:itemId,uid:Date.now()+Math.random()});if(document.getElementById('inv-panel').classList.contains('open'))renderInventory();}
 
 function equipItem(itemId){
   const item=ITEM_DB[itemId];if(!item)return;
@@ -2091,7 +2128,7 @@ function tryOpenChest(){
     spawnLoot(nearChest.x,nearChest.y-20,item);
     player.gold+=gold;
     addLog(`🎁 Baú [${nearChest.rarity}]: ${ITEM_DB[item]?.icon||'?'} ${ITEM_DB[item]?.name||item} + ${gold}🪙`,'lchest');
-    for(let i=0;i<20;i++){const ang=Math.random()*Math.PI*2;const spd=60+Math.random()*100;particles.push({type:'hit',x:nearChest.x,y:nearChest.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-50,life:600,maxLife:600,r:3+Math.random()*4,color:nearChest.rarity==='epic'?'#bb8fce':nearChest.rarity==='rare'?'#5dade2':'#e8a020',gravity:80});}
+    for(let i=0;i<40;i++){const ang=Math.random()*Math.PI*2;const spd=60+Math.random()*100;particles.push({type:'hit',x:nearChest.x,y:nearChest.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-50,life:600,maxLife:600,r:3+Math.random()*4,color:nearChest.rarity==='epic'?'#bb8fce':nearChest.rarity==='rare'?'#5dade2':'#e8a020',gravity:80});}
     return;
   }
   // Try NPC
@@ -3005,7 +3042,7 @@ function activatePet(itemId) {
 function hideItemPopup(immediate = false) {
   clearTimeout(popupState.hideTimer);
   if (immediate) _doHidePopup();
-  else popupState.hideTimer = setTimeout(_doHidePopup, 120);
+  else popupState.hideTimer = setTimeout(_doHidePopup, 400);
 }
 function _doHidePopup() {
   const popup = document.getElementById('item-popup');
@@ -3053,7 +3090,7 @@ function cancelDrag(){
 function renderInventory() {
   const grid = document.getElementById('inv-grid');
   grid.innerHTML = '';
-  const max = 20;
+  const max = 40;
   for (let i = 0; i < max; i++) {
     const cell = document.createElement('div');
     cell.dataset.idx = i;
@@ -3110,7 +3147,7 @@ function renderInventory() {
     grid.appendChild(cell);
   }
   const cnt = document.getElementById('inv-count');
-  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length + '/20';
+  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length + '/40';
 }
 
 // EQUIP SLOTS
@@ -3514,8 +3551,8 @@ function selectShopItem(id,price,db){shopSelectedItem={id,price};document.getEle
 function confirmBuy(){
   if(!shopSelectedItem)return;const{id,price}=shopSelectedItem;const db=ITEM_DB[id];if(!db){showShopMsg('Item inválido','err');return;}
   if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}
-  if(db.type!=='pet'&&db.type!=='artifact'&&player.inventory.length>=20){showShopMsg('Inventário cheio!','err');return;}
-  if(player.inventory.length>=20){showShopMsg('Inventário cheio!','err');return;}
+  if(db.type!=='pet'&&db.type!=='artifact'&&player.inventory.length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
+  if(player.inventory.length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
   player.gold-=price;addItemToInventory(id);
   // Auto-activate pet on purchase
   if(db.type==='pet'){activatePet(id);showShopMsg('✓ '+db.name+' ativado!','ok');}
@@ -3533,7 +3570,7 @@ function triggerGameOver(){player.isAlive=false;gameState='dead';setTimeout(()=>
 
 // CLASS PREVIEWS
 function drawClassPreviews(){
-  function drawPrev(id,fn){const cv=document.getElementById('prev-'+id);const cx=cv.getContext('2d');cx.clearRect(0,0,80,100);const grd=cx.createRadialGradient(40,55,5,40,55,38);const c={warrior:'rgba(230,126,34,.3)',mage:'rgba(142,68,173,.3)',archer:'rgba(39,174,96,.3)'};grd.addColorStop(0,c[id]);grd.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=grd;cx.fillRect(0,0,80,100);fn(cx,{x:40,y:65,size:16,facing:{x:0,y:-1},hitFlash:0,classId:id,color:CLASS_DEF[id].color,isDashing:false,subSkill:null});}
+  function drawPrev(id,fn){const cv=document.getElementById('prev-'+id);const cx=cv.getContext('2d');cx.clearRect(0,0,80,100);const grd=cx.createRadialGradient(40,55,5,40,55,38);const c={warrior:'rgba(230,126,34,.3)',mage:'rgba(142,68,173,.3)',archer:'rgba(39,174,96,.3)'};grd.addColorStop(0,c[id]);grd.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=grd;cx.fillRect(0,0,80,100);fn(cx,{x:40,y:55,size:16,facing:{x:0,y:1},hitFlash:0,classId:id,color:CLASS_DEF[id].color,isDashing:false,subSkill:null});}
   let prevRunning=true;
   function animatePrev(){if(!prevRunning)return;drawPrev('warrior',drawWarriorPlayer);drawPrev('mage',drawMagePlayer);drawPrev('archer',drawArcherPlayer);requestAnimationFrame(animatePrev);}
   animatePrev();
@@ -4071,7 +4108,7 @@ function renderInventory() {
     grid.appendChild(cell);
   }
   const cnt = document.getElementById('inv-count');
-  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length+'/20';
+  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length+'/40';
 }
 
 // ─────────────────────────────────────────────────────────
@@ -5855,7 +5892,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   drawClassPreviews();
   const popup = document.getElementById('item-popup');
   if (popup) {
-    popup.addEventListener('mouseenter', () => clearTimeout(popupState.sizeideTimer));
+    popup.addEventListener('mouseenter', () => clearTimeout(popupState.hideTimer));
     popup.addEventListener('mouseleave', () => hideItemPopup(false));
   }
   initMusic();
