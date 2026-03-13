@@ -1060,7 +1060,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
       <div class="hud-info-row">🪙 Ouro: <span class="hud-info-val" id="hud-gold">0</span></div>
       <div class="hud-info-row">💀 Mortos: <span class="hud-info-val" id="hud-kills">0</span></div>
       <div class="hud-info-row">⚔ ATK: <span class="hud-info-val" id="hud-atk">10</span> &nbsp;🛡 DEF: <span class="hud-info-val" id="hud-def">5</span></div>
-      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música &nbsp;[J] Artefatos</div>
+      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música &nbsp;[J] Artefatos &nbsp;[N] Missões</div>
     </div>
     <div id="minimap"><canvas id="mm-canvas" width="120" height="90"></canvas></div>
     <div id="lvl-banner">⬆ LEVEL UP!</div>
@@ -2346,6 +2346,8 @@ function startGame(classId){
   addLog('🧙 Archimedes aguarda a W/NW do centro do mapa','lchest');
   addLog('☠ Guardião Eterno dorme no centro — requer Nível 8!','lboss');
   addLog('🐾 Compre um companheiro na loja (M=loja)','lheal');
+  addLog('📜 Missões & Conquistas: pressione [N]','lskill');
+  setTimeout(initQuestSystem, 300);
 }
 
 function resizeCanvas(){if(!canvas)return;W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;}
@@ -2503,6 +2505,9 @@ function killEnemy(e){
   const goldGain = Math.floor((gmin+Math.random()*(gmax-gmin)) * (player.art?.goldMult || 1));
   player.gold += goldGain;
   if(goldGain > 0) playCoinSound();
+  // Quest/Achievement hooks
+  if (typeof qOnKill === 'function') qOnKill(!!(e.isBoss || e.isCentralBoss));
+  if (goldGain > 0 && typeof qOnGoldGain === 'function') qOnGoldGain(goldGain);
   // Auto-collect: skip loot spawning, pick up instantly
   const autoCollect = player.art?.autoCollect || false;
   for(const drop of e.drops){
@@ -2512,7 +2517,7 @@ function killEnemy(e){
     }
   }
   if(Math.random()<.7){
-    if(autoCollect){ const g=1+Math.floor(Math.random()*5); player.gold+=Math.floor(g*(player.art?.goldMult||1)); addLog(`🪙 +${g} ouro (auto)`,''); }
+    if(autoCollect){ const g=1+Math.floor(Math.random()*5); player.gold+=Math.floor(g*(player.art?.goldMult||1)); addLog(`🪙 +${g} ouro (auto)`,''); if(typeof qOnGoldGain==='function') qOnGoldGain(g); }
     else spawnLoot(e.x+(Math.random()-.5)*20,e.y+(Math.random()-.5)*20,'gold_coin');
   }
   spawnDeathParticles(e.x,e.y,e.color);
@@ -2533,7 +2538,7 @@ function collectLootDirect(itemId) {
 function updateLoot(dt){for(let i=lootItems.length-1;i>=0;i--){lootItems[i].life-=dt;lootItems[i].bob+=dt*.003;if(lootItems[i].life<=0)lootItems.splice(i,1);}}
 
 function collectLoot(loot){
-  if(loot.id==='gold_coin'){const g=1+Math.floor(Math.random()*5);player.gold+=Math.floor(g*(player.art?.goldMult||1));addLog(`🪙 +${g} ouro`,'');return;}
+  if(loot.id==='gold_coin'){const g=1+Math.floor(Math.random()*5);const total=Math.floor(g*(player.art?.goldMult||1));player.gold+=total;addLog(`🪙 +${g} ouro`,'');if(typeof qOnGoldGain==='function')qOnGoldGain(total);return;}
   const item=ITEM_DB[loot.id];if(!item)return;
   if(item.type==='consumable'){addItemToInventory(loot.id);playPickupSound();addLog(`${item.icon} Coletou ${item.name}`,'ldrop');}
   else if(item.type==='artifact'){addItemToInventory(loot.id);playRareItemSound();addLog(`💎 Artefato encontrado: ${item.icon} ${item.name}! (Abra inventário [I] para ver)`,'llvl');}
@@ -2622,6 +2627,9 @@ function tryOpenChest(){
     player.gold+=gold;
     addLog(`🎁 Baú [${nearChest.rarity}]: ${ITEM_DB[item]?.icon||'?'} ${ITEM_DB[item]?.name||item} + ${gold}🪙`,'lchest');
     for(let i=0;i<40;i++){const ang=Math.random()*Math.PI*2;const spd=60+Math.random()*100;particles.push({type:'hit',x:nearChest.x,y:nearChest.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-50,life:600,maxLife:600,r:3+Math.random()*4,color:nearChest.rarity==='epic'?'#bb8fce':nearChest.rarity==='rare'?'#5dade2':'#e8a020',gravity:80});}
+    // Quest/Achievement hooks
+    if(typeof qOnChestOpen==='function') qOnChestOpen();
+    if(gold>0 && typeof qOnGoldGain==='function') qOnGoldGain(gold);
     return;
   }
   // Try NPC
@@ -2640,6 +2648,7 @@ function checkLevelUp(){
     addLog(`⬆ LEVEL ${player.level}! +HP +ATK +MP`,'llvl');
     playLevelUpSound();
     showLevelUpBanner(player.level);
+    if(typeof qOnLevelUp==='function') qOnLevelUp();
     if(player.level===6&&!player.subclassChosen)setTimeout(()=>showSubclassScreen(),1500);
   }
 }
@@ -4440,7 +4449,6 @@ const SFX = (() => {
   }
 
   // ── 9. DASH ─────────────────────────────────────────────
-  // Whoosh veloz + impacto de ar — sensação de velocidade explosiva
   function playDash() {
     tone({ type:'sawtooth', freq:600, freqEnd:120,
            vol:0.10, attack:0.004, decay:0.06, release:0.05 });
@@ -4450,27 +4458,54 @@ const SFX = (() => {
   }
 
   // ── 10. ULTIMATE ────────────────────────────────────────
-  // Explosão épica em 3 camadas: impacto grave + surge arcano + shimmer final
   function playUltimate() {
-    // Boom grave profundo — peso do poder
     tone({ type:'sine', freq:80, freqEnd:40,
            vol:0.22, attack:0.005, decay:0.18, release:0.25 });
-    // Ruído de explosão denso
     noise({ vol:0.18, freq:300, q:0.4, duration:0.20 });
-    // Surge ascendente dramático
     tone({ type:'sawtooth', freq:120, freqEnd:800,
            vol:0.14, attack:0.010, decay:0.12, release:0.18, start:0.03 });
-    // Camada de harmônico agudo — brilho mágico
     tone({ type:'sine', freq:880, freqEnd:1760,
            vol:0.10, attack:0.020, decay:0.10, release:0.20, start:0.08 });
-    // Shimmer final de poder (nota dourada)
     tone({ type:'sine', freq:1320, freqEnd:1760,
            vol:0.07, attack:0.015, decay:0.08, release:0.22, start:0.18 });
     tone({ type:'sine', freq:2640,
            vol:0.04, attack:0.020, decay:0.06, release:0.18, start:0.22 });
   }
 
-  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin, playDash, playUltimate };
+  // ── 11. MISSÃO COMPLETA ──────────────────────────────────
+  // Fanfarra vitoriosa de 3 notas + shimmer
+  function playMissionComplete() {
+    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      tone({ type:'sine', freq, freqEnd: freq * 1.03,
+             vol:0.12, attack:0.006, decay:0.07, sustain:0.15, release:0.18,
+             start: i * 0.11 });
+    });
+    tone({ type:'triangle', freq:1568, freqEnd:2093,
+           vol:0.06, attack:0.015, decay:0.08, release:0.20, start:0.38 });
+  }
+
+  // ── 12. CONQUISTA DESBLOQUEADA ───────────────────────────
+  // Som épico de troféu: surge + acorde brilhante + sino dourado
+  function playAchievement() {
+    // Impacto inicial grave
+    tone({ type:'sine', freq:110, freqEnd:55,
+           vol:0.18, attack:0.004, decay:0.14, release:0.20 });
+    noise({ vol:0.10, freq:500, q:0.5, duration:0.10 });
+    // Acorde de vitória (G4 B4 D5 G5)
+    [392, 494, 587, 784].forEach((freq, i) => {
+      tone({ type:'sine', freq, freqEnd: freq * 1.02,
+             vol:0.11, attack:0.012, decay:0.09, sustain:0.3, release:0.28,
+             start: 0.06 + i * 0.04 });
+    });
+    // Sino dourado final
+    tone({ type:'sine', freq:2093, freqEnd:1760,
+           vol:0.08, attack:0.006, decay:0.10, release:0.35, start:0.30 });
+    tone({ type:'sine', freq:4186, freqEnd:3520,
+           vol:0.04, attack:0.008, decay:0.08, release:0.28, start:0.34 });
+  }
+
+  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin, playDash, playUltimate, playMissionComplete, playAchievement };
 })();
 
 function playAttackSound()        { try { SFX.playAttack();              } catch(e){} }
@@ -4480,9 +4515,11 @@ function playChestOpenSound(r)    { try { SFX.playChestOpen(r);          } catch
 function playPickupSound()        { try { SFX.playPickup();              } catch(e){} }
 function playHurtSound()          { try { SFX.playHurt();                } catch(e){} }
 function playSkillSound()         { try { SFX.playSkill();               } catch(e){} }
-function playCoinSound()          { try { SFX.playCoin();                } catch(e){} }
-function playDashSound()          { try { SFX.playDash();                } catch(e){} }
-function playUltimateSound()      { try { SFX.playUltimate();            } catch(e){} }
+function playCoinSound()              { try { SFX.playCoin();               } catch(e){} }
+function playDashSound()              { try { SFX.playDash();               } catch(e){} }
+function playUltimateSound()          { try { SFX.playUltimate();           } catch(e){} }
+function playMissionCompleteSound()   { try { SFX.playMissionComplete();    } catch(e){} }
+function playAchievementSound()       { try { SFX.playAchievement();        } catch(e){} }
 
 
 
@@ -4495,7 +4532,7 @@ const ULTIMATE_DEF = {
   defensive: {
     id:'ult_shield_wall', name:'Muralha Divina', icon:'🛡',
     cd:30000, mpCost:60,
-    desc:'Invulnerabilidade total por 4s + reflete todo dano recebido | Custo: 60 MP',
+    desc:'Invulnerabilidade total por 4s + reflete todo dano recebido',
     color:'#3498db',
     use(p) {
       p.ultShieldWall = 4000;
@@ -4507,7 +4544,7 @@ const ULTIMATE_DEF = {
   berserker: {
     id:'ult_bloodlust', name:'Sede de Sangue', icon:'🩸',
     cd:30000, mpCost:50,
-    desc:'Cura 40% do dano causado e +50% ATK por 5s | Custo: 50 MP',
+    desc:'Cura 40% do dano causado e +50% ATK por 5s',
     color:'#e74c3c',
     use(p) {
       p.ultBloodlust = 5000;
@@ -4519,7 +4556,7 @@ const ULTIMATE_DEF = {
   holy: {
     id:'ult_divine_wrath', name:'Ira Divina', icon:'✨',
     cd:30000, mpCost:70,
-    desc:'Onda sagrada que cura o jogador e destrói inimigos próximos | Custo: 70 MP',
+    desc:'Onda sagrada que cura o jogador e destrói inimigos próximos',
     color:'#f0c060',
     use(p) {
       const dmg = p.atk * 8;
@@ -4542,7 +4579,7 @@ const ULTIMATE_DEF = {
   ice: {
     id:'ult_blizzard', name:'Blizzard', icon:'🌨',
     cd:30000, mpCost:80,
-    desc:'Congela TODOS os inimigos na tela por 3s e causa dano massivo | Custo: 80 MP',
+    desc:'Congela TODOS os inimigos na tela por 3s e causa dano massivo',
     color:'#a8d8f0',
     use(p) {
       const dmg = p.atk * 6;
@@ -4559,7 +4596,7 @@ const ULTIMATE_DEF = {
   arcane: {
     id:'ult_arcane_surge', name:'Surto Arcano', icon:'🌀',
     cd:30000, mpCost:90,
-    desc:'12 projéteis em espiral com dano arcano devastador | Custo: 90 MP',
+    desc:'12 projéteis em espiral com dano arcano devastador',
     color:'#c070ff',
     use(p) {
       const dmg = Math.floor(p.atk * 4 * p.skillDmgMult);
@@ -4581,7 +4618,7 @@ const ULTIMATE_DEF = {
   fire_mage: {
     id:'ult_meteor', name:'Meteorito', icon:'☄️',
     cd:30000, mpCost:85,
-    desc:'Meteorito gigante causa dano enorme em área central | Custo: 85 MP',
+    desc:'Meteorito gigante causa dano enorme em área central',
     color:'#ff8040',
     use(p) {
       const target = getNearestEnemy(p, 9999) || { x: p.x + p.facing.x*150, y: p.y + p.facing.y*150 };
@@ -4610,7 +4647,7 @@ const ULTIMATE_DEF = {
   poison: {
     id:'ult_toxic_cloud', name:'Nuvem Tóxica', icon:'☠',
     cd:30000, mpCost:65,
-    desc:'Nuvem de veneno que cobre área enorme, envenenando todos | Custo: 65 MP',
+    desc:'Nuvem de veneno que cobre área enorme, envenenando todos',
     color:'#6dde60',
     use(p) {
       let hit = 0;
@@ -4633,7 +4670,7 @@ const ULTIMATE_DEF = {
   wind: {
     id:'ult_storm', name:'Tempestade de Flechas', icon:'🌪',
     cd:30000, mpCost:75,
-    desc:'30 flechas em todas as direções, dano de área total | Custo: 75 MP',
+    desc:'30 flechas em todas as direções, dano de área total',
     color:'#7ae8e8',
     use(p) {
       const dmg = Math.floor(p.atk * 2.5);
@@ -4655,7 +4692,7 @@ const ULTIMATE_DEF = {
   fire_archer: {
     id:'ult_fire_rain', name:'Chuva de Fogo', icon:'🔥',
     cd:30000, mpCost:80,
-    desc:'20 flechas flamejantes com explosão em área cada uma | Custo: 80 MP',
+    desc:'20 flechas flamejantes com explosão em área cada uma',
     color:'#ffb040',
     use(p) {
       const dmg = Math.floor(p.atk * 3);
@@ -7320,5 +7357,472 @@ window.addEventListener('DOMContentLoaded',()=>{
     <div id="worldlvl-title">⚔ WORLD LEVEL UP! ⚔</div>
     <div id="worldlvl-sub"></div>
   </div>
-</body>
+  <!-- ══ MISSIONS & ACHIEVEMENTS SYSTEM ══ -->
+  <div id="quest-panel">
+    <div class="qp-header">
+      <span class="qp-title">📜 Missões & Conquistas</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="qp-tab active" id="qp-tab-quest" onclick="qpShowTab('quest')">Missões</span>
+        <span class="qp-tab" id="qp-tab-ach" onclick="qpShowTab('ach')">Conquistas</span>
+        <span class="qp-close" onclick="toggleQuestPanel()">✕</span>
+      </div>
+    </div>
+    <div id="qp-body-quest">
+      <div id="qp-active-mission"></div>
+    </div>
+    <div id="qp-body-ach" style="display:none">
+      <div id="qp-ach-list"></div>
+    </div>
+  </div>
+
+  <!-- Quest HUD button -->
+  <div id="quest-hud-btn" onclick="toggleQuestPanel()" title="Missões [N]">
+    📜 <span id="quest-hud-label">Missão</span>
+    <div id="quest-hud-progress"></div>
+  </div>
+
+  <!-- Achievement toast -->
+  <div id="ach-toast">
+    <div id="ach-toast-icon">🏆</div>
+    <div id="ach-toast-body">
+      <div id="ach-toast-title">Conquista!</div>
+      <div id="ach-toast-name"></div>
+    </div>
+  </div>
+
+  <!-- Mission complete toast -->
+  <div id="mission-toast">
+    <div id="mission-toast-icon">✅</div>
+    <div id="mission-toast-body">
+      <div id="mission-toast-title">Missão Completa!</div>
+      <div id="mission-toast-reward"></div>
+    </div>
+  </div>
+
+<style>
+/* ── Quest Panel ── */
+#quest-panel {
+  position:fixed; bottom:16px; right:130px;
+  width:280px; background:rgba(8,10,16,.97);
+  border:1px solid #2a3a20; border-radius:12px;
+  padding:10px 13px 13px; z-index:95; display:none;
+  box-shadow:0 0 28px rgba(39,174,96,.25);
+  font-family:'Crimson Text',serif;
+}
+#quest-panel.open { display:block; }
+.qp-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.qp-title { font-family:'Cinzel',serif; font-size:13px; color:#6dde60; letter-spacing:.08em; text-shadow:0 0 8px #27ae60; }
+.qp-tab { font-family:'VT323',monospace; font-size:14px; color:#3a5030; cursor:pointer; padding:2px 8px; border-radius:4px; transition:color .15s; }
+.qp-tab:hover { color:#6dde60; }
+.qp-tab.active { color:#6dde60; background:rgba(39,174,96,.15); border:1px solid #2a4a20; }
+.qp-close { cursor:pointer; color:#3a5030; font-size:15px; margin-left:4px; }
+.qp-close:hover { color:#6dde60; }
+
+/* Active mission card */
+.qp-mission-card {
+  background:rgba(16,28,14,.80); border:1px solid #2a4a20; border-radius:8px;
+  padding:10px 12px; margin-bottom:8px;
+}
+.qp-mission-name { font-family:'Cinzel',serif; font-size:12px; color:#a0e090; letter-spacing:.05em; margin-bottom:4px; }
+.qp-mission-desc { font-size:12px; color:#6a8a60; margin-bottom:6px; font-style:italic; }
+.qp-mission-progress { font-family:'VT323',monospace; font-size:16px; color:#6dde60; margin-bottom:5px; }
+.qp-progress-track { width:100%; height:5px; background:#111; border-radius:3px; overflow:hidden; margin-bottom:6px; }
+.qp-progress-fill { height:100%; background:linear-gradient(90deg,#1a6a10,#6dde60); border-radius:3px; transition:width .3s; }
+.qp-reward { font-size:11px; color:#7a6a30; font-family:'VT323',monospace; }
+.qp-reward span { color:#f0c060; }
+
+/* Achievement list */
+.qp-ach-item {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(14,12,22,.80); border:1px solid #2a2040; border-radius:8px;
+  padding:8px 10px; margin-bottom:6px; transition:border-color .15s;
+}
+.qp-ach-item.done { border-color:#6040a0; background:rgba(24,12,40,.80); }
+.qp-ach-icon { font-size:20px; width:26px; text-align:center; flex-shrink:0; }
+.qp-ach-info { flex:1; min-width:0; }
+.qp-ach-name { font-family:'Cinzel',serif; font-size:11px; color:#7050a0; letter-spacing:.04em; }
+.qp-ach-item.done .qp-ach-name { color:#c080ff; }
+.qp-ach-desc { font-size:10px; color:#3a3050; margin-top:1px; font-style:italic; }
+.qp-ach-item.done .qp-ach-desc { color:#6a5080; }
+.qp-ach-progress { font-family:'VT323',monospace; font-size:13px; color:#4a3870; margin-top:2px; }
+.qp-ach-item.done .qp-ach-progress { color:#9b59b6; }
+.qp-ach-prog-track { width:100%; height:3px; background:#111; border-radius:2px; margin-top:3px; }
+.qp-ach-prog-fill { height:100%; background:linear-gradient(90deg,#4a1880,#c070ff); border-radius:2px; transition:width .3s; }
+
+/* HUD quest button */
+#quest-hud-btn {
+  position:fixed; bottom:152px; right:10px;
+  background:rgba(8,10,13,.92); border:1px solid #2a4a20; border-radius:7px;
+  padding:4px 10px 4px 8px; font-family:'VT323',monospace; font-size:14px;
+  color:#6dde60; cursor:pointer; pointer-events:all; z-index:80;
+  display:none; white-space:nowrap; box-shadow:0 0 10px rgba(39,174,96,.15);
+  transition:border-color .15s;
+}
+#quest-hud-btn:hover { border-color:#6dde60; }
+#quest-hud-btn.visible { display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
+#quest-hud-label { font-size:12px; color:#a0e090; max-width:110px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+#quest-hud-progress { font-size:11px; color:#4a6a40; }
+
+/* Achievement toast */
+#ach-toast {
+  position:fixed; top:60px; left:50%; transform:translateX(-50%) translateY(-20px);
+  background:rgba(14,8,28,.97); border:2px solid #8040c0; border-radius:12px;
+  padding:10px 18px; display:flex; align-items:center; gap:12px;
+  font-family:'Cinzel',serif; z-index:999; opacity:0; pointer-events:none;
+  box-shadow:0 0 30px rgba(128,64,192,.50); transition:none;
+  min-width:240px;
+}
+#ach-toast.show { animation:achToastAnim 3.2s ease forwards; }
+@keyframes achToastAnim {
+  0%   { opacity:0; transform:translateX(-50%) translateY(-20px); }
+  12%  { opacity:1; transform:translateX(-50%) translateY(0); }
+  75%  { opacity:1; transform:translateX(-50%) translateY(0); }
+  100% { opacity:0; transform:translateX(-50%) translateY(-16px); }
+}
+#ach-toast-icon { font-size:28px; }
+#ach-toast-title { font-size:10px; color:#6040a0; letter-spacing:.15em; text-transform:uppercase; }
+#ach-toast-name { font-size:14px; color:#c080ff; text-shadow:0 0 10px #9050d0; margin-top:2px; }
+
+/* Mission complete toast */
+#mission-toast {
+  position:fixed; top:110px; left:50%; transform:translateX(-50%) translateY(-20px);
+  background:rgba(8,18,8,.97); border:2px solid #27ae60; border-radius:12px;
+  padding:10px 18px; display:flex; align-items:center; gap:12px;
+  font-family:'Cinzel',serif; z-index:999; opacity:0; pointer-events:none;
+  box-shadow:0 0 24px rgba(39,174,96,.45); transition:none;
+  min-width:220px;
+}
+#mission-toast.show { animation:missionToastAnim 3s ease forwards; }
+@keyframes missionToastAnim {
+  0%   { opacity:0; transform:translateX(-50%) translateY(-20px); }
+  12%  { opacity:1; transform:translateX(-50%) translateY(0); }
+  75%  { opacity:1; transform:translateX(-50%) translateY(0); }
+  100% { opacity:0; transform:translateX(-50%) translateY(-16px); }
+}
+#mission-toast-icon { font-size:26px; }
+#mission-toast-title { font-size:10px; color:#1a6a30; letter-spacing:.15em; text-transform:uppercase; }
+#mission-toast-reward { font-size:13px; color:#6dde60; text-shadow:0 0 8px #27ae60; margin-top:2px; }
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// MISSIONS & ACHIEVEMENTS SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+// ── Mission templates ──────────────────────────────────────
+const MISSION_POOL = [
+  { id:'kill_10',   type:'kills',   goal:10,  icon:'⚔',  name:'Primeira Sangria',      desc:'Mate 10 inimigos',           reward:{gold:50,  xp:80}  },
+  { id:'kill_30',   type:'kills',   goal:30,  icon:'💀',  name:'Caçador',               desc:'Mate 30 inimigos',           reward:{gold:120, xp:200} },
+  { id:'kill_50',   type:'kills',   goal:50,  icon:'🗡',  name:'Exterminador',           desc:'Mate 50 inimigos',           reward:{gold:200, xp:350} },
+  { id:'kill_100',  type:'kills',   goal:100, icon:'☠',   name:'Ceifador',              desc:'Mate 100 inimigos',          reward:{gold:400, xp:600} },
+  { id:'gold_100',  type:'gold',    goal:100, icon:'🪙',  name:'Primeiros Cofres',      desc:'Colete 100 de ouro',         reward:{gold:60,  xp:100} },
+  { id:'gold_300',  type:'gold',    goal:300, icon:'💰',  name:'Garimpeiro',            desc:'Colete 300 de ouro',         reward:{gold:150, xp:180} },
+  { id:'gold_500',  type:'gold',    goal:500, icon:'💎',  name:'Mercador de Guerra',    desc:'Colete 500 de ouro',         reward:{gold:250, xp:300} },
+  { id:'gold_1000', type:'gold',    goal:1000,icon:'👑',  name:'Barão do Ouro',         desc:'Colete 1000 de ouro',        reward:{gold:400, xp:500} },
+  { id:'boss_1',    type:'bosses',  goal:1,   icon:'🐲',  name:'Matador de Chefes',     desc:'Derrote 1 boss',             reward:{gold:200, xp:400} },
+  { id:'boss_3',    type:'bosses',  goal:3,   icon:'🔥',  name:'Lendário',              desc:'Derrote 3 bosses',           reward:{gold:400, xp:700} },
+  { id:'level_5',   type:'level',   goal:5,   icon:'⬆',   name:'Veterano',              desc:'Alcance o nível 5',          reward:{gold:150, xp:0}  },
+  { id:'level_10',  type:'level',   goal:10,  icon:'🌟',  name:'Mestre',                desc:'Alcance o nível 10',         reward:{gold:300, xp:0}  },
+  { id:'chest_3',   type:'chests',  goal:3,   icon:'📦',  name:'Caçador de Tesouros',   desc:'Abra 3 baús',                reward:{gold:100, xp:150} },
+  { id:'chest_7',   type:'chests',  goal:7,   icon:'🗝',   name:'Explorador',            desc:'Abra 7 baús',                reward:{gold:200, xp:300} },
+];
+
+// ── Achievement definitions ────────────────────────────────
+const ACHIEVEMENT_DEF = [
+  { id:'kill_100_ach',   type:'kills',   goal:100,   icon:'💀', name:'Ceifador Eterno',      desc:'Mate 100 inimigos no total'     },
+  { id:'kill_500_ach',   type:'kills',   goal:500,   icon:'☠',  name:'Flagelo do Mundo',      desc:'Mate 500 inimigos no total'     },
+  { id:'kill_1000_ach',  type:'kills',   goal:1000,  icon:'🔱', name:'Deus da Guerra',         desc:'Mate 1000 inimigos no total'    },
+  { id:'boss_5_ach',     type:'bosses',  goal:5,     icon:'🐲', name:'Caçador de Dragões',    desc:'Derrote 5 bosses'               },
+  { id:'boss_15_ach',    type:'bosses',  goal:15,    icon:'👑', name:'Lenda Viva',             desc:'Derrote 15 bosses'              },
+  { id:'gold_5000_ach',  type:'gold',    goal:5000,  icon:'💰', name:'Tesouro do Reino',       desc:'Colete 5000 de ouro no total'   },
+  { id:'gold_20000_ach', type:'gold',    goal:20000, icon:'💎', name:'Rei dos Mercadores',     desc:'Colete 20000 de ouro no total'  },
+  { id:'level_15_ach',   type:'level',   goal:15,    icon:'🌟', name:'Herói Lendário',         desc:'Alcance o nível 15'             },
+  { id:'chest_15_ach',   type:'chests',  goal:15,    icon:'🗝',  name:'Grande Explorador',      desc:'Abra 15 baús'                   },
+  { id:'quest_5_ach',    type:'quests',  goal:5,     icon:'📜', name:'Caçador de Missões',    desc:'Complete 5 missões'             },
+  { id:'quest_20_ach',   type:'quests',  goal:20,    icon:'🏆', name:'Mestre das Missões',     desc:'Complete 20 missões'            },
+];
+
+// ── Quest state ────────────────────────────────────────────
+const questState = {
+  activeMission: null,       // current mission template
+  missionProgress: 0,        // current progress value
+  missionGoldAccum: 0,       // gold accumulator for gold missions
+  completedMissionIds: [],   // ids already used (avoid immediate repeat)
+  totalCompleted: 0,         // for quest-type achievements
+
+  achievements: {},          // { [id]: { progress, done } }
+  achGoldAccum: 0,           // total gold tracked for achievements
+  achChests: 0,
+};
+
+// ── Helpers ────────────────────────────────────────────────
+function _qPickMission() {
+  const used = questState.completedMissionIds;
+  const available = MISSION_POOL.filter(m => !used.includes(m.id) || used.length >= MISSION_POOL.length);
+  if (used.length >= MISSION_POOL.length) questState.completedMissionIds = [];
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function _qInitAchievements() {
+  for (const a of ACHIEVEMENT_DEF) {
+    if (!questState.achievements[a.id]) {
+      questState.achievements[a.id] = { progress: 0, done: false };
+    }
+  }
+}
+
+function _qMissionMetric(type) {
+  if (!player) return 0;
+  switch (type) {
+    case 'kills':  return player.kills;
+    case 'level':  return player.level;
+    default:       return 0; // gold and chests tracked incrementally
+  }
+}
+
+// ── Start / advance mission ────────────────────────────────
+function qStartNewMission() {
+  const tpl = _qPickMission();
+  questState.activeMission = tpl;
+  // Snapshot for delta-based types
+  if (tpl.type === 'kills')  questState.missionProgress = player ? player.kills : 0;
+  else if (tpl.type === 'level') questState.missionProgress = player ? player.level : 1;
+  else questState.missionProgress = 0; // gold / chests / bosses start at 0
+  questState.missionGoldAccum = 0;
+  renderQuestHUD();
+  renderQuestPanel();
+}
+
+function qCurrentValue() {
+  const m = questState.activeMission;
+  if (!m) return 0;
+  if (m.type === 'kills')  return Math.max(0, (player ? player.kills : 0) - questState.missionProgress);
+  if (m.type === 'level')  return Math.max(0, (player ? player.level : 1) - questState.missionProgress);
+  if (m.type === 'gold')   return questState.missionGoldAccum;
+  if (m.type === 'bosses') return questState.missionProgress; // counted directly
+  if (m.type === 'chests') return questState.missionProgress;
+  return 0;
+}
+
+// ── Called on each kill ────────────────────────────────────
+function qOnKill(isBoss) {
+  if (!questState.activeMission) return;
+  // boss missions
+  if (isBoss && questState.activeMission.type === 'bosses') {
+    questState.missionProgress++;
+    checkMissionComplete();
+  }
+  checkMissionComplete();
+  // achievements
+  _qTickAchievement('kills', 1);
+  if (isBoss) _qTickAchievement('bosses', 1);
+  renderQuestHUD();
+}
+
+function qOnGoldGain(amount) {
+  if (!questState.activeMission) return;
+  if (questState.activeMission.type === 'gold') {
+    questState.missionGoldAccum += amount;
+    checkMissionComplete();
+  }
+  questState.achGoldAccum += amount;
+  _qSetAchievementProgress('gold', questState.achGoldAccum);
+  renderQuestHUD();
+}
+
+function qOnChestOpen() {
+  if (!questState.activeMission) return;
+  if (questState.activeMission.type === 'chests') {
+    questState.missionProgress++;
+    checkMissionComplete();
+  }
+  questState.achChests++;
+  _qSetAchievementProgress('chests', questState.achChests);
+  renderQuestHUD();
+}
+
+function qOnLevelUp() {
+  if (!questState.activeMission) return;
+  if (questState.activeMission.type === 'level') checkMissionComplete();
+  _qSetAchievementProgress('level', player ? player.level : 1);
+  renderQuestHUD();
+}
+
+// ── Check mission completion ───────────────────────────────
+function checkMissionComplete() {
+  const m = questState.activeMission;
+  if (!m) return;
+  if (qCurrentValue() >= m.goal) {
+    completeMission(m);
+  }
+}
+
+function completeMission(m) {
+  if (!player) return;
+  // Give rewards
+  player.gold += m.reward.gold;
+  if (m.reward.xp > 0) {
+    player.xp += m.reward.xp;
+    checkLevelUp();
+  }
+  questState.completedMissionIds.push(m.id);
+  questState.activeMission = null;
+  questState.totalCompleted++;
+  _qTickAchievement('quests', 1);
+
+  // Sounds & UI
+  playMissionCompleteSound();
+  showMissionToast(m);
+  addLog(`✅ Missão "${m.name}" completa! +${m.reward.gold}🪙 +${m.reward.xp}xp`, 'llvl');
+
+  // Start next after short delay
+  setTimeout(qStartNewMission, 2200);
+}
+
+// ── Achievement helpers ────────────────────────────────────
+function _qTickAchievement(type, delta) {
+  for (const a of ACHIEVEMENT_DEF) {
+    if (a.type !== type) continue;
+    const state = questState.achievements[a.id];
+    if (!state || state.done) continue;
+    state.progress = (state.progress || 0) + delta;
+    if (state.progress >= a.goal) {
+      state.progress = a.goal;
+      state.done = true;
+      unlockAchievement(a);
+    }
+  }
+  if (document.getElementById('quest-panel').classList.contains('open')) renderQuestPanel();
+}
+
+function _qSetAchievementProgress(type, value) {
+  for (const a of ACHIEVEMENT_DEF) {
+    if (a.type !== type) continue;
+    const state = questState.achievements[a.id];
+    if (!state || state.done) continue;
+    state.progress = Math.min(value, a.goal);
+    if (state.progress >= a.goal) {
+      state.done = true;
+      unlockAchievement(a);
+    }
+  }
+  if (document.getElementById('quest-panel').classList.contains('open')) renderQuestPanel();
+}
+
+function unlockAchievement(a) {
+  playAchievementSound();
+  showAchToast(a);
+  addLog(`🏆 CONQUISTA: "${a.name}" desbloqueada!`, 'llvl');
+  if (player) { player.gold += 100; addLog('🪙 Bônus: +100 ouro pela conquista!', 'lchest'); }
+}
+
+// ── Toasts ────────────────────────────────────────────────
+function showAchToast(a) {
+  const el = document.getElementById('ach-toast');
+  document.getElementById('ach-toast-icon').textContent = a.icon;
+  document.getElementById('ach-toast-name').textContent = a.name;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3400);
+}
+
+function showMissionToast(m) {
+  const el = document.getElementById('mission-toast');
+  document.getElementById('mission-toast-icon').textContent = m.icon;
+  document.getElementById('mission-toast-reward').textContent =
+    `${m.name}  ·  +${m.reward.gold}🪙  +${m.reward.xp > 0 ? m.reward.xp + 'xp' : ''}`;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ── Panel toggle ───────────────────────────────────────────
+function toggleQuestPanel() {
+  const p = document.getElementById('quest-panel');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) renderQuestPanel();
+}
+
+function qpShowTab(tab) {
+  document.getElementById('qp-body-quest').style.display = tab === 'quest' ? '' : 'none';
+  document.getElementById('qp-body-ach').style.display   = tab === 'ach'   ? '' : 'none';
+  document.getElementById('qp-tab-quest').classList.toggle('active', tab === 'quest');
+  document.getElementById('qp-tab-ach').classList.toggle('active', tab === 'ach');
+  if (tab === 'ach') renderQuestPanel();
+}
+
+// ── Render panel ───────────────────────────────────────────
+function renderQuestPanel() {
+  // Mission card
+  const mDiv = document.getElementById('qp-active-mission');
+  const m = questState.activeMission;
+  if (!m) {
+    mDiv.innerHTML = '<div style="color:#3a5030;font-size:12px;padding:8px;font-style:italic;">Nenhuma missão ativa…</div>';
+  } else {
+    const cur = Math.min(qCurrentValue(), m.goal);
+    const pct = Math.round(cur / m.goal * 100);
+    mDiv.innerHTML = `
+      <div class="qp-mission-card">
+        <div class="qp-mission-name">${m.icon} ${m.name}</div>
+        <div class="qp-mission-desc">${m.desc}</div>
+        <div class="qp-mission-progress">${cur} / ${m.goal}</div>
+        <div class="qp-progress-track"><div class="qp-progress-fill" style="width:${pct}%"></div></div>
+        <div class="qp-reward">Recompensa: <span>+${m.reward.gold}🪙</span>${m.reward.xp > 0 ? ` <span>+${m.reward.xp}xp</span>` : ''}</div>
+      </div>
+      <div style="font-size:10px;color:#2a3a22;font-family:'VT323',monospace;text-align:center;">Missões completas: ${questState.totalCompleted}</div>
+    `;
+  }
+
+  // Achievements
+  const aDiv = document.getElementById('qp-ach-list');
+  let html = '';
+  for (const a of ACHIEVEMENT_DEF) {
+    const state = questState.achievements[a.id] || { progress: 0, done: false };
+    const cur = Math.min(state.progress, a.goal);
+    const pct = Math.round(cur / a.goal * 100);
+    html += `
+      <div class="qp-ach-item ${state.done ? 'done' : ''}">
+        <div class="qp-ach-icon">${state.done ? a.icon : '🔒'}</div>
+        <div class="qp-ach-info">
+          <div class="qp-ach-name">${a.name}</div>
+          <div class="qp-ach-desc">${a.desc}</div>
+          <div class="qp-ach-progress">${cur} / ${a.goal}${state.done ? ' ✓' : ''}</div>
+          ${!state.done ? `<div class="qp-ach-prog-track"><div class="qp-ach-prog-fill" style="width:${pct}%"></div></div>` : ''}
+        </div>
+      </div>`;
+  }
+  aDiv.innerHTML = html;
+}
+
+// ── HUD mini display ───────────────────────────────────────
+function renderQuestHUD() {
+  const btn = document.getElementById('quest-hud-btn');
+  const m = questState.activeMission;
+  if (!m || !gameState || gameState !== 'playing') { btn.classList.remove('visible'); return; }
+  btn.classList.add('visible');
+  const cur = Math.min(qCurrentValue(), m.goal);
+  document.getElementById('quest-hud-label').textContent = `${m.icon} ${m.name}`;
+  document.getElementById('quest-hud-progress').textContent = `${cur}/${m.goal}`;
+}
+
+// ── Init ───────────────────────────────────────────────────
+function initQuestSystem() {
+  _qInitAchievements();
+  qStartNewMission();
+  renderQuestHUD();
+  // Tick HUD every second
+  setInterval(() => { if (gameState === 'playing') renderQuestHUD(); }, 1000);
+}
+
+// ── Hook into [N] key ──────────────────────────────────────
+document.addEventListener('keydown', function(ev) {
+  if ((ev.key === 'n' || ev.key === 'N') && gameState === 'playing') {
+    toggleQuestPanel();
+    ev.preventDefault();
+  }
+});
+</script>
+</body>-e 
 </html>
