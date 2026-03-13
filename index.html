@@ -589,7 +589,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .inv-main-title { font-family:'Cinzel',serif; font-size:12px; color:var(--amber); letter-spacing:.1em; margin-bottom:10px; border-bottom:1px solid #2a2010; padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
 .inv-close-btn { cursor:pointer; color:var(--text-dim); font-size:16px; font-family:'VT323',monospace; transition:color .2s; }
 .inv-close-btn:hover { color:var(--red-glow); }
-.inv-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; }
+.inv-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:4px; }
 .inv-cell {
   aspect-ratio:1; background:#0d1018; border:1px solid #2a2010; border-radius:6px;
   display:flex; align-items:center; justify-content:center; font-size:22px;
@@ -1419,6 +1419,7 @@ let lastTime  = 0;
 let kills     = 0;
 let respawnTimer = 0;
 const RESPAWN_INTERVAL = 9000;
+let dynamicRespawnInterval = 9000; // decreases each time central boss is killed
 let cam = {x:0, y:0};
 const keys = {};
 let mapTiles = [];
@@ -1499,6 +1500,11 @@ function closeArtifactPanel() {
 function renderArtifactPanel() {
   const slotsEl = document.getElementById('artp-slots');
   if (!slotsEl || !player) return;
+
+  // Remove previously injected dynamic rows (dividers, owned-row) to prevent pollution
+  const parent = slotsEl.parentElement;
+  parent.querySelectorAll('.artp-dynamic').forEach(el => el.remove());
+
   slotsEl.innerHTML = '';
 
   // ── Equipped slots (always show ART_MAX_SLOTS) ───────────
@@ -1536,14 +1542,17 @@ function renderArtifactPanel() {
   }
   slotsEl.appendChild(effDiv);
 
-  // ── Inventory artifacts available to equip ───────────────
+  // ── Inventory artifacts available to equip (only those NOT already equipped) ──
+  const hint = parent.querySelector('.artp-hint');
   const owned = (player.inventory || []).filter(it => it && ITEM_DB[it.id]?.type === 'artifact' && !equippedArtifacts.includes(it.id));
   if (owned.length > 0) {
     const divider2 = document.createElement('div');
+    divider2.className = 'artp-dynamic';
     divider2.style.cssText = 'width:100%;font-size:9px;color:#3a2060;font-family:VT323,monospace;letter-spacing:.06em;padding-top:4px;';
     divider2.textContent = '── NA MOCHILA (clique para equipar) ──';
-    slotsEl.parentElement.insertBefore(divider2, slotsEl.parentElement.querySelector('.artp-hint'));
+    parent.insertBefore(divider2, hint);
     const ownRow = document.createElement('div');
+    ownRow.className = 'artp-dynamic';
     ownRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
     for (const it of owned) {
       const db = ITEM_DB[it.id];
@@ -1554,7 +1563,7 @@ function renderArtifactPanel() {
       s2.addEventListener('click', () => { equipArtifact(it.id); });
       ownRow.appendChild(s2);
     }
-    slotsEl.parentElement.insertBefore(ownRow, slotsEl.parentElement.querySelector('.artp-hint'));
+    parent.insertBefore(ownRow, hint);
   }
 
   document.getElementById('artp-count').textContent = `${equippedArtifacts.length}/${ART_MAX_SLOTS} equipados`;
@@ -2040,6 +2049,11 @@ function respawnCentralBoss() {
 function onCentralBossKilled() {
   worldLevel += 1;
 
+  // Escala de spawn baseada no worldLevel — cada boss central aumenta pressão
+  // Intervalo: 9s → 7.5s → 6s → 5s → 4s → 3.5s → 3s (mínimo)
+  dynamicRespawnInterval = Math.max(3000, 9000 - (worldLevel - 1) * 900);
+  addLog(`⚡ Mundo mais perigoso! Spawn a cada ${(dynamicRespawnInterval/1000).toFixed(1)}s`, 'lboss');
+
   // Reforça todos os inimigos vivos imediatamente
   const ws = getWorldScale();
   for (const e of enemies) {
@@ -2049,7 +2063,6 @@ function onCentralBossKilled() {
     const lvlSc = 1 + (player.level - 1) * 0.08;
     const newAtk = Math.floor(def.atk * ws * lvlSc);
     e.atk = newAtk;
-    // HP: escala o máximo e mantém proporção
     const ratio = e.hp / e.maxHp;
     e.maxHp = Math.floor(def.hp * ws * lvlSc);
     e.hp    = Math.max(1, Math.floor(e.maxHp * ratio));
@@ -2061,7 +2074,28 @@ function onCentralBossKilled() {
   addLog(`⬆ World Level ${worldLevel}! Próximo boss: Nível ${getBossMinLevel(worldLevel)}`, 'lboss');
   updateWorldLevelBadge();
 
-  // Respawna boss após 4 s (dá tempo do banner aparecer)
+  // Respawn chests with upgraded loot quality based on world level
+  setTimeout(() => {
+    // Reopen all chests with better rarity
+    for (const c of chests) {
+      c.open = false;
+      c.bossKilled = false;
+      c.bossSpawned = false;
+      c.guard = null;
+      // Upgrade chest rarity each world level
+      if (worldLevel >= 3) {
+        if (c.rarity === 'common') c.rarity = 'rare';
+        if (c.rarity === 'rare' && worldLevel >= 5) c.rarity = 'epic';
+      }
+    }
+    // Remove mission chests (they were only for missions)
+    for (let i = chests.length - 1; i >= 0; i--) {
+      if (chests[i].isMissionChest) chests.splice(i, 1);
+    }
+    addLog('🎁 Os baús reapareceram com loot melhorado!', 'lchest');
+  }, 5000);
+
+  // Respawn boss after 4s
   setTimeout(respawnCentralBoss, 4000);
 }
 
@@ -2192,8 +2226,7 @@ function placeChests(){
   const chestCount=6+Math.floor(Math.random()*3);
   for(let i=0;i<chestCount;i++){
     const pos=findFreePos(T*5,WORLD_W/2,WORLD_H/2);
-    const isBossChest=i<2;
-    chests.push({x:pos.x,y:pos.y,open:false,isBossChest,bossKilled:false,bossId:isBossChest?(['boss','lich','ogre_boss'][Math.floor(Math.random()*3)]):null,bossSpawned:false,rarity:i<2?'epic':i<4?'rare':'common',bob:Math.random()*Math.PI*2,guard:null});
+    chests.push({x:pos.x,y:pos.y,open:false,isBossChest:false,bossKilled:false,bossId:null,bossSpawned:false,rarity:i<2?'epic':i<4?'rare':'common',bob:Math.random()*Math.PI*2,guard:null});
   }
 }
 
@@ -2206,7 +2239,7 @@ function findFreePos(minDist=0,fromX=0,fromY=0){for(let tries=0;tries<400;tries+
 // ─────────────────────────────────────────────────────────
 function createPlayer(classId){
   const def=CLASS_DEF[classId];
-  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:100,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,_subSkillLogic:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,ultShieldWall:0,ultBloodlust:0,
+  return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:60,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,_subSkillLogic:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,ultShieldWall:0,ultBloodlust:0,
     activePetType:null,
     art:{xpMult:1,goldMult:1,atkMult:1,maxHpFlat:0,dmgReduce:0,poisonMult:1,fireMult:1,iceMult:1,swordMult:1,bowMult:1,autoCollect:false,hpApplied:0}};
 }
@@ -2303,10 +2336,13 @@ function spawnEnemy(forceBossId=null){
 function spawnInitialEnemies(){enemies=[];const count=12+player.level*2;for(let i=0;i<count;i++)enemies.push(spawnEnemy());}
 
 function spawnBossChestGuards(){
+  // Only spawn guards on mission chests (isMissionChest flag)
   for(const chest of chests){
-    if(chest.isBossChest&&chest.bossId){
-      const boss=spawnEnemy(chest.bossId);
-      boss.x=chest.x;boss.y=chest.y;boss.guardingChest=chest;chest.guard=boss;enemies.push(boss);
+    if(chest.isMissionChest && !chest.guard && !chest.open){
+      const bossIds = ['boss','lich','ogre_boss'];
+      const bossId = bossIds[Math.floor(Math.random()*bossIds.length)];
+      const boss=spawnEnemy(bossId);
+      boss.x=chest.x;boss.y=chest.y;boss.guardingChest=chest;chest.guard=boss;chest.isBossChest=true;enemies.push(boss);
     }
   }
 }
@@ -2329,7 +2365,6 @@ function startGame(classId){
   equippedArtifacts = [];
   pet = null; // Pet deve ser comprado na loja
   spawnInitialEnemies();
-  spawnBossChestGuards();
   spawnCentralBoss();
   updateHUD();
   renderInventory();
@@ -2393,7 +2428,7 @@ function updatePlayer(dt){
     if(Math.hypot(lootItems[i].x-p.x,lootItems[i].y-p.y)<28){
       const li=lootItems[i];
       // Só coleta se for ouro, ou tiver espaço
-      const isFreeSlot=li.id==='gold_coin'||player.inventory.filter(Boolean).length<40;
+      const isFreeSlot=li.id==='gold_coin'||player.inventory.filter(Boolean).length<60;
       if(isFreeSlot){collectLoot(li);lootItems.splice(i,1);}
       else{addLog('🎒 Inventário cheio! Item no chão.','');break;}
     }
@@ -2546,14 +2581,23 @@ function collectLoot(loot){
 }
 
 function addItemToInventory(itemId){
+  const item = ITEM_DB[itemId];
+  // Stack consumables: find existing stack slot (max 99)
+  if (item && item.type === 'consumable') {
+    const stackSlot = player.inventory.findIndex(s => s && s.id === itemId && (s.qty||1) < 99);
+    if (stackSlot !== -1) {
+      player.inventory[stackSlot].qty = (player.inventory[stackSlot].qty||1) + 1;
+      if(document.getElementById('inv-panel').classList.contains('open'))renderInventory();
+      return;
+    }
+  }
   const realCount = player.inventory.filter(Boolean).length;
-  if(realCount>=40){addLog('🎒 Inventário cheio! (40/40)','');return;}
-  // Encontrar primeiro slot vazio (null) ou adicionar no final
+  if(realCount>=60){addLog('🎒 Inventário cheio! (60/60)','');return;}
   const emptyIdx = player.inventory.indexOf(null);
   if(emptyIdx !== -1){
-    player.inventory[emptyIdx]={id:itemId,uid:Date.now()+Math.random()};
+    player.inventory[emptyIdx]={id:itemId,uid:Date.now()+Math.random(),qty:1};
   } else {
-    player.inventory.push({id:itemId,uid:Date.now()+Math.random()});
+    player.inventory.push({id:itemId,uid:Date.now()+Math.random(),qty:1});
   }
   if(document.getElementById('inv-panel').classList.contains('open'))renderInventory();
 }
@@ -2587,7 +2631,9 @@ function useInventoryItem(idx){
     if(db.effect.hp)player.hp=Math.min(player.maxHp,player.hp+db.effect.hp);
     if(db.effect.mp)player.mp=Math.min(player.maxMp,player.mp+db.effect.mp);
     addLog(`${db.icon} Usou ${db.name}: ${db.desc}`,'lheal');
-    player.inventory.splice(idx,1);
+    // Handle stacks
+    if((invItem.qty||1) > 1){ invItem.qty--; }
+    else { player.inventory.splice(idx,1); }
   }else{
     if(db.forClass&&!db.forClass.includes(player.classId)){addLog(`❌ ${db.name} é para outra classe!`,'ldmg');return;}
     const currEq=db.type==='weapon'?player.equippedWeapon:player.equippedArmor;
@@ -2620,9 +2666,15 @@ function tryOpenChest(){
     if(!guardOk){addLog('⚠ Derrote o boss para abrir!','ldmg');return;}
     nearChest.open=true;
     playChestOpenSound(nearChest.rarity);
+    const wlBonus = 1 + (worldLevel - 1) * 0.3; // 30% better per world level
     const pool=nearChest.rarity==='epic'?CHEST_LOOT.epic:nearChest.rarity==='rare'?[...CHEST_LOOT.rare,...CHEST_LOOT.epic]:CHEST_LOOT.common;
-    const item=pool[Math.floor(Math.random()*pool.length)];
-    const gold=nearChest.rarity==='epic'?60+Math.floor(Math.random()*80):nearChest.rarity==='rare'?20+Math.floor(Math.random()*30):5+Math.floor(Math.random()*15);
+    // Higher world levels give a chance of upgraded loot tier
+    let finalPool = pool;
+    if (worldLevel >= 2 && nearChest.rarity === 'rare') finalPool = [...CHEST_LOOT.rare, ...CHEST_LOOT.epic, ...CHEST_LOOT.epic];
+    if (worldLevel >= 3 && nearChest.rarity === 'common') finalPool = [...CHEST_LOOT.common, ...CHEST_LOOT.rare];
+    const item=finalPool[Math.floor(Math.random()*finalPool.length)];
+    const baseGold=nearChest.rarity==='epic'?60+Math.floor(Math.random()*80):nearChest.rarity==='rare'?20+Math.floor(Math.random()*30):5+Math.floor(Math.random()*15);
+    const gold=Math.floor(baseGold * wlBonus * (player.art?.goldMult||1));
     spawnLoot(nearChest.x,nearChest.y-20,item);
     player.gold+=gold;
     addLog(`🎁 Baú [${nearChest.rarity}]: ${ITEM_DB[item]?.icon||'?'} ${ITEM_DB[item]?.name||item} + ${gold}🪙`,'lchest');
@@ -2640,7 +2692,7 @@ function tryOpenChest(){
 
 function checkLevelUp(){
   while(player.xp>=player.xpNext){
-    player.xp-=player.xpNext;player.level+=1;player.xpNext=Math.floor(player.xpNext*1.6);
+    player.xp-=player.xpNext;player.level+=1;player.xpNext=Math.floor(player.xpNext*1.35);
     const hpG=player.classId==='warrior'?22:player.classId==='archer'?13:9;const atkG=player.classId==='mage'?5:3;const defG=player.classId==='warrior'?3:1;const mpG=player.classId==='mage'?12:5;
     player.maxHp+=hpG;player.hp=player.maxHp;player.baseAtk+=atkG;player.atk=player.baseAtk+(player.equippedWeapon?(ITEM_DB[player.equippedWeapon].effect.atk||0):0);player.baseDef+=defG;player.def=player.baseDef+(player.equippedArmor?(ITEM_DB[player.equippedArmor].effect.def||0):0);player.maxMp+=mpG;player.mp=player.maxMp;
     for(let i=0;i<3;i++)enemies.push(spawnEnemy());
@@ -2668,7 +2720,16 @@ function updateSkillCDs(dt){
   document.getElementById('dash-indicator').style.color=player.dashTimer<=0?'var(--amber)':'var(--text-dim)';
 }
 
-function updateRespawn(dt){respawnTimer+=dt;if(respawnTimer>=RESPAWN_INTERVAL){respawnTimer=0;const alive=enemies.filter(e=>e.isAlive&&!e.isCentralBoss).length;if(alive<10+player.level*2)for(let i=0;i<3;i++)enemies.push(spawnEnemy());}}
+function updateRespawn(dt){
+  respawnTimer+=dt;
+  if(respawnTimer>=dynamicRespawnInterval){
+    respawnTimer=0;
+    const alive=enemies.filter(e=>e.isAlive&&!e.isCentralBoss).length;
+    const cap = 10 + player.level*2 + (worldLevel-1)*5; // +5 per world level
+    const batch = 2 + Math.floor((worldLevel-1)/2);      // +1 batch every 2 world levels
+    if(alive<cap) for(let i=0;i<batch;i++) enemies.push(spawnEnemy());
+  }
+}
 function updateCamera(){const tx=player.x-W/2,ty=player.y-H/2;cam.x+=(tx-cam.x)*.12;cam.y+=(ty-cam.y)*.12;cam.x=Math.max(0,Math.min(WORLD_W-W,cam.x));cam.y=Math.max(0,Math.min(WORLD_H-H,cam.y));}
 function updateParticles(dt){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;if(p.life<=0){particles.splice(i,1);continue;}if(p.vx!==undefined){p.x+=p.vx*dt/1000;p.y+=p.vy*dt/1000;}if(p.gravity)p.vy+=p.gravity*dt/1000;}}
 function spawnHitParticles(x,y,color,count=6){for(let i=0;i<count;i++){const ang=Math.random()*Math.PI*2,spd=60+Math.random()*80;particles.push({type:'hit',x,y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,life:250+Math.random()*150,maxLife:400,r:2+Math.random()*3,color,gravity:120});}}
@@ -5201,7 +5262,8 @@ function calcEquipBonuses() {
   const b = {atk:0, def:0, hp:0, mp:0, spd:0, critBonus:0};
   if (!player?.equippedSlots) return b;
   for (const slotId of ALL_SLOTS) {
-    const itemId = player.equippedSlots[slotId]; if (!itemId) continue;
+    const entry = player.equippedSlots[slotId]; if (!entry) continue;
+    const itemId = entry.itemId || entry; // backwards compat with plain strings
     const db = ITEM_DB[itemId]; if (!db?.effect) continue;
     if (db.effect.atk)       b.atk       += db.effect.atk;
     if (db.effect.def)       b.def       += db.effect.def;
@@ -5243,17 +5305,21 @@ function resolveEquipSlot(itemId, preferredSlot) {
   const candidates = ALL_SLOTS.filter(s => SLOT_ACCEPTS[s]?.includes(itemSlotType));
   if (!candidates.length) return null;
   for (const s of candidates) { if (!player.equippedSlots[s]) return s; }
-  return candidates[0];
+  return candidates[0]; // replace first candidate
 }
 
-function equipItem(itemId, preferredSlot) {
+function equipItem(itemId, preferredSlot, uid) {
   const db = ITEM_DB[itemId]; if (!db) return;
   if (!player.equippedSlots) player.equippedSlots = {};
   const targetSlot = resolveEquipSlot(itemId, preferredSlot);
   if (!targetSlot) { addLog(`❌ Sem slot para ${db.name}`, 'ldmg'); return; }
   const existing = player.equippedSlots[targetSlot];
-  if (existing && existing !== itemId) addLog(`↩ Desequipou ${ITEM_DB[existing]?.name || existing}`, '');
-  player.equippedSlots[targetSlot] = itemId;
+  if (existing && existing.itemId !== itemId) addLog(`↩ Desequipou ${ITEM_DB[existing.itemId]?.name || existing.itemId}`, '');
+  // Find the inventory item to get its uid if not provided
+  const invItem = uid ? player.inventory.find(it => it && it.uid === uid) :
+                        player.inventory.find(it => it && it.id === itemId);
+  const resolvedUid = invItem ? invItem.uid : uid || (itemId + '_' + Date.now());
+  player.equippedSlots[targetSlot] = { itemId, uid: resolvedUid };
   // Legacy compat
   if (db.type === 'weapon') player.equippedWeapon = itemId;
   else if (db.type === 'armor') player.equippedArmor = itemId;
@@ -5263,22 +5329,43 @@ function equipItem(itemId, preferredSlot) {
   }
 }
 
-function removeEquip(itemId) {
+function removeEquip(itemId, uid) {
   if (!player?.equippedSlots) return;
   for (const slotId of ALL_SLOTS) {
-    if (player.equippedSlots[slotId] === itemId) {
+    const entry = player.equippedSlots[slotId];
+    if (!entry) continue;
+    const entryItemId = entry.itemId || entry; // backwards compat
+    const entryUid    = entry.uid;
+    if (uid ? entryUid === uid : entryItemId === itemId) {
       delete player.equippedSlots[slotId];
       break;
     }
   }
-  if (player.equippedWeapon === itemId) player.equippedWeapon = null;
-  if (player.equippedArmor  === itemId) player.equippedArmor  = null;
+  // Only clear legacy if no other copy of same itemId is equipped
+  const stillEquipped = Object.values(player.equippedSlots).some(e => (e.itemId||e) === itemId);
+  if (!stillEquipped) {
+    if (player.equippedWeapon === itemId) player.equippedWeapon = null;
+    if (player.equippedArmor  === itemId) player.equippedArmor  = null;
+  }
   applyEquipBonuses();
 }
 
-function isItemEquipped(itemId) {
+function isItemEquipped(itemId, uid) {
   if (!player?.equippedSlots) return false;
-  return Object.values(player.equippedSlots).includes(itemId);
+  return Object.values(player.equippedSlots).some(e => {
+    const eId  = e.itemId || e;
+    const eUid = e.uid;
+    return uid ? eUid === uid : eId === itemId;
+  });
+}
+
+function getEquippedUid(itemId) {
+  // Return the uid of the currently equipped instance of itemId (for display)
+  if (!player?.equippedSlots) return null;
+  for (const e of Object.values(player.equippedSlots)) {
+    if ((e.itemId || e) === itemId) return e.uid || null;
+  }
+  return null;
 }
 
 function buildStatStr(effect) {
@@ -5321,7 +5408,7 @@ function createPlayer(classId) {
     maxHp: def.hp, hp: def.hp, maxMp: def.mp, mp: def.mp,
     baseAtk: def.atk, atk: def.atk,
     baseDef: def.def, def: def.def,
-    level: 1, xp: 0, xpNext: 100, gold: 0, kills: 0,
+    level: 1, xp: 0, xpNext: 60, gold: 0, kills: 0,
     inventory: [],
     equippedSlots: {},
     equippedWeapon: null, equippedArmor: null,
@@ -5350,13 +5437,18 @@ function useInventoryItem(idx) {
     if (db.effect.hp) player.hp = Math.min(player.maxHp, player.hp + db.effect.hp);
     if (db.effect.mp) player.mp = Math.min(player.maxMp, player.mp + db.effect.mp);
     addLog(`${db.icon} Usou ${db.name}: ${db.desc}`, 'lheal');
-    player.inventory.splice(idx, 1);
+    // Handle stacks: decrement qty, only remove slot when qty reaches 0
+    if ((invItem.qty || 1) > 1) {
+      invItem.qty--;
+    } else {
+      player.inventory.splice(idx, 1);
+    }
   } else if (db.type === 'weapon' || db.type === 'armor') {
     if (db.forClass && !db.forClass.includes(player.classId)) {
       addLog(`❌ ${db.name} é para ${db.forClass.join('/')}!`, 'ldmg'); return;
     }
-    if (isItemEquipped(invItem.id)) removeEquip(invItem.id);
-    else equipItem(invItem.id);
+    if (isItemEquipped(invItem.id, invItem.uid)) removeEquip(invItem.id, invItem.uid);
+    else equipItem(invItem.id, null, invItem.uid);
   } else if (db.type === 'artifact') {
     if (equippedArtifacts.includes(invItem.id)) unequipArtifact(invItem.id);
     else equipArtifact(invItem.id);
@@ -5396,15 +5488,19 @@ function collectLoot(loot) {
     if (canEquip) {
       const targetSlot = resolveEquipSlot(loot.id);
       if (targetSlot) {
-        const currentId = player.equippedSlots?.[targetSlot];
+        const currentEntry = player.equippedSlots?.[targetSlot];
+        const currentId = currentEntry ? (currentEntry.itemId || currentEntry) : null;
+        // Find the just-added item's uid
+        const newInvItem = player.inventory.find(it => it && it.id === loot.id && !isItemEquipped(it.id, it.uid));
+        const newUid = newInvItem?.uid;
         if (!currentId) {
-          equipItem(loot.id);
+          equipItem(loot.id, null, newUid);
           addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`, 'ldrop');
         } else {
           const currDb = ITEM_DB[currentId];
           const score = e => Object.values(e||{}).reduce((a,v)=>typeof v==='number'?a+v:a,0);
           if (score(item.effect) > score(currDb?.effect)) {
-            equipItem(loot.id);
+            equipItem(loot.id, null, newUid);
             addLog(`${item.icon} ↑ Upgradou para ${item.name}! (${item.desc})`, 'ldrop');
           } else {
             addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`, 'ldrop');
@@ -5459,7 +5555,8 @@ function recalcPlayerForClass(p, newClassId) {
 function renderEquipSlots() {
   for (const slotId of ALL_SLOTS) {
     const el = document.getElementById('eslot-' + slotId); if (!el) continue;
-    const itemId = player.equippedSlots?.[slotId];
+    const entry = player.equippedSlots?.[slotId];
+    const itemId = entry ? (entry.itemId || entry) : null;
     el.innerHTML = '';
     if (itemId && ITEM_DB[itemId]) {
       const db = ITEM_DB[itemId];
@@ -5475,17 +5572,22 @@ function renderEquipSlots() {
   const list = document.getElementById('equipped-items-list'); if (!list) return;
   list.innerHTML = '';
   const eqSlots = player.equippedSlots || {};
-  const eqEntries = Object.entries(eqSlots).filter(([,id]) => id && ITEM_DB[id]);
+  const eqEntries = Object.entries(eqSlots).filter(([,e]) => {
+    const id = e ? (e.itemId || e) : null;
+    return id && ITEM_DB[id];
+  });
   if (!eqEntries.length) { list.innerHTML = '<div class="no-equip-msg">Sem itens equipados</div>'; }
   else {
-    for (const [slotId, itemId] of eqEntries) {
+    for (const [slotId, entry] of eqEntries) {
+      const itemId = entry.itemId || entry;
+      const uid = entry.uid;
       const db = ITEM_DB[itemId];
       const row = document.createElement('div'); row.className = 'equipped-item-row';
       const statStr = buildStatStr(db.effect);
       row.innerHTML = `<span class="ei-icon">${db.icon}</span><span class="ei-name" style="color:${{common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]};max-width:90px;overflow:hidden;text-overflow:ellipsis;">${db.name}</span><span class="ei-stat" style="font-size:10px;color:#2ecc71">${statStr}</span><span class="ei-unequip" title="Desequipar">✕</span>`;
       row.querySelector('.ei-unequip').addEventListener('click', ev => {
         ev.stopPropagation();
-        removeEquip(itemId); renderInventory(); updateInventoryPanel(); renderEquipSlots();
+        removeEquip(itemId, uid); renderInventory(); updateInventoryPanel(); renderEquipSlots();
       });
       list.appendChild(row);
     }
@@ -5501,21 +5603,28 @@ function renderEquipSlots() {
 // ─────────────────────────────────────────────────────────
 function renderInventory() {
   const grid = document.getElementById('inv-grid'); grid.innerHTML = '';
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 60; i++) {
     const cell = document.createElement('div'); cell.dataset.idx = i;
     const invItem = player.inventory[i];
     if (invItem) {
       const db = ITEM_DB[invItem.id];
       if (db) {
-        const isEq = isItemEquipped(invItem.id);
+        const isEq = isItemEquipped(invItem.id, invItem.uid);
         const isArtEq = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
         const isPetActive = db.type==='pet' && pet && pet.petType===db.petType;
         cell.className = 'inv-cell rarity-'+db.rarity+((isEq||isArtEq||isPetActive)?' is-equipped':'');
         const iconS = document.createElement('span');
         iconS.style.cssText = 'pointer-events:none;font-size:22px;'; iconS.textContent = db.icon; cell.appendChild(iconS);
-        const badge = document.createElement('span'); badge.className = 'inv-badge'; badge.style.pointerEvents = 'none';
-        badge.textContent = db.slot ? (SLOT_ICON_EMPTY?.[db.slot]||'?') : {consumable:'❤',artifact:'💎',pet:'🐾'}[db.type]||'?';
-        cell.appendChild(badge);
+        // Stack count badge for consumables
+        if (db.type === 'consumable' && (invItem.qty||1) > 1) {
+          const qtyBadge = document.createElement('span');
+          qtyBadge.style.cssText = 'position:absolute;bottom:2px;right:3px;font-family:VT323,monospace;font-size:13px;color:#f0c060;pointer-events:none;text-shadow:0 0 4px #000;';
+          qtyBadge.textContent = invItem.qty; cell.appendChild(qtyBadge);
+        } else {
+          const badge = document.createElement('span'); badge.className = 'inv-badge'; badge.style.pointerEvents = 'none';
+          badge.textContent = db.slot ? (SLOT_ICON_EMPTY?.[db.slot]||'?') : {consumable:'❤',artifact:'💎',pet:'🐾'}[db.type]||'?';
+          cell.appendChild(badge);
+        }
         const price = document.createElement('span');
         price.style.cssText = 'position:absolute;top:2px;left:3px;font-family:VT323,monospace;font-size:9px;color:#5a3808;pointer-events:none;';
         price.textContent = getSellPrice(invItem.id)+'g'; cell.appendChild(price);
@@ -5535,7 +5644,7 @@ function renderInventory() {
     grid.appendChild(cell);
   }
   const cnt = document.getElementById('inv-count');
-  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length+'/40';
+  if (cnt) cnt.textContent = player.inventory.filter(Boolean).length+'/60';
 }
 
 // ─────────────────────────────────────────────────────────
@@ -5551,7 +5660,7 @@ function showItemPopup(idx, anchorEl) {
   const acts  = document.getElementById('popup-actions');
   const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]||'#aaa';
   const canEquip = !db.forClass || db.forClass.includes(player.classId);
-  const isEq = isItemEquipped(invItem.id);
+  const isEq = isItemEquipped(invItem.id, invItem.uid);
   const isArtEquipped = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
   const sellPrice = getSellPrice(invItem.id);
   const slotStr = db.slot ? (SLOT_LABEL?.[db.slot] || db.slot) : '';
@@ -7509,37 +7618,61 @@ window.addEventListener('DOMContentLoaded',()=>{
 // MISSIONS & ACHIEVEMENTS SYSTEM
 // ═══════════════════════════════════════════════════════════
 
-// ── Mission templates ──────────────────────────────────────
+// ── Mission templates — ordered progression ────────────────
 const MISSION_POOL = [
-  { id:'kill_10',   type:'kills',   goal:10,  icon:'⚔',  name:'Primeira Sangria',      desc:'Mate 10 inimigos',           reward:{gold:50,  xp:80}  },
-  { id:'kill_30',   type:'kills',   goal:30,  icon:'💀',  name:'Caçador',               desc:'Mate 30 inimigos',           reward:{gold:120, xp:200} },
-  { id:'kill_50',   type:'kills',   goal:50,  icon:'🗡',  name:'Exterminador',           desc:'Mate 50 inimigos',           reward:{gold:200, xp:350} },
-  { id:'kill_100',  type:'kills',   goal:100, icon:'☠',   name:'Ceifador',              desc:'Mate 100 inimigos',          reward:{gold:400, xp:600} },
-  { id:'gold_100',  type:'gold',    goal:100, icon:'🪙',  name:'Primeiros Cofres',      desc:'Colete 100 de ouro',         reward:{gold:60,  xp:100} },
-  { id:'gold_300',  type:'gold',    goal:300, icon:'💰',  name:'Garimpeiro',            desc:'Colete 300 de ouro',         reward:{gold:150, xp:180} },
-  { id:'gold_500',  type:'gold',    goal:500, icon:'💎',  name:'Mercador de Guerra',    desc:'Colete 500 de ouro',         reward:{gold:250, xp:300} },
-  { id:'gold_1000', type:'gold',    goal:1000,icon:'👑',  name:'Barão do Ouro',         desc:'Colete 1000 de ouro',        reward:{gold:400, xp:500} },
-  { id:'boss_1',    type:'bosses',  goal:1,   icon:'🐲',  name:'Matador de Chefes',     desc:'Derrote 1 boss',             reward:{gold:200, xp:400} },
-  { id:'boss_3',    type:'bosses',  goal:3,   icon:'🔥',  name:'Lendário',              desc:'Derrote 3 bosses',           reward:{gold:400, xp:700} },
-  { id:'level_5',   type:'level',   goal:5,   icon:'⬆',   name:'Veterano',              desc:'Alcance o nível 5',          reward:{gold:150, xp:0}  },
-  { id:'level_10',  type:'level',   goal:10,  icon:'🌟',  name:'Mestre',                desc:'Alcance o nível 10',         reward:{gold:300, xp:0}  },
-  { id:'chest_3',   type:'chests',  goal:3,   icon:'📦',  name:'Caçador de Tesouros',   desc:'Abra 3 baús',                reward:{gold:100, xp:150} },
-  { id:'chest_7',   type:'chests',  goal:7,   icon:'🗝',   name:'Explorador',            desc:'Abra 7 baús',                reward:{gold:200, xp:300} },
+  // Tier 1 — early game
+  { id:'kill_3',    type:'kills',   goal:3,    icon:'⚔',  name:'Primeiro Sangue',       desc:'Mate 3 inimigos',            reward:{gold:20,  xp:30},  tier:1 },
+  { id:'kill_10',   type:'kills',   goal:10,   icon:'💀',  name:'Caçador Iniciante',     desc:'Mate 10 inimigos',           reward:{gold:50,  xp:80},  tier:1 },
+  { id:'gold_50',   type:'gold',    goal:50,   icon:'🪙',  name:'Primeiras Moedas',      desc:'Colete 50 de ouro',          reward:{gold:30,  xp:50},  tier:1 },
+  { id:'chest_1',   type:'chests',  goal:1,    icon:'📦',  name:'Primeiro Tesouro',      desc:'Abra 1 baú',                 reward:{gold:40,  xp:60},  tier:1 },
+
+  // Tier 2 — mid game
+  { id:'kill_30',   type:'kills',   goal:30,   icon:'🗡',  name:'Caçador',               desc:'Mate 30 inimigos',           reward:{gold:100, xp:150}, tier:2 },
+  { id:'level_6',   type:'level',   goal:6,    icon:'🌟',  name:'Veterano',              desc:'Alcance o nível 6',          reward:{gold:120, xp:0},   tier:2 },
+  { id:'boss_1',    type:'bosses',  goal:1,    icon:'🐲',  name:'Matador de Chefes',     desc:'Derrote 1 boss de baú',      reward:{gold:200, xp:300}, tier:2 },
+  { id:'gold_200',  type:'gold',    goal:200,  icon:'💰',  name:'Garimpeiro',            desc:'Colete 200 de ouro',         reward:{gold:100, xp:120}, tier:2 },
+  { id:'chest_3',   type:'chests',  goal:3,    icon:'🗝',   name:'Caçador de Tesouros',  desc:'Abra 3 baús',                reward:{gold:80,  xp:120}, tier:2 },
+
+  // Tier 3 — advanced
+  { id:'kill_60',   type:'kills',   goal:60,   icon:'☠',   name:'Exterminador',          desc:'Mate 60 inimigos',           reward:{gold:200, xp:300}, tier:3 },
+  { id:'level_10',  type:'level',   goal:10,   icon:'👑',  name:'Mestre',                desc:'Alcance o nível 10',         reward:{gold:250, xp:0},   tier:3 },
+  { id:'boss_3',    type:'bosses',  goal:3,    icon:'🔥',  name:'Caçador de Bosses',     desc:'Derrote 3 bosses',           reward:{gold:350, xp:500}, tier:3 },
+  { id:'gold_500',  type:'gold',    goal:500,  icon:'💎',  name:'Mercador de Guerra',    desc:'Colete 500 de ouro',         reward:{gold:200, xp:250}, tier:3 },
+  { id:'chest_7',   type:'chests',  goal:7,    icon:'📦',  name:'Explorador',            desc:'Abra 7 baús',                reward:{gold:180, xp:250}, tier:3 },
+
+  // Tier 4 — late game
+  { id:'kill_120',  type:'kills',   goal:120,  icon:'💀',  name:'Ceifador',              desc:'Mate 120 inimigos',          reward:{gold:350, xp:500}, tier:4 },
+  { id:'level_15',  type:'level',   goal:15,   icon:'🌟',  name:'Herói Lendário',        desc:'Alcance o nível 15',         reward:{gold:400, xp:0},   tier:4 },
+  { id:'boss_7',    type:'bosses',  goal:7,    icon:'🐲',  name:'Lendário',              desc:'Derrote 7 bosses',           reward:{gold:500, xp:700}, tier:4 },
+  { id:'gold_1000', type:'gold',    goal:1000, icon:'👑',  name:'Barão do Ouro',         desc:'Colete 1000 de ouro',        reward:{gold:400, xp:450}, tier:4 },
+  { id:'chest_15',  type:'chests',  goal:15,   icon:'🗝',   name:'Grande Explorador',     desc:'Abra 15 baús',               reward:{gold:300, xp:400}, tier:4 },
 ];
 
-// ── Achievement definitions ────────────────────────────────
+// ── Achievement definitions — all achievable in normal play ──
 const ACHIEVEMENT_DEF = [
-  { id:'kill_100_ach',   type:'kills',   goal:100,   icon:'💀', name:'Ceifador Eterno',      desc:'Mate 100 inimigos no total'     },
-  { id:'kill_500_ach',   type:'kills',   goal:500,   icon:'☠',  name:'Flagelo do Mundo',      desc:'Mate 500 inimigos no total'     },
-  { id:'kill_1000_ach',  type:'kills',   goal:1000,  icon:'🔱', name:'Deus da Guerra',         desc:'Mate 1000 inimigos no total'    },
-  { id:'boss_5_ach',     type:'bosses',  goal:5,     icon:'🐲', name:'Caçador de Dragões',    desc:'Derrote 5 bosses'               },
-  { id:'boss_15_ach',    type:'bosses',  goal:15,    icon:'👑', name:'Lenda Viva',             desc:'Derrote 15 bosses'              },
-  { id:'gold_5000_ach',  type:'gold',    goal:5000,  icon:'💰', name:'Tesouro do Reino',       desc:'Colete 5000 de ouro no total'   },
-  { id:'gold_20000_ach', type:'gold',    goal:20000, icon:'💎', name:'Rei dos Mercadores',     desc:'Colete 20000 de ouro no total'  },
-  { id:'level_15_ach',   type:'level',   goal:15,    icon:'🌟', name:'Herói Lendário',         desc:'Alcance o nível 15'             },
-  { id:'chest_15_ach',   type:'chests',  goal:15,    icon:'🗝',  name:'Grande Explorador',      desc:'Abra 15 baús'                   },
-  { id:'quest_5_ach',    type:'quests',  goal:5,     icon:'📜', name:'Caçador de Missões',    desc:'Complete 5 missões'             },
-  { id:'quest_20_ach',   type:'quests',  goal:20,    icon:'🏆', name:'Mestre das Missões',     desc:'Complete 20 missões'            },
+  // Kill milestones
+  { id:'kill_10_ach',    type:'kills',   goal:10,    icon:'⚔',  name:'Batismo de Fogo',       desc:'Mate 10 inimigos'           },
+  { id:'kill_50_ach',    type:'kills',   goal:50,    icon:'💀',  name:'Guerreiro Experiente',  desc:'Mate 50 inimigos'           },
+  { id:'kill_150_ach',   type:'kills',   goal:150,   icon:'☠',   name:'Ceifador',              desc:'Mate 150 inimigos'          },
+  { id:'kill_500_ach',   type:'kills',   goal:500,   icon:'🔱',  name:'Flagelo do Mundo',      desc:'Mate 500 inimigos'          },
+  // Boss milestones
+  { id:'boss_1_ach',     type:'bosses',  goal:1,     icon:'🐲',  name:'Caçador de Chefes',     desc:'Derrote 1 boss'             },
+  { id:'boss_5_ach',     type:'bosses',  goal:5,     icon:'🔥',  name:'Terror dos Bosses',     desc:'Derrote 5 bosses'           },
+  { id:'boss_15_ach',    type:'bosses',  goal:15,    icon:'👑',  name:'Lenda Viva',            desc:'Derrote 15 bosses'          },
+  // Gold milestones
+  { id:'gold_200_ach',   type:'gold',    goal:200,   icon:'🪙',  name:'Primeiros Cofres',      desc:'Colete 200 de ouro'         },
+  { id:'gold_1000_ach',  type:'gold',    goal:1000,  icon:'💰',  name:'Mercador',              desc:'Colete 1000 de ouro'        },
+  { id:'gold_5000_ach',  type:'gold',    goal:5000,  icon:'💎',  name:'Tesouro do Reino',      desc:'Colete 5000 de ouro'        },
+  // Level milestones
+  { id:'level_5_ach',    type:'level',   goal:5,     icon:'⬆',   name:'Veterano',              desc:'Alcance o nível 5'          },
+  { id:'level_10_ach',   type:'level',   goal:10,    icon:'🌟',  name:'Mestre de Batalha',     desc:'Alcance o nível 10'         },
+  { id:'level_15_ach',   type:'level',   goal:15,    icon:'👑',  name:'Herói Lendário',        desc:'Alcance o nível 15'         },
+  // Chest milestones
+  { id:'chest_5_ach',    type:'chests',  goal:5,     icon:'📦',  name:'Explorador',            desc:'Abra 5 baús'                },
+  { id:'chest_15_ach',   type:'chests',  goal:15,    icon:'🗝',   name:'Grande Explorador',     desc:'Abra 15 baús'               },
+  // Quest milestones
+  { id:'quest_3_ach',    type:'quests',  goal:3,     icon:'📜',  name:'Cumpre Ordens',         desc:'Complete 3 missões'         },
+  { id:'quest_10_ach',   type:'quests',  goal:10,    icon:'🏆',  name:'Mestre das Missões',    desc:'Complete 10 missões'        },
 ];
 
 // ── Quest state ────────────────────────────────────────────
@@ -7557,10 +7690,21 @@ const questState = {
 
 // ── Helpers ────────────────────────────────────────────────
 function _qPickMission() {
-  const used = questState.completedMissionIds;
-  const available = MISSION_POOL.filter(m => !used.includes(m.id) || used.length >= MISSION_POOL.length);
-  if (used.length >= MISSION_POOL.length) questState.completedMissionIds = [];
-  return available[Math.floor(Math.random() * available.length)];
+  const completed = questState.completedMissionIds;
+  // Find the next uncompleted mission in order (respecting tier progression)
+  const plvl = player ? player.level : 1;
+  const currentTier = plvl < 4 ? 1 : plvl < 8 ? 2 : plvl < 13 ? 3 : 4;
+  // Get available missions: not yet completed, tier <= current tier
+  const available = MISSION_POOL.filter(m => !completed.includes(m.id) && m.tier <= currentTier);
+  if (available.length === 0) {
+    // All done — reset completed list and offer tier-appropriate missions again
+    questState.completedMissionIds = [];
+    return MISSION_POOL.filter(m => m.tier <= currentTier)[0] || MISSION_POOL[0];
+  }
+  // Pick the lowest-tier available mission first (progressive)
+  const minTier = Math.min(...available.map(m => m.tier));
+  const tierGroup = available.filter(m => m.tier === minTier);
+  return tierGroup[Math.floor(Math.random() * tierGroup.length)];
 }
 
 function _qInitAchievements() {
@@ -7584,22 +7728,54 @@ function _qMissionMetric(type) {
 function qStartNewMission() {
   const tpl = _qPickMission();
   questState.activeMission = tpl;
-  // Snapshot for delta-based types
-  if (tpl.type === 'kills')  questState.missionProgress = player ? player.kills : 0;
-  else if (tpl.type === 'level') questState.missionProgress = player ? player.level : 1;
-  else questState.missionProgress = 0; // gold / chests / bosses start at 0
+  questState.missionProgress = 0;
   questState.missionGoldAccum = 0;
+  if (tpl.type === 'kills') questState.missionProgress = player ? player.kills : 0;
   renderQuestHUD();
   renderQuestPanel();
+  // If level mission already satisfied, complete immediately
+  if (tpl.type === 'level' && player && player.level >= tpl.goal) {
+    setTimeout(() => checkMissionComplete(), 100);
+  }
+  // If chest mission starts and all chests are open, spawn free blue chests so player isn't stuck
+  if (tpl.type === 'chests') {
+    const openCount = typeof chests !== 'undefined' ? chests.filter(c => !c.open).length : 0;
+    if (openCount < tpl.goal) {
+      const needed = tpl.goal - openCount + 1;
+      setTimeout(() => _qSpawnMissionChests(needed), 500);
+    }
+  }
+}
+
+function _qSpawnMissionChests(count) {
+  if (typeof chests === 'undefined' || typeof findFreePos === 'undefined') return;
+  for (let i = 0; i < count; i++) {
+    const pos = findFreePos(200, player ? player.x : 2000, player ? player.y : 2000);
+    const chest = {
+      x: pos.x, y: pos.y, open: false,
+      isBossChest: true, bossKilled: false,
+      bossId: ['boss','lich','ogre_boss'][Math.floor(Math.random()*3)],
+      bossSpawned: false, rarity: 'rare',
+      bob: Math.random() * Math.PI * 2, guard: null,
+      isMissionChest: true
+    };
+    chests.push(chest);
+    // Spawn a guard for this mission chest
+    const boss = spawnEnemy(chest.bossId);
+    boss.x = chest.x; boss.y = chest.y;
+    boss.guardingChest = chest; chest.guard = boss;
+    enemies.push(boss);
+  }
+  addLog(`📦 Baús com guardiões surgiram para sua missão!`, 'lchest');
 }
 
 function qCurrentValue() {
   const m = questState.activeMission;
   if (!m) return 0;
   if (m.type === 'kills')  return Math.max(0, (player ? player.kills : 0) - questState.missionProgress);
-  if (m.type === 'level')  return Math.max(0, (player ? player.level : 1) - questState.missionProgress);
+  if (m.type === 'level')  return player ? player.level : 1;   // absolute check
   if (m.type === 'gold')   return questState.missionGoldAccum;
-  if (m.type === 'bosses') return questState.missionProgress; // counted directly
+  if (m.type === 'bosses') return questState.missionProgress;
   if (m.type === 'chests') return questState.missionProgress;
   return 0;
 }
