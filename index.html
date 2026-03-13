@@ -309,6 +309,47 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .bar-hp-fill  { background:linear-gradient(90deg,#8b1a1a,#e74c3c); }
 .bar-mp-fill  { background:linear-gradient(90deg,#1a3a8b,#5dade2); }
 .bar-xp-fill  { background:linear-gradient(90deg,#7a5010,#e8a020); }
+
+/* ── Belt potion slots ───────────────────────────────── */
+#hud-potion-belt {
+  display:flex; gap:6px; margin-top:7px; pointer-events:all;
+}
+.potion-slot {
+  flex:1; height:42px;
+  background:rgba(6,8,12,.9);
+  border:1px solid #2a3040;
+  border-radius:6px;
+  display:flex; align-items:center; gap:7px;
+  padding:0 7px;
+  cursor:pointer;
+  position:relative;
+  transition:border-color .15s, box-shadow .15s;
+  overflow:hidden;
+}
+.potion-slot:hover { border-color:#4a5060; }
+.potion-slot.has-potion.hp { border-color:#5a1a1a; box-shadow:inset 0 0 8px rgba(231,76,60,.12); }
+.potion-slot.has-potion.mp { border-color:#1a2a5a; box-shadow:inset 0 0 8px rgba(93,173,226,.12); }
+.potion-slot.used-flash { animation:potionFlash .25s ease-out; }
+@keyframes potionFlash {
+  0%   { opacity:.4; transform:scale(.96); }
+  100% { opacity:1;  transform:scale(1); }
+}
+.potion-slot-key {
+  position:absolute; top:2px; right:5px;
+  font-family:'VT323',monospace; font-size:11px; color:#3a4050;
+}
+.potion-slot-icon { font-size:20px; line-height:1; flex-shrink:0; }
+.potion-slot-info { flex:1; min-width:0; }
+.potion-slot-name {
+  font-family:'VT323',monospace; font-size:13px; color:#6a7080;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.potion-slot-qty {
+  font-family:'VT323',monospace; font-size:11px; color:#4a5060;
+}
+.potion-slot.has-potion.hp .potion-slot-name { color:#e74c3c; }
+.potion-slot.has-potion.mp .potion-slot-name { color:#5dade2; }
+.potion-slot.has-potion .potion-slot-qty { color:#8a9080; }
 #hud-skills {
   position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
   display:flex; gap:10px; pointer-events:all;
@@ -355,7 +396,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .log-line.lboss  { color:#e74c3c; font-weight:bold; }
 .log-line.lchest { color:#e8a020; }
 #dash-indicator {
-  position:absolute; top:50px; left:50%; transform:translateX(-50%);
+  position:absolute; top:38px; left:50%; transform:translateX(-50%);
   font-family:'VT323',monospace; font-size:13px;
   background:rgba(8,10,13,.88); border:1px solid var(--border);
   border-radius:6px; padding:3px 10px; color:var(--text-dim); display:flex; align-items:center; gap:6px;
@@ -1011,6 +1052,25 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
         <div class="hud-bar-label"><span>✨ XP</span><span><span id="hud-xp">0</span>/<span id="hud-xpn">100</span></span></div>
         <div class="hud-bar-track"><div class="hud-bar-fill bar-xp-fill" id="bar-xp" style="width:0%"></div></div>
       </div>
+      <!-- Potion Belt -->
+      <div id="hud-potion-belt">
+        <div class="potion-slot" id="potion-slot-hp" onclick="useBeltPotion('hp')">
+          <span class="potion-slot-key">1</span>
+          <span class="potion-slot-icon" id="belt-hp-icon">🧪</span>
+          <div class="potion-slot-info">
+            <div class="potion-slot-name" id="belt-hp-name">Vida</div>
+            <div class="potion-slot-qty" id="belt-hp-qty">—</div>
+          </div>
+        </div>
+        <div class="potion-slot" id="potion-slot-mp" onclick="useBeltPotion('mp')">
+          <span class="potion-slot-key">2</span>
+          <span class="potion-slot-icon" id="belt-mp-icon">💧</span>
+          <div class="potion-slot-info">
+            <div class="potion-slot-name" id="belt-mp-name">Mana</div>
+            <div class="potion-slot-qty" id="belt-mp-qty">—</div>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="hud-log">
       <div class="log-title">⚔ Diário de Batalha</div>
@@ -1060,7 +1120,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
       <div class="hud-info-row">🪙 Ouro: <span class="hud-info-val" id="hud-gold">0</span></div>
       <div class="hud-info-row">💀 Mortos: <span class="hud-info-val" id="hud-kills">0</span></div>
       <div class="hud-info-row">⚔ ATK: <span class="hud-info-val" id="hud-atk">10</span> &nbsp;🛡 DEF: <span class="hud-info-val" id="hud-def">5</span></div>
-      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música &nbsp;[J] Artefatos &nbsp;[N] Missões</div>
+      <div class="hud-info-row" style="font-size:10px;color:#444;">[I] Inv &nbsp;[P] Loja &nbsp;[F] Baú/NPC &nbsp;[M] Música &nbsp;[J] Artefatos &nbsp;[N] Missões &nbsp;[1] ❤Poção &nbsp;[2] 💧Mana</div>
     </div>
     <div id="minimap"><canvas id="mm-canvas" width="120" height="90"></canvas></div>
     <div id="lvl-banner">⬆ LEVEL UP!</div>
@@ -1128,7 +1188,18 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
           <span class="inv-close-btn" onclick="closeInventory()">✕ [I/ESC]</span>
         </div>
         <div class="inv-grid" id="inv-grid"></div>
-        <div style="margin-top:8px;font-size:10px;color:#444;font-style:italic;">
+        <div style="display:flex;gap:6px;margin-top:8px;align-items:center;">
+          <button id="sell-offclass-btn" onclick="sellOffClassItems()" style="
+            flex:1;padding:6px 10px;border:1px solid #5a2a10;border-radius:5px;
+            background:linear-gradient(135deg,#1c0c04,#120804);
+            color:#c06030;font-family:'VT323',monospace;font-size:13px;
+            cursor:pointer;letter-spacing:.04em;transition:all .15s;
+          " onmouseover="this.style.borderColor='#e87020';this.style.color='#e87020'"
+             onmouseout="this.style.borderColor='#5a2a10';this.style.color='#c06030'">
+            🪙 Vender itens de outra classe
+          </button>
+        </div>
+        <div style="margin-top:4px;font-size:10px;color:#444;font-style:italic;">
           Hover → popup de ações • Arrastar → mover item
         </div>
       </div>
@@ -1370,9 +1441,11 @@ const ENEMY_DEF = [
 ];
 
 const ITEM_DB = {
-  potion:       {name:'Poção de Vida',    icon:'🧪', type:'consumable', effect:{hp:35},   desc:'+35 HP',   rarity:'common', forClass:null},
-  big_potion:   {name:'Poção Grande',     icon:'⚗️',  type:'consumable', effect:{hp:90},   desc:'+90 HP',   rarity:'rare',   forClass:null},
-  elixir:       {name:'Elixir Sagrado',   icon:'✨',  type:'consumable', effect:{hp:150,mp:50},desc:'+150HP +50MP',rarity:'epic',forClass:null},
+  potion:       {name:'Poção de Vida',    icon:'🧪', type:'belt_potion', beltType:'hp', effect:{hp:50},   desc:'+50 HP',   rarity:'common', forClass:null},
+  big_potion:   {name:'Poção Grande',     icon:'🧪', type:'belt_potion', beltType:'hp', effect:{hp:120},  desc:'+120 HP',  rarity:'rare',   forClass:null},
+  elixir:       {name:'Elixir Sagrado',   icon:'🧪', type:'belt_potion', beltType:'hp', effect:{hp:250},  desc:'+250 HP',  rarity:'epic',   forClass:null},
+  mana_potion:  {name:'Poção de Mana',    icon:'💧', type:'belt_potion', beltType:'mp', effect:{mp:50},   desc:'+50 MP',   rarity:'common', forClass:null},
+  big_mana_pot: {name:'Poção de Mana+',   icon:'💧', type:'belt_potion', beltType:'mp', effect:{mp:120},  desc:'+120 MP',  rarity:'rare',   forClass:null},
   old_sword:    {name:'Espada Velha',     icon:'🗡️',  type:'weapon',     effect:{atk:4},   desc:'+4 ATK',   rarity:'common', forClass:['warrior']},
   short_bow:    {name:'Arco Curto',       icon:'🏹',  type:'weapon',     effect:{atk:5},   desc:'+5 ATK',   rarity:'common', forClass:['archer']},
   oak_staff:    {name:'Cajado de Carvalho',icon:'🪄', type:'weapon',     effect:{atk:6,mp:15},desc:'+6 ATK +15MP',rarity:'common',forClass:['mage']},
@@ -1403,13 +1476,13 @@ const ITEM_DB = {
   art_ice:   {name:'Gema do Gelo',      icon:'❄️', type:'artifact',effect:{iceMult:1.60},         desc:'+60% dano de gelo',        rarity:'epic',forClass:null},
   art_sword: {name:'Fio da Espada',     icon:'⚔️', type:'artifact',effect:{swordMult:1.35},      desc:'+35% dano de espada',      rarity:'epic',forClass:null},
   art_bow:   {name:'Olho do Arqueiro',  icon:'🎯',type:'artifact',effect:{bowMult:1.35},         desc:'+35% dano de arco',        rarity:'epic',forClass:null},
-  art_auto:  {name:'Orbe da Coleta',    icon:'✨',type:'artifact',effect:{autoCollect:true},     desc:'Coleta gold/XP automaticamente',rarity:'epic',forClass:null},
+  art_auto:  {name:'Orbe da Coleta',    icon:'✨',type:'artifact',effect:{autoCollect:true},     desc:'Itens dropados são coletados automaticamente',rarity:'epic',forClass:null},
 };
 
 const CHEST_LOOT = {
   common: ['potion','old_sword','short_bow','oak_staff','leather_armor','robe','shield'],
-  rare:   ['big_potion','steel_sword','venom_bow','mage_staff','troll_club'],
-  epic:   ['elixir','dragon_sword','elven_bow','arcane_tome','heavy_armor','shadow_cloak'],
+  rare:   ['big_potion','mana_potion','steel_sword','venom_bow','mage_staff','troll_club'],
+  epic:   ['elixir','big_mana_pot','full_elixir','dragon_sword','elven_bow','arcane_tome','heavy_armor','shadow_cloak'],
 };
 
 let canvas, ctx, mmCanvas, mmCtx;
@@ -2582,6 +2655,11 @@ function collectLoot(loot){
 
 function addItemToInventory(itemId){
   const item = ITEM_DB[itemId];
+  // Belt potions must never go into inventory — route to belt
+  if (item && item.type === 'belt_potion') {
+    addPotionToBelt(itemId);
+    return;
+  }
   // Stack consumables: find existing stack slot (max 99)
   if (item && item.type === 'consumable') {
     const stackSlot = player.inventory.findIndex(s => s && s.id === itemId && (s.qty||1) < 99);
@@ -2652,6 +2730,39 @@ function sellInventoryItem(idx){
   player.gold+=price;
   addLog(`🪙 Vendeu ${db.name} por ${price} ouro`,'lchest');
   renderInventory();updateInventoryPanel();renderEquipSlots();
+}
+
+function sellOffClassItems() {
+  if (!player) return;
+  let totalGold = 0, count = 0;
+  const classId = player.classId;
+  // Walk backwards so splice indices stay valid
+  for (let i = player.inventory.length - 1; i >= 0; i--) {
+    const invItem = player.inventory[i];
+    if (!invItem) continue;
+    const db = ITEM_DB[invItem.id];
+    if (!db) continue;
+    // Only sell weapons/armor that have a forClass restriction AND don't include this class
+    if (!db.forClass) continue;                          // no class restriction → keep
+    if (db.forClass.includes(classId)) continue;        // compatible → keep
+    if (db.type !== 'weapon' && db.type !== 'armor') continue; // non-equippable → keep
+    // Don't sell currently equipped items
+    if (isItemEquipped(invItem.id, invItem.uid)) continue;
+    const price = getSellPrice(invItem.id);
+    removeEquip(invItem.id, invItem.uid);
+    player.inventory.splice(i, 1);
+    player.gold += price;
+    totalGold += price;
+    count++;
+  }
+  if (count === 0) {
+    addLog('🪙 Nenhum item de outra classe para vender.', '');
+  } else {
+    addLog(`🪙 Vendeu ${count} item(s) de outra classe por ${totalGold} ouro total!`, 'lchest');
+    if (typeof playPickupSound === 'function') playPickupSound();
+  }
+  renderInventory(); updateInventoryPanel(); renderEquipSlots();
+  if (typeof updateHUD === 'function') updateHUD();
 }
 
 function getSellPrice(itemId){const db=ITEM_DB[itemId];if(!db)return 1;if(db.type==='pet')return 500;if(db.type==='artifact')return 3000;const base={consumable:8,weapon:15,armor:12}[db.type]||5;const rarityMult={common:1,rare:2.5,epic:6}[db.rarity]||1;return Math.floor(base*rarityMult);}
@@ -3738,6 +3849,100 @@ function updateHUD(){
   document.getElementById('hud-lvl').textContent=p.level;document.getElementById('hud-gold').textContent=p.gold;
   document.getElementById('hud-kills').textContent=kills;document.getElementById('hud-atk').textContent=p.atk;document.getElementById('hud-def').textContent=p.def;
   sb('bar-hp',p.hp,p.maxHp);sb('bar-mp',p.mp,p.maxMp);sb('bar-xp',p.xp,p.xpNext);
+  updateBeltHUD();
+}
+
+// ─────────────────────────────────────────────────────────
+// BELT POTION SYSTEM
+// ─────────────────────────────────────────────────────────
+// Belt slots are separate from inventory. Stored on player object.
+// player.belt = { hp: {itemId, qty}, mp: {itemId, qty} }
+
+function initBelt() {
+  if (!player.belt) player.belt = { hp: null, mp: null };
+}
+
+function updateBeltHUD() {
+  if (!player || !player.belt) return;
+  _renderBeltSlot('hp');
+  _renderBeltSlot('mp');
+}
+
+function _renderBeltSlot(type) {
+  const slot = player.belt[type];
+  const slotEl = document.getElementById('potion-slot-' + type);
+  const iconEl = document.getElementById('belt-' + type + '-icon');
+  const nameEl = document.getElementById('belt-' + type + '-name');
+  const qtyEl  = document.getElementById('belt-' + type + '-qty');
+  if (!slotEl) return;
+
+  if (slot && slot.qty > 0) {
+    const db = ITEM_DB[slot.itemId];
+    slotEl.className = 'potion-slot has-potion ' + type;
+    iconEl.textContent = db ? db.icon : (type === 'hp' ? '🧪' : '💧');
+    nameEl.textContent = db ? db.name : (type === 'hp' ? 'Vida' : 'Mana');
+    qtyEl.textContent  = '×' + slot.qty;
+  } else {
+    slotEl.className = 'potion-slot';
+    iconEl.textContent = type === 'hp' ? '🧪' : '💧';
+    nameEl.textContent = type === 'hp' ? 'Vida' : 'Mana';
+    qtyEl.textContent  = '—';
+  }
+}
+
+function useBeltPotion(type) {
+  if (!player || !player.isAlive) return;
+  initBelt();
+  const slot = player.belt[type];
+  if (!slot || slot.qty <= 0) {
+    addLog(type === 'hp' ? '🧪 Sem poção de vida!' : '💧 Sem poção de mana!', 'ldmg');
+    return;
+  }
+  const db = ITEM_DB[slot.itemId];
+  if (!db) return;
+  if (db.effect.hp) player.hp = Math.min(player.maxHp, player.hp + db.effect.hp);
+  if (db.effect.mp) player.mp = Math.min(player.maxMp, player.mp + db.effect.mp);
+  addLog(`${db.icon} Usou ${db.name}: ${db.desc}`, 'lheal');
+  slot.qty--;
+  if (slot.qty <= 0) player.belt[type] = null;
+  // Flash animation
+  const slotEl = document.getElementById('potion-slot-' + type);
+  if (slotEl) { slotEl.classList.add('used-flash'); setTimeout(() => slotEl.classList.remove('used-flash'), 280); }
+  updateBeltHUD();
+  updateHUD();
+  if (typeof playPickupSound === 'function') playPickupSound();
+}
+
+function addPotionToBelt(itemId) {
+  const db = ITEM_DB[itemId];
+  if (!db || db.type !== 'belt_potion') return false;
+  initBelt();
+  const type = db.beltType; // 'hp' or 'mp'
+  const slot = player.belt[type];
+
+  if (!slot) {
+    // Empty slot — place it
+    player.belt[type] = { itemId, qty: 1 };
+  } else if (slot.itemId === itemId) {
+    // Stack same potion (max 99)
+    if (slot.qty >= 99) { addLog('🧪 Cinto cheio! (99/' + 99 + ')', ''); return false; }
+    slot.qty++;
+  } else {
+    // Different potion — keep the better one (higher hp/mp restore)
+    const existing = ITEM_DB[slot.itemId];
+    const existingVal = (existing?.effect?.hp || 0) + (existing?.effect?.mp || 0);
+    const newVal = (db.effect?.hp || 0) + (db.effect?.mp || 0);
+    if (newVal > existingVal) {
+      // Replace with better, drop old qty
+      addLog(`🧪 Substituiu ${existing?.name} por ${db.name} no cinto!`, 'ldrop');
+      player.belt[type] = { itemId, qty: 1 };
+    } else {
+      addLog(`🧪 Cinto já tem ${existing?.name}. Venda ou descarte para trocar.`, '');
+      return false;
+    }
+  }
+  updateBeltHUD();
+  return true;
 }
 
 function renderSkillsHUD(){
@@ -4210,6 +4415,7 @@ function closeAllPanels() {
   closeMusicPanel();
   if (npcPanelOpen) closeNpcPanel();
   closeArtifactPanel();
+  if (typeof petTrainerState !== 'undefined' && petTrainerState.open) closePetTrainer();
 }
 
 
@@ -4891,6 +5097,7 @@ document.addEventListener('keydown', ev => {
     const npc=document.getElementById('npc-panel');
     const art=document.getElementById('artifact-panel');
     if(npc.classList.contains('open')){closeNpcPanel();ev.preventDefault();return;}
+    if(typeof petTrainerState!=='undefined'&&petTrainerState.open){closePetTrainer();ev.preventDefault();return;}
     if(music.classList.contains('open')){closeMusicPanel();ev.preventDefault();return;}
     if(art.classList.contains('open')){closeArtifactPanel();ev.preventDefault();return;}
     if(inv.classList.contains('open')){closeInventory();ev.preventDefault();return;}
@@ -4932,6 +5139,8 @@ document.addEventListener('keydown', ev => {
     ev.preventDefault();return;
   }
   if(ev.key==='f'||ev.key==='F'){tryOpenChest();ev.preventDefault();return;}
+  if(ev.key==='1'){if(typeof useBeltPotion==='function')useBeltPotion('hp');ev.preventDefault();return;}
+  if(ev.key==='2'){if(typeof useBeltPotion==='function')useBeltPotion('mp');ev.preventDefault();return;}
   if(ev.key==='Shift'&&p.dashTimer<=0){
     let dx=(keys['d']?1:0)-(keys['a']?1:0);let dy=(keys['s']?1:0)-(keys['w']?1:0);
     if(dx===0&&dy===0){dx=p.facing.x;dy=p.facing.y;}
@@ -5034,13 +5243,22 @@ function selectShopItem(id,price,db){shopSelectedItem={id,price};document.getEle
 function confirmBuy(){
   if(!shopSelectedItem)return;const{id,price}=shopSelectedItem;const db=ITEM_DB[id];if(!db){showShopMsg('Item inválido','err');return;}
   if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}
-  if(db.type!=='pet'&&db.type!=='artifact'&&player.inventory.filter(Boolean).length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
-  if(player.inventory.filter(Boolean).length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
-  player.gold-=price;addItemToInventory(id);
-  // Auto-activate pet on purchase
-  if(db.type==='pet'){activatePet(id);showShopMsg('✓ '+db.name+' ativado!','ok');}
-  else if(db.type==='artifact'){showShopMsg('✓ '+db.name+' adquirido! Equipe em [J]','ok');}
-  else{showShopMsg('✓ '+db.name+' comprado!','ok');}
+  player.gold-=price;
+  // Belt potions go to belt slots, not inventory
+  if(db.type==='belt_potion'){
+    const added=addPotionToBelt(id);
+    if(!added){player.gold+=price;showShopMsg('Cinto cheio ou poção já presente!','err');return;}
+    showShopMsg('✓ '+db.name+' → cinto ['+db.beltType.toUpperCase()+']!','ok');
+  } else if(db.type==='pet'){
+    if(player.inventory.filter(Boolean).length>=60){player.gold+=price;showShopMsg('Inventário cheio!','err');return;}
+    addItemToInventory(id);activatePet(id);showShopMsg('✓ '+db.name+' ativado!','ok');
+  } else if(db.type==='artifact'){
+    if(player.inventory.filter(Boolean).length>=60){player.gold+=price;showShopMsg('Inventário cheio!','err');return;}
+    addItemToInventory(id);showShopMsg('✓ '+db.name+' adquirido! Equipe em [J]','ok');
+  } else {
+    if(player.inventory.filter(Boolean).length>=60){player.gold+=price;showShopMsg('Inventário cheio! (60/60)','err');return;}
+    addItemToInventory(id);showShopMsg('✓ '+db.name+' comprado!','ok');
+  }
   document.getElementById('shop-gold-val').textContent=player.gold;document.getElementById('hud-gold').textContent=player.gold;
   const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';
   renderShopGrid(currentShopTab);selectShopItem(id,price,db);addLog('🛒 Comprou '+db.name+' por '+price+'🪙','lchest');
@@ -5071,10 +5289,10 @@ function addLog(msg,cls=''){logLines.unshift({msg,cls});if(logLines.length>8)log
 // ─────────────────────────────────────────────────────────
 
 Object.assign(ITEM_DB, {
-  // ── CONSUMABLES ──────────────────────────────────────────────────
-  mana_potion:  {name:'Poção de Mana',     icon:'💧',  type:'consumable', slot:null, effect:{mp:40},          desc:'+40 MP',          rarity:'common', forClass:null},
-  full_elixir:  {name:'Elixir Supremo',    icon:'🌟',  type:'consumable', slot:null, effect:{hp:300,mp:100},  desc:'+300HP +100MP',   rarity:'epic',   forClass:null},
-  antidote:     {name:'Antídoto',          icon:'🍶',  type:'consumable', slot:null, effect:{hp:20},          desc:'+20HP',           rarity:'common', forClass:null},
+  // ── BELT POTIONS ─────────────────────────────────────────────────
+  mana_potion:  {name:'Poção de Mana',     icon:'💧',  type:'belt_potion', beltType:'mp', slot:null, effect:{mp:50},          desc:'+50 MP',          rarity:'common', forClass:null},
+  big_mana_pot: {name:'Poção de Mana+',    icon:'💧',  type:'belt_potion', beltType:'mp', slot:null, effect:{mp:120},         desc:'+120 MP',         rarity:'rare',   forClass:null},
+  full_elixir:  {name:'Elixir Supremo',    icon:'🧪',  type:'belt_potion', beltType:'hp', slot:null, effect:{hp:300},         desc:'+300 HP',         rarity:'epic',   forClass:null},
 
   // ── WEAPONS — WARRIOR ────────────────────────────────────────────
   iron_axe:     {name:'Machado de Ferro',  icon:'🪓',  type:'weapon', slot:'weapon', effect:{atk:6},          desc:'+6 ATK',          rarity:'common', forClass:['warrior']},
@@ -5421,6 +5639,8 @@ function createPlayer(classId) {
     skillDmgMult: 1, arrowAoe: 0, holyRegen: false, fireAura: false,
     holyRegenTimer: 0, fireAuraTimer: 0, poisonProc: .25, rageBonus: 0,
     activePetType: null,
+    petLevel: 0,
+    belt: { hp: null, mp: null },
     art: {xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0, dmgReduce:0,
           poisonMult:1, fireMult:1, iceMult:1, swordMult:1, bowMult:1,
           autoCollect:false, hpApplied:0}
@@ -5469,7 +5689,13 @@ function collectLoot(loot) {
     addLog(`🪙 +${g} ouro`, ''); return;
   }
   const item = ITEM_DB[loot.id]; if (!item) return;
-  if (item.type === 'consumable') {
+  if (item.type === 'belt_potion') {
+    const added = addPotionToBelt(loot.id);
+    if (added) {
+      if (item.rarity === 'rare' || item.rarity === 'epic') playRareItemSound(); else playPickupSound();
+      addLog(`${item.icon} Coletou ${item.name} → cinto!`, 'ldrop');
+    }
+  } else if (item.type === 'consumable') {
     addItemToInventory(loot.id);
     playPickupSound();
     addLog(`${item.icon} Coletou ${item.name}`, 'ldrop');
@@ -5704,8 +5930,8 @@ function showItemPopup(idx, anchorEl) {
 // ─────────────────────────────────────────────────────────
 SHOP_CATALOG.length = 0;
 [
-  // Consumables
-  'potion','big_potion','elixir','mana_potion','antidote','full_elixir',
+  // Belt Potions (HP & MP slots)
+  'potion','big_potion','elixir','mana_potion','big_mana_pot','full_elixir',
   // Warrior weapons
   'old_sword','iron_axe','wooden_club','steel_sword','war_hammer','battle_axe','troll_club','dragon_sword','cursed_blade','titan_maul',
   // Mage weapons
@@ -5802,7 +6028,7 @@ function renderShopGrid(filterType) {
   const items = SHOP_CATALOG.filter(entry => {
     const db = ITEM_DB[entry.id]; if (!db) return false;
     if (filterType === 'all')         return true;
-    if (filterType === 'consumable')  return db.type === 'consumable';
+    if (filterType === 'consumable')  return db.type === 'consumable' || db.type === 'belt_potion';
     if (filterType === 'weapon')      return db.type === 'weapon' || (db.type==='armor' && db.slot==='offhand');
     if (filterType === 'upper')       return db.type === 'armor' && ['head','chest','gloves'].includes(db.slot);
     if (filterType === 'lower')       return db.type === 'armor' && ['legs','boots'].includes(db.slot);
@@ -8330,7 +8556,6 @@ function drawPetTrainer() {
   const nx = petTrainerState.x, ny = petTrainerState.y;
   if (!nx || !ny) return;
   if (nx < cam.x - 80 || nx > cam.x + W + 80 || ny < cam.y - 80 || ny > cam.y + H + 80) return;
-
   const now = Date.now();
   const pulse = Math.sin(now / 600) * 0.5 + 0.5;
 
@@ -8629,88 +8854,79 @@ function updatePetTrainerProximity() {
 
 // ── Hook into existing systems ───────────────────────────
 
-// 1. Hook into generateMap to place NPC after map is ready
+// 1. Place NPC after map generation
 const _ptOrigGenerateMap = typeof generateMap === 'function' ? generateMap : null;
 if (_ptOrigGenerateMap) {
   generateMap = function(...args) {
     _ptOrigGenerateMap.apply(this, args);
     placePetTrainer();
   };
-} else {
-  // Fallback: place on startGame
-  document.addEventListener('DOMContentLoaded', () => {
-    const _orig = window.startGame;
-    if (_orig) window.startGame = function(...a) { _orig.apply(this,a); placePetTrainer(); };
-  });
 }
 
-// 2. Hook into updatePlayer proximity check to show prompt and handle F
-const _ptOrigUpdatePlayer = typeof updatePlayer === 'function' ? updatePlayer : null;
-// We can't easily wrap updatePlayer without risk — instead we patch the keydown handler
-// and add our own proximity display into updateNpcProximity
+// 2. Draw trainer in renderNpc (called every frame in render())
+// We wrap the global renderNpc which may itself be re-assigned by visual patches,
+// so we use a post-frame hook via the render function instead.
+const _ptOrigRender = typeof render === 'function' ? render : null;
+if (_ptOrigRender) {
+  render = function(...args) {
+    _ptOrigRender.apply(this, args);
+    // drawPetTrainer uses its own ctx.save/restore internally — safe to call after
+    if (typeof ctx !== 'undefined' && ctx) {
+      ctx.save();
+      ctx.translate(-(typeof cam !== 'undefined' ? cam.x : 0), -(typeof cam !== 'undefined' ? cam.y : 0));
+      drawPetTrainer();
+      ctx.restore();
+    }
+  };
+}
 
+// 3. Show proximity prompt — patch updateNpcProximity
 const _ptOrigUpdateNpcProx = typeof updateNpcProximity === 'function' ? updateNpcProximity : null;
 if (_ptOrigUpdateNpcProx) {
   updateNpcProximity = function() {
     _ptOrigUpdateNpcProx.apply(this, arguments);
-    updatePetTrainerProximity();
-    // Inject prompt if near trainer and no chest/npc prompt already active
     if (!player || !petTrainerState.x) return;
     const dist = Math.hypot(player.x - petTrainerState.x, player.y - petTrainerState.y);
+    petTrainerState.nearPlayer = dist < 65;
     if (dist < 65) {
-      const prompt = document.getElementById('chest-prompt');
-      // Only show if not already showing chest prompt
       const nearChest = typeof chests !== 'undefined' && chests.find(c => !c.open && Math.hypot(c.x - player.x, c.y - player.y) < 55);
-      const nearNpc = typeof npcObj !== 'undefined' && npcObj && Math.hypot(player.x - npcObj.x, player.y - npcObj.y) < 60;
+      const nearNpc   = typeof npcObj !== 'undefined' && npcObj && Math.hypot(player.x - npcObj.x, player.y - npcObj.y) < 60;
+      const prompt    = document.getElementById('chest-prompt');
       if (!nearChest && !nearNpc && prompt) {
         prompt.style.display = 'block';
-        prompt.textContent = '[F] Falar com Zephira';
-        prompt.style.color = '#27ae60';
+        prompt.textContent   = '[F] Falar com Zephira';
+        prompt.style.color   = '#27ae60';
       }
     }
   };
 }
 
-// 3. Hook F key — patch tryOpenChest to also check pet trainer
+// 4. F-key — patch tryOpenChest to intercept when near trainer
 const _ptOrigTryOpenChest = typeof tryOpenChest === 'function' ? tryOpenChest : null;
 if (_ptOrigTryOpenChest) {
   tryOpenChest = function() {
-    // Check pet trainer first
     if (player && petTrainerState.x) {
       const dist = Math.hypot(player.x - petTrainerState.x, player.y - petTrainerState.y);
-      if (dist < 65) {
-        openPetTrainer();
-        return;
-      }
+      if (dist < 65) { openPetTrainer(); return; }
     }
     _ptOrigTryOpenChest.apply(this, arguments);
   };
 }
 
-// 4. Hook draw loop — draw trainer in drawNpc or similar
-const _ptOrigDrawNpc = typeof drawNpc === 'function' ? drawNpc : null;
-if (_ptOrigDrawNpc) {
-  drawNpc = function(...args) {
-    _ptOrigDrawNpc.apply(this, args);
-    drawPetTrainer();
-  };
-}
-
-// 5. ESC key — close trainer panel
+// 5. ESC key — close trainer panel (high priority, before other handlers)
 document.addEventListener('keydown', function(ev) {
   if (ev.key === 'Escape' && petTrainerState.open) {
     closePetTrainer();
     ev.preventDefault();
     ev.stopImmediatePropagation();
   }
-});
+}, true); // capture phase so it fires before other listeners
 
-// 6. Apply saved training bonuses when pet is activated
+// 6. Re-apply training bonuses whenever a pet is activated
 const _ptOrigActivatePet = typeof activatePet === 'function' ? activatePet : null;
 if (_ptOrigActivatePet) {
   activatePet = function(itemId) {
     _ptOrigActivatePet.apply(this, arguments);
-    // Re-apply training bonuses after activation
     setTimeout(() => {
       if (typeof pet !== 'undefined' && pet && player) {
         applyPetTrainBonus(pet, getPetLevel());
@@ -8719,18 +8935,20 @@ if (_ptOrigActivatePet) {
   };
 }
 
-// 7. Minimap dot for pet trainer
+// 7. Minimap dot — patch updateMinimapCanvas
 const _ptOrigUpdateMinimap = typeof updateMinimapCanvas === 'function' ? updateMinimapCanvas : null;
 if (_ptOrigUpdateMinimap) {
   updateMinimapCanvas = function(...args) {
     _ptOrigUpdateMinimap.apply(this, args);
     if (!petTrainerState.x || typeof mmCtx === 'undefined' || !mmCtx) return;
-    const mmW = typeof MM_W !== 'undefined' ? MM_W : 120;
-    const mmH = typeof MM_H !== 'undefined' ? MM_H : 80;
+    const mmEl = document.getElementById('mm-canvas');
+    if (!mmEl) return;
+    const mmW = mmEl.width  || 120;
+    const mmH = mmEl.height || 80;
     const ww  = typeof WORLD_W !== 'undefined' ? WORLD_W : 3840;
     const wh  = typeof WORLD_H !== 'undefined' ? WORLD_H : 2560;
-    const sx = petTrainerState.x / ww * mmW;
-    const sy = petTrainerState.y / wh * mmH;
+    const sx  = petTrainerState.x / ww * mmW;
+    const sy  = petTrainerState.y / wh * mmH;
     mmCtx.fillStyle = '#27ae60';
     mmCtx.fillRect(sx - 3, sy - 3, 6, 6);
   };
