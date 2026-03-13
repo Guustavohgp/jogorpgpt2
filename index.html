@@ -1376,12 +1376,12 @@ const TILE_COLOR = {
 const CLASS_DEF = {
   warrior: {
     name:'Cavaleiro', icon:'⚔', color:'#e67e22', secondColor:'#c0392b',
-    hp:160, mp:30, atk:16, def:10, spd:130, atkRange:44, atkSpeed:800,
-    critChance:.08, critMult:1.8,
+    hp:200, mp:50, atk:20, def:14, spd:135, atkRange:50, atkSpeed:750,
+    critChance:.10, critMult:1.9,
     skills:[
-      {id:'whirl',  name:'Redemoinho',icon:'🌀',key:'Q',cd:4000, mpCost:10,use:(p,w)=>skillWhirlwind(p,w)},
-      {id:'charge', name:'Investida', icon:'⚡',key:'E',cd:6000, mpCost:15,use:(p,w)=>skillCharge(p,w)},
-      {id:'quake',  name:'Terremoto', icon:'💢',key:'R',cd:10000,mpCost:20,use:(p,w)=>skillQuake(p,w)},
+      {id:'whirl',  name:'Redemoinho',icon:'🌀',key:'Q',cd:3000, mpCost:8, use:(p,w)=>skillWhirlwind(p,w)},
+      {id:'charge', name:'Investida', icon:'⚡',key:'E',cd:4500, mpCost:12,use:(p,w)=>skillCharge(p,w)},
+      {id:'quake',  name:'Terremoto', icon:'💢',key:'R',cd:8000, mpCost:18,use:(p,w)=>skillQuake(p,w)},
     ]
   },
   mage: {
@@ -1429,14 +1429,14 @@ const SUBCLASS_DEF = {
 };
 
 const ENEMY_DEF = [
-  {id:'slime',name:'Slime',color:'#2ecc71',hp:28,atk:6,def:1,spd:60,xp:15,atkRange:28,atkSpeed:1500,goldRange:[1,5],size:14,drawFn:drawSlime,drops:[{id:'potion',chance:.35}],minLevel:1},
-  {id:'goblin',name:'Goblin',color:'#f39c12',hp:45,atk:10,def:3,spd:95,xp:28,atkRange:30,atkSpeed:1200,goldRange:[3,10],size:16,drawFn:drawGoblin,drops:[{id:'potion',chance:.25},{id:'old_sword',chance:.12}],minLevel:1},
-  {id:'skeleton',name:'Esqueleto',color:'#bdc3c7',hp:65,atk:14,def:5,spd:80,xp:42,atkRange:32,atkSpeed:1400,goldRange:[5,15],size:17,drawFn:drawSkeleton,drops:[{id:'potion',chance:.2},{id:'shield',chance:.12}],minLevel:1},
-  {id:'orc',name:'Orc',color:'#e74c3c',hp:110,atk:20,def:8,spd:75,xp:70,atkRange:35,atkSpeed:1600,goldRange:[10,22],size:20,drawFn:drawOrc,drops:[{id:'big_potion',chance:.3},{id:'steel_sword',chance:.18}],minLevel:2},
-  {id:'troll',name:'Troll',color:'#d35400',hp:200,atk:28,def:12,spd:55,xp:120,atkRange:40,atkSpeed:2000,goldRange:[18,35],size:24,drawFn:drawTroll,drops:[{id:'big_potion',chance:.4},{id:'troll_club',chance:.22}],minLevel:3},
-  {id:'boss',name:'▲ DRAGÃO ▲',color:'#c0392b',hp:500,atk:40,def:18,spd:70,xp:400,atkRange:50,atkSpeed:1800,goldRange:[60,120],size:30,drawFn:drawBoss,drops:[{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
-  {id:'lich',name:'▲ LICH ▲',color:'#9b59b6',hp:380,atk:35,def:14,spd:85,xp:350,atkRange:55,atkSpeed:1600,goldRange:[50,100],size:26,drawFn:drawLich,drops:[{id:'mage_staff',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
-  {id:'ogre_boss',name:'▲ OGRO CHEFE ▲',color:'#e67e22',hp:600,atk:45,def:22,spd:55,xp:450,atkRange:45,atkSpeed:2200,goldRange:[70,130],size:34,drawFn:drawOgreBoss,drops:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1}],minLevel:1,isBoss:true},
+  {id:'slime',name:'Slime',color:'#2ecc71',hp:28,atk:6,def:1,spd:60,xp:15,atkRange:28,atkSpeed:1500,goldRange:[1,5],size:14,drawFn:drawSlime,drops:[{id:'potion',chance:.35},{id:'mana_potion',chance:.15}],minLevel:1},
+  {id:'goblin',name:'Goblin',color:'#f39c12',hp:45,atk:10,def:3,spd:95,xp:28,atkRange:30,atkSpeed:1200,goldRange:[3,10],size:16,drawFn:drawGoblin,drops:[{id:'potion',chance:.25},{id:'mana_potion',chance:.15},{id:'old_sword',chance:.12}],minLevel:1},
+  {id:'skeleton',name:'Esqueleto',color:'#bdc3c7',hp:65,atk:14,def:5,spd:80,xp:42,atkRange:32,atkSpeed:1400,goldRange:[5,15],size:17,drawFn:drawSkeleton,drops:[{id:'potion',chance:.2},{id:'mana_potion',chance:.18},{id:'shield',chance:.12}],minLevel:1},
+  {id:'orc',name:'Orc',color:'#e74c3c',hp:110,atk:20,def:8,spd:75,xp:70,atkRange:35,atkSpeed:1600,goldRange:[10,22],size:20,drawFn:drawOrc,drops:[{id:'big_potion',chance:.3},{id:'mana_potion',chance:.25},{id:'steel_sword',chance:.18}],minLevel:2},
+  {id:'troll',name:'Troll',color:'#d35400',hp:200,atk:28,def:12,spd:55,xp:120,atkRange:40,atkSpeed:2000,goldRange:[18,35],size:24,drawFn:drawTroll,drops:[{id:'big_potion',chance:.4},{id:'mana_potion',chance:.30},{id:'troll_club',chance:.22}],minLevel:3},
+  {id:'boss',name:'▲ DRAGÃO ▲',color:'#c0392b',hp:500,atk:40,def:18,spd:70,xp:400,atkRange:50,atkSpeed:1800,goldRange:[60,120],size:30,drawFn:drawBoss,drops:[{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
+  {id:'lich',name:'▲ LICH ▲',color:'#9b59b6',hp:380,atk:35,def:14,spd:85,xp:350,atkRange:55,atkSpeed:1600,goldRange:[50,100],size:26,drawFn:drawLich,drops:[{id:'mage_staff',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
+  {id:'ogre_boss',name:'▲ OGRO CHEFE ▲',color:'#e67e22',hp:600,atk:45,def:22,spd:55,xp:450,atkRange:45,atkSpeed:2200,goldRange:[70,130],size:34,drawFn:drawOgreBoss,drops:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
   {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:4000,atk:100,def:55,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],minLevel:10,isBoss:true,isCentralBoss:true},
 ];
 
@@ -2488,6 +2488,8 @@ function updatePlayer(dt){
   if(p.hitFlash>0)p.hitFlash-=dt;
   p.mp=Math.min(p.maxMp,p.mp+dt*0.005);
   if(p.holyRegen){p.holyRegenTimer=(p.holyRegenTimer||0)+dt;if(p.holyRegenTimer>2000){p.holyRegenTimer=0;p.hp=Math.min(p.maxHp,p.hp+5);addLog('✨ Cura Sagrada +5 HP','lheal');}}
+  // Warrior passive: slow but steady HP regen (1 HP every 3s) — makes melee survivable early
+  if(p.classId==='warrior'){p._warriorRegenTimer=(p._warriorRegenTimer||0)+dt;if(p._warriorRegenTimer>3000){p._warriorRegenTimer=0;p.hp=Math.min(p.maxHp,p.hp+1);}}
   if(p.fireAura){p.fireAuraTimer=(p.fireAuraTimer||0)+dt;if(p.fireAuraTimer>1000){p.fireAuraTimer=0;for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-p.x,e.y-p.y)<60)applyDamageToEnemy(e,Math.floor(p.atk*0.3),false);}}}
   if(p.subSkill==='berserker' || p._subSkillLogic==='rage'){const hpPct=p.hp/p.maxHp;p.rageBonus=Math.floor((1-hpPct)*20);p.atk=p.baseAtk+p.rageBonus+(p.equippedWeapon?(ITEM_DB[p.equippedWeapon].effect.atk||0):0);}
   if(p.isDashing){p.dashDuration-=dt;if(p.dashDuration<=0)p.isDashing=false;else{moveEntity(p,p.dashDirX*600*dt/1000,p.dashDirY*600*dt/1000);return;}}
@@ -2850,9 +2852,9 @@ function spawnDmgNumber(x,y,dmg,color){const el=document.createElement('div');el
 // SKILLS
 function getSkillDmgMult(){return player.skillDmgMult||1;}
 function getNearestEnemy(p,maxRange){let nearest=null,nd=maxRange;for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<nd){nd=d;nearest=e;}}return nearest;}
-function skillWhirlwind(p){const range=85,mult=getSkillDmgMult();let hit=0;for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-p.x,e.y-p.y)<range){applyDamageToEnemy(e,Math.floor(p.atk*1.6*mult),false);hit++;}}for(let i=0;i<24;i++){const ang=(i/24)*Math.PI*2;particles.push({type:'hit',x:p.x+Math.cos(ang)*range*.5,y:p.y+Math.sin(ang)*range*.5,vx:Math.cos(ang)*90,vy:Math.sin(ang)*90,life:300,maxLife:300,r:5,color:'#e67e22',gravity:0});}addLog(`🌀 Redemoinho! ${hit} inimigos`,'lskill');}
-function skillCharge(p){p.isDashing=true;p.dashDuration=350;p.dashDirX=p.facing.x;p.dashDirY=p.facing.y;const mult=getSkillDmgMult();for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<120){const dot=(e.x-p.x)*p.facing.x+(e.y-p.y)*p.facing.y;if(dot>0)applyDamageToEnemy(e,Math.floor(p.atk*2*mult),true);}}addLog('⚡ Investida!','lskill');}
-function skillQuake(p){const range=130,mult=getSkillDmgMult();for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<range){const dmg=Math.floor(p.atk*(2.5-d/range)*mult);applyDamageToEnemy(e,dmg,false);}}for(let ring=0;ring<3;ring++)setTimeout(()=>particles.push({type:'explosion',x:p.x,y:p.y,r:40+ring*40,life:400,maxLife:400,color:'#d35400'}),ring*120);addLog('💢 Terremoto!','lskill');}
+function skillWhirlwind(p){const range=100,mult=getSkillDmgMult();let hit=0;for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-p.x,e.y-p.y)<range){applyDamageToEnemy(e,Math.floor(p.atk*2.0*mult),false);hit++;}}for(let i=0;i<28;i++){const ang=(i/28)*Math.PI*2;particles.push({type:'hit',x:p.x+Math.cos(ang)*range*.5,y:p.y+Math.sin(ang)*range*.5,vx:Math.cos(ang)*100,vy:Math.sin(ang)*100,life:300,maxLife:300,r:5,color:'#e67e22',gravity:0});}addLog(`🌀 Redemoinho! ${hit} inimigos`,'lskill');}
+function skillCharge(p){p.isDashing=true;p.dashDuration=400;p.dashDirX=p.facing.x;p.dashDirY=p.facing.y;const mult=getSkillDmgMult();for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<140){const dot=(e.x-p.x)*p.facing.x+(e.y-p.y)*p.facing.y;if(dot>0)applyDamageToEnemy(e,Math.floor(p.atk*2.8*mult),true);}}addLog('⚡ Investida!','lskill');}
+function skillQuake(p){const range=150,mult=getSkillDmgMult();for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<range){const dmg=Math.floor(p.atk*(3.2-d/range)*mult);applyDamageToEnemy(e,dmg,false);}}for(let ring=0;ring<3;ring++)setTimeout(()=>particles.push({type:'explosion',x:p.x,y:p.y,r:50+ring*45,life:400,maxLife:400,color:'#d35400'}),ring*120);addLog('💢 Terremoto!','lskill');}
 function skillFireball(p){const target=getNearestEnemy(p,300);const tx=target?target.x:p.x+p.facing.x*200,ty=target?target.y:p.y+p.facing.y*200;const dmg=Math.floor(p.atk*2.2*getSkillDmgMult());const dx=tx-p.x,dy=ty-p.y,len=Math.hypot(dx,dy);projectiles.push({x:p.x,y:p.y,vx:(dx/len)*300,vy:(dy/len)*300,dmg,color:'#e74c3c',isCrit:false,radius:12,life:2500,aoeRadius:65,piercing:false,targetEnemy:target,poisonProc:0,freezeProc:p.subSkill==='ice'?.35:0});addLog('🔥 Bola de Fogo!','lskill');}
 function skillNova(p){const count=12,mult=getSkillDmgMult();for(let i=0;i<count;i++){const ang=(i/count)*Math.PI*2,dmg=Math.floor(p.atk*1.5*mult);projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*260,vy:Math.sin(ang)*260,dmg,color:'#9b59b6',isCrit:false,radius:8,life:800,aoeRadius:0,piercing:false,targetEnemy:null,poisonProc:0,freezeProc:p.subSkill==='ice'?.25:0});}addLog('💥 Nova Arcana!','lskill');}
 function skillLightning(p){const sorted=enemies.filter(e=>e.isAlive).map(e=>({e,d:Math.hypot(e.x-p.x,e.y-p.y)})).sort((a,b)=>a.d-b.d).slice(0,4);const mult=getSkillDmgMult();let hits=0;for(const{e}of sorted){const dmg=Math.floor(p.atk*(1.8-hits*.3)*mult);applyDamageToEnemy(e,Math.max(dmg,1),true);if(p.subSkill==='ice')e.frozenTimer=1200;hits++;particles.push({type:'lightning',x:p.x,y:p.y,tx:e.x,ty:e.y,life:200,maxLife:200,color:'#f0e040'});}addLog(`⚡ Raio! ${hits} alvos`,'lskill');}
@@ -4823,21 +4825,21 @@ const ULTIMATE_DEF = {
   holy: {
     id:'ult_divine_wrath', name:'Ira Divina', icon:'✨',
     cd:30000, mpCost:70,
-    desc:'Onda sagrada que cura o jogador e destrói inimigos próximos',
+    desc:'Onda sagrada que cura o jogador e causa dano sagrado a inimigos próximos',
     color:'#f0c060',
     use(p) {
-      const dmg = p.atk * 8;
+      const dmg = p.atk * 5; // 5× ATK, area falloff — ~300–500 on boss
       let healed = 0;
       for (const e of enemies) {
         if (!e.isAlive) continue;
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d < 200) {
-          applyDamageToEnemy(e, Math.floor(dmg * (1 - d/200)), true);
-          healed += 30;
+          applyDamageToEnemy(e, Math.floor(dmg * (1 - d/220)), true);
+          healed += 25;
         }
       }
-      p.hp = Math.min(p.maxHp, p.hp + Math.min(healed, 120));
-      addLog(`✨ IRA DIVINA! +${Math.min(healed,120)} HP curado!`, 'lskill');
+      p.hp = Math.min(p.maxHp, p.hp + Math.min(healed, 100));
+      addLog(`✨ IRA DIVINA! +${Math.min(healed,100)} HP curado!`, 'lskill');
       spawnUltParticles(p.x, p.y, '#f0c060', 80);
       showUltBanner('✨ IRA DIVINA!', '#f0c060');
     }
@@ -4849,10 +4851,10 @@ const ULTIMATE_DEF = {
     desc:'Congela TODOS os inimigos na tela por 3s e causa dano massivo',
     color:'#a8d8f0',
     use(p) {
-      const dmg = p.atk * 6;
+      const dmg = p.atk * 4.5; // 4.5× hit all — strong but not instant-kill
       for (const e of enemies) {
         if (!e.isAlive) continue;
-        applyDamageToEnemy(e, Math.floor(dmg * (0.5 + Math.random())), true);
+        applyDamageToEnemy(e, Math.floor(dmg * (0.6 + Math.random() * 0.5)), true);
         e.frozenTimer = 3000;
       }
       addLog('🌨 BLIZZARD! Todos congelados!', 'lskill');
@@ -4866,15 +4868,17 @@ const ULTIMATE_DEF = {
     desc:'12 projéteis em espiral com dano arcano devastador',
     color:'#c070ff',
     use(p) {
-      const dmg = Math.floor(p.atk * 4 * p.skillDmgMult);
+      // Each projectile: 0.9× ATK × skillDmgMult → 12 proj = ~10.8× total if ALL hit one target
+      // In practice boss only gets hit by ~3-4 projectiles = ~3.5× effective — fair
+      const dmg = Math.floor(p.atk * 0.9 * p.skillDmgMult);
       for (let i = 0; i < 12; i++) {
         const ang = (i / 12) * Math.PI * 2;
         projectiles.push({
           x:p.x, y:p.y,
           vx:Math.cos(ang)*380, vy:Math.sin(ang)*380,
-          dmg, color:'#c070ff', isCrit:true,
-          radius:10, life:1400, aoeRadius:30,
-          piercing:true, targetEnemy:null, poisonProc:0, freezeProc:0
+          dmg, color:'#c070ff', isCrit:false,
+          radius:9, life:1400, aoeRadius:20,
+          piercing:false, targetEnemy:null, poisonProc:0, freezeProc:0
         });
       }
       addLog('🌀 SURTO ARCANO! 12 projéteis!', 'lskill');
@@ -4885,18 +4889,16 @@ const ULTIMATE_DEF = {
   fire_mage: {
     id:'ult_meteor', name:'Meteorito', icon:'☄️',
     cd:30000, mpCost:85,
-    desc:'Meteorito gigante causa dano enorme em área central',
+    desc:'Meteorito gigante causa dano massivo em área',
     color:'#ff8040',
     use(p) {
       const target = getNearestEnemy(p, 9999) || { x: p.x + p.facing.x*150, y: p.y + p.facing.y*150 };
-      const dmg = p.atk * 12;
-      // Impacto imediato na área
+      const dmg = p.atk * 7; // 7× ATK single target at center — was 12×
       for (const e of enemies) {
         if (!e.isAlive) continue;
         const d = Math.hypot(e.x - target.x, e.y - target.y);
-        if (d < 120) applyDamageToEnemy(e, Math.floor(dmg * (1 - d/120)), true);
+        if (d < 130) applyDamageToEnemy(e, Math.floor(dmg * (1 - d/160)), true);
       }
-      // Partículas de explosão
       for (let i = 0; i < 80; i++) {
         const ang = Math.random() * Math.PI * 2;
         const spd = 80 + Math.random() * 200;
@@ -4921,10 +4923,10 @@ const ULTIMATE_DEF = {
       for (const e of enemies) {
         if (!e.isAlive) continue;
         const d = Math.hypot(e.x - p.x, e.y - p.y);
-        if (d < 280) {
-          e.poisonStacks = Math.min((e.poisonStacks||0) + 8, 15);
+        if (d < 300) {
+          e.poisonStacks = Math.min((e.poisonStacks||0) + 10, 15);
           e.poisonTimer = 0;
-          const dmg = Math.floor(p.atk * 2);
+          const dmg = Math.floor(p.atk * 3.0); // up from 2× — archers need love too
           applyDamageToEnemy(e, dmg, false);
           hit++;
         }
@@ -4940,7 +4942,7 @@ const ULTIMATE_DEF = {
     desc:'30 flechas em todas as direções, dano de área total',
     color:'#7ae8e8',
     use(p) {
-      const dmg = Math.floor(p.atk * 2.5);
+      const dmg = Math.floor(p.atk * 3.5); // up from 2.5×
       for (let i = 0; i < 30; i++) {
         const ang = (i / 30) * Math.PI * 2;
         projectiles.push({
@@ -4962,7 +4964,7 @@ const ULTIMATE_DEF = {
     desc:'20 flechas flamejantes com explosão em área cada uma',
     color:'#ffb040',
     use(p) {
-      const dmg = Math.floor(p.atk * 3);
+      const dmg = Math.floor(p.atk * 4.0); // up from 3×
       for (let i = 0; i < 20; i++) {
         const ang = (i / 20) * Math.PI * 2;
         const spd = 300 + Math.random() * 150;
@@ -6088,14 +6090,14 @@ function _patchShopTabs() {
 //  PATCH ENEMY DROPS — use expanded drop pools
 // ─────────────────────────────────────────────────────────
 const ENEMY_DROP_POOLS = {
-  slime:    [{id:'potion',chance:.35},{id:'copper_ring',chance:.08},{id:'herb_charm',chance:.06}],
-  goblin:   [{id:'potion',chance:.25},{id:'old_sword',chance:.12},{id:'iron_axe',chance:.10},{id:'leather_gloves',chance:.08},{id:'copper_ring',chance:.07}],
-  skeleton: [{id:'potion',chance:.20},{id:'wooden_shield',chance:.12},{id:'bone_amulet',chance:.10},{id:'iron_helm',chance:.08},{id:'iron_ring',chance:.07}],
-  orc:      [{id:'big_potion',chance:.30},{id:'steel_sword',chance:.18},{id:'chainmail',chance:.12},{id:'iron_greaves',chance:.10},{id:'vitality_ring',chance:.08}],
-  troll:    [{id:'big_potion',chance:.40},{id:'troll_club',chance:.22},{id:'plate_armor',chance:.15},{id:'kite_shield',chance:.12},{id:'warrior_ring',chance:.10}],
-  boss:     [{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1},{id:'dragon_helm',chance:.5},{id:'heavy_armor',chance:.4},{id:'ring_fortress',chance:.3}],
-  lich:     [{id:'mage_staff',chance:.8},{id:'big_potion',chance:1},{id:'archmage_crown',chance:.5},{id:'archmage_robe',chance:.4},{id:'ring_arcane',chance:.3}],
-  ogre_boss:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1},{id:'dragon_gauntlets',chance:.5},{id:'titan_maul',chance:.4},{id:'berserker_heart',chance:.3}],
+  slime:    [{id:'potion',chance:.35},{id:'mana_potion',chance:.15},{id:'copper_ring',chance:.08},{id:'herb_charm',chance:.06}],
+  goblin:   [{id:'potion',chance:.25},{id:'mana_potion',chance:.15},{id:'old_sword',chance:.12},{id:'iron_axe',chance:.10},{id:'leather_gloves',chance:.08},{id:'copper_ring',chance:.07}],
+  skeleton: [{id:'potion',chance:.20},{id:'mana_potion',chance:.18},{id:'wooden_shield',chance:.12},{id:'bone_amulet',chance:.10},{id:'iron_helm',chance:.08},{id:'iron_ring',chance:.07}],
+  orc:      [{id:'big_potion',chance:.30},{id:'mana_potion',chance:.25},{id:'steel_sword',chance:.18},{id:'chainmail',chance:.12},{id:'iron_greaves',chance:.10},{id:'vitality_ring',chance:.08}],
+  troll:    [{id:'big_potion',chance:.40},{id:'mana_potion',chance:.30},{id:'troll_club',chance:.22},{id:'plate_armor',chance:.15},{id:'kite_shield',chance:.12},{id:'warrior_ring',chance:.10}],
+  boss:     [{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1},{id:'dragon_helm',chance:.5},{id:'heavy_armor',chance:.4},{id:'ring_fortress',chance:.3}],
+  lich:     [{id:'mage_staff',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1},{id:'archmage_crown',chance:.5},{id:'archmage_robe',chance:.4},{id:'ring_arcane',chance:.3}],
+  ogre_boss:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1},{id:'dragon_gauntlets',chance:.5},{id:'titan_maul',chance:.4},{id:'berserker_heart',chance:.3}],
   guardian: [{id:'elixir',chance:1},{id:'full_elixir',chance:.7},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'amulet_titan',chance:.7},{id:'ring_power',chance:.7},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],
 };
 
