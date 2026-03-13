@@ -1480,9 +1480,10 @@ function spawnCentralBoss() {
     guardingChest: null, poisonTimer: 0, poisonStacks: 0, frozenTimer: 0,
     isCentralBoss: true
   };
+  centralBoss.aggroRange = 0; // dorme até player chegar no nível 8
   enemies.push(centralBoss);
-  onBossSpawned();
-  addLog('☠ O GUARDIÃO ETERNO DESPERTA no centro do mapa!', 'lboss');
+  // NÃO chama onBossSpawned aqui — música boss só toca quando player se aproxima
+  addLog('☠ Guardião Eterno dorme no centro — chegue ao Nível 8!', 'lboss');
   updateCentralBossBar();
 }
 
@@ -1924,7 +1925,15 @@ function updatePlayer(dt){
   if(mx!==0||my!==0){p.facing.x=mx;p.facing.y=my;}
   const moveSpd=p.spd*dt/1000;moveEntity(p,mx*moveSpd,my*moveSpd);
   if(p.atkTimer<=0)autoAttack(p);
-  for(let i=lootItems.length-1;i>=0;i--){if(Math.hypot(lootItems[i].x-p.x,lootItems[i].y-p.y)<28){collectLoot(lootItems[i]);lootItems.splice(i,1);}}
+  for(let i=lootItems.length-1;i>=0;i--){
+    if(Math.hypot(lootItems[i].x-p.x,lootItems[i].y-p.y)<28){
+      const li=lootItems[i];
+      // Só coleta se for ouro, ou tiver espaço
+      const isFreeSlot=li.id==='gold_coin'||player.inventory.filter(Boolean).length<40;
+      if(isFreeSlot){collectLoot(li);lootItems.splice(i,1);}
+      else{addLog('🎒 Inventário cheio! Item no chão.','');break;}
+    }
+  }
   const nearChest=chests.find(c=>!c.open&&Math.hypot(c.x-p.x,c.y-p.y)<55);
   const prompt=document.getElementById('chest-prompt');
   if(nearChest){const guardOk=!nearChest.isBossChest||nearChest.guard==null||!nearChest.guard.isAlive;prompt.style.display='block';prompt.textContent=guardOk?'[F] Abrir Baú':'⚠ Derrote o boss primeiro!';prompt.style.color=guardOk?'var(--amber)':'#e74c3c';}
@@ -2059,7 +2068,18 @@ function collectLoot(loot){
   else{addItemToInventory(loot.id);const curr=item.type==='weapon'?player.equippedWeapon:player.equippedArmor;const currBonus=curr?(ITEM_DB[curr].effect.atk||ITEM_DB[curr].effect.def||0):0;const newBonus=item.effect.atk||item.effect.def||0;const canEquip=!item.forClass||item.forClass.includes(player.classId);if(newBonus>currBonus&&canEquip){equipItem(loot.id);addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`,'ldrop');}else addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`,'ldrop');}
 }
 
-function addItemToInventory(itemId){if(player.inventory.length>=40){addLog('🎒 Inventário cheio! (40/40)','');return;}player.inventory.push({id:itemId,uid:Date.now()+Math.random()});if(document.getElementById('inv-panel').classList.contains('open'))renderInventory();}
+function addItemToInventory(itemId){
+  const realCount = player.inventory.filter(Boolean).length;
+  if(realCount>=40){addLog('🎒 Inventário cheio! (40/40)','');return;}
+  // Encontrar primeiro slot vazio (null) ou adicionar no final
+  const emptyIdx = player.inventory.indexOf(null);
+  if(emptyIdx !== -1){
+    player.inventory[emptyIdx]={id:itemId,uid:Date.now()+Math.random()};
+  } else {
+    player.inventory.push({id:itemId,uid:Date.now()+Math.random()});
+  }
+  if(document.getElementById('inv-panel').classList.contains('open'))renderInventory();
+}
 
 function equipItem(itemId){
   const item=ITEM_DB[itemId];if(!item)return;
@@ -3551,8 +3571,8 @@ function selectShopItem(id,price,db){shopSelectedItem={id,price};document.getEle
 function confirmBuy(){
   if(!shopSelectedItem)return;const{id,price}=shopSelectedItem;const db=ITEM_DB[id];if(!db){showShopMsg('Item inválido','err');return;}
   if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}
-  if(db.type!=='pet'&&db.type!=='artifact'&&player.inventory.length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
-  if(player.inventory.length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
+  if(db.type!=='pet'&&db.type!=='artifact'&&player.inventory.filter(Boolean).length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
+  if(player.inventory.filter(Boolean).length>=40){showShopMsg('Inventário cheio! (40/40)','err');return;}
   player.gold-=price;addItemToInventory(id);
   // Auto-activate pet on purchase
   if(db.type==='pet'){activatePet(id);showShopMsg('✓ '+db.name+' ativado!','ok');}
