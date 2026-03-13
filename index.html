@@ -2565,6 +2565,8 @@ function updateEnemies(dt){
         } else {
           dmg=Math.max(1,dmg-Math.floor(p.def*.5));
           if(p.subSkill==='defensive' || p._subSkillLogic==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
+          // Apply damage reduction (from art artifact or enchantment)
+          if((p.art?.dmgReduce||0)>0) dmg=Math.max(1,Math.floor(dmg*(1-(p.art.dmgReduce))));
           if(p.isAlive){
             if(p.ultShieldWall>0){
               applyDamageToEnemy(e, Math.floor(dmg*.5), false);
@@ -8957,6 +8959,996 @@ if (_ptOrigUpdateMinimap) {
 }
 
 console.log('[PetTrainer] Sistema de Treinamento de Pets carregado ✓');
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SMITHY & ALCHEMIST NPC SYSTEM
+     Designed for easy future extension (special currency, legendary gear)
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* ── Shared NPC panel base ─────────────────────────────── */
+.craftnpc-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4,6,10,.85);
+  backdrop-filter: blur(3px);
+}
+.craftnpc-panel.open { display: flex; }
+.craftnpc-win {
+  width: 460px; max-width: 96vw;
+  border-radius: 14px;
+  overflow: hidden;
+  font-family: 'Cinzel', serif;
+  position: relative;
+}
+
+/* Smithy colors */
+#smithy-panel .craftnpc-win {
+  background: linear-gradient(160deg,#120a04,#09060210);
+  border: 1px solid #7a3a10;
+  box-shadow: 0 0 60px rgba(200,100,20,.3), 0 0 0 1px #3a1808;
+}
+/* Alchemist colors */
+#alchemist-panel .craftnpc-win {
+  background: linear-gradient(160deg,#04100a,#020908);
+  border: 1px solid #1a6a30;
+  box-shadow: 0 0 60px rgba(40,180,80,.22), 0 0 0 1px #0a2818;
+}
+
+.craftnpc-header {
+  padding: 13px 18px 11px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+#smithy-panel .craftnpc-header { background: linear-gradient(90deg,#1e0c04,#100604,#1e0c04); }
+#alchemist-panel .craftnpc-header { background: linear-gradient(90deg,#061a0c,#030e06,#061a0c); }
+
+.craftnpc-portrait {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+}
+#smithy-panel .craftnpc-portrait {
+  background: radial-gradient(circle at 40% 35%,#2a1206,#0e0602);
+  border: 2px solid #c06020; box-shadow: 0 0 16px rgba(200,96,32,.4);
+}
+#alchemist-panel .craftnpc-portrait {
+  background: radial-gradient(circle at 40% 35%,#061e0e,#020c06);
+  border: 2px solid #20a050; box-shadow: 0 0 16px rgba(32,160,80,.4);
+}
+.craftnpc-npcinfo { flex: 1; min-width: 0; }
+.craftnpc-name { font-size: 15px; font-weight: 700; letter-spacing: .07em; }
+#smithy-panel   .craftnpc-name { color: #f08030; text-shadow: 0 0 12px rgba(240,128,48,.5); }
+#alchemist-panel .craftnpc-name { color: #40c870; text-shadow: 0 0 12px rgba(64,200,112,.5); }
+.craftnpc-title  { font-size: 10px; font-family: 'Crimson Text',serif; margin-top: 2px; }
+#smithy-panel   .craftnpc-title  { color: #7a4020; }
+#alchemist-panel .craftnpc-title  { color: #206840; }
+.craftnpc-quote  { font-size: 11px; font-family: 'Crimson Text',serif; font-style: italic; margin-top: 4px; }
+#smithy-panel   .craftnpc-quote  { color: #9a5030; }
+#alchemist-panel .craftnpc-quote  { color: #30884a; }
+.craftnpc-close { cursor: pointer; font-size: 18px; padding: 4px 6px; border-radius: 4px; transition: color .15s; }
+#smithy-panel   .craftnpc-close { color: #5a2808; }
+#smithy-panel   .craftnpc-close:hover { color: #f08030; }
+#alchemist-panel .craftnpc-close { color: #083818; }
+#alchemist-panel .craftnpc-close:hover { color: #40c870; }
+
+.craftnpc-body { padding: 16px 18px 18px; }
+
+/* Item display card */
+.craft-item-card {
+  border-radius: 10px; padding: 13px 14px; margin-bottom: 13px;
+  display: flex; align-items: center; gap: 13px;
+}
+#smithy-panel   .craft-item-card { background: linear-gradient(135deg,#1c0c04,#100804); border: 1px solid #3a1808; }
+#alchemist-panel .craft-item-card { background: linear-gradient(135deg,#041408,#020c06); border: 1px solid #0c3818; }
+.craft-item-icon-wrap {
+  width: 52px; height: 52px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; flex-shrink: 0; position: relative;
+}
+#smithy-panel   .craft-item-icon-wrap { background: radial-gradient(circle,#1e0e04,#0a0402); border: 2px solid #5a2810; }
+#alchemist-panel .craft-item-icon-wrap { background: radial-gradient(circle,#041808,#020804); border: 2px solid #10481e; }
+.craft-item-level-badge {
+  position: absolute; bottom: -5px; right: -5px;
+  font-size: 9px; font-family: 'VT323',monospace;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+#smithy-panel   .craft-item-level-badge { background: #c06020; color: #fff; border: 1px solid #0a0402; }
+#alchemist-panel .craft-item-level-badge { background: #20a050; color: #fff; border: 1px solid #020804; }
+.craft-item-details { flex: 1; min-width: 0; }
+.craft-item-name { font-size: 14px; font-weight: 700; letter-spacing: .05em; }
+#smithy-panel   .craft-item-name { color: #f0b060; }
+#alchemist-panel .craft-item-name { color: #80f0a0; }
+.craft-item-bonus { font-size: 11px; font-family: 'Crimson Text',serif; margin-top: 5px; line-height: 1.6; color: #7cf07c; }
+.craft-item-rarity { font-size: 9px; font-family: 'VT323',monospace; letter-spacing: .06em; margin-top: 3px; }
+
+/* Level pips */
+.craft-level-track { display: flex; gap: 3px; margin-bottom: 13px; }
+.craft-level-pip {
+  flex: 1; height: 5px; border-radius: 3px;
+  transition: background .3s;
+}
+#smithy-panel   .craft-level-pip { background: #1c0a04; border: 1px solid #3a1808; }
+#alchemist-panel .craft-level-pip { background: #041408; border: 1px solid #0c3818; }
+#smithy-panel   .craft-level-pip.filled { background: #c06020; border-color: #f08030; box-shadow: 0 0 5px rgba(192,96,32,.5); }
+#alchemist-panel .craft-level-pip.filled { background: #20a050; border-color: #40c870; box-shadow: 0 0 5px rgba(32,160,80,.5); }
+#smithy-panel   .craft-level-pip.current { background: #f08030; border-color: #ffc080; box-shadow: 0 0 8px rgba(240,128,48,.8); animation: craftPip .9s ease-in-out infinite alternate; }
+#alchemist-panel .craft-level-pip.current { background: #40c870; border-color: #a0ffc0; box-shadow: 0 0 8px rgba(64,200,112,.8); animation: craftPip .9s ease-in-out infinite alternate; }
+@keyframes craftPip { from { opacity: .7; } to { opacity: 1; } }
+
+/* Upgrade box */
+.craft-upgrade-box { border-radius: 10px; padding: 13px 14px; }
+#smithy-panel   .craft-upgrade-box { background: linear-gradient(135deg,#160c04,#0e0802); border: 1px solid #3a1808; }
+#alchemist-panel .craft-upgrade-box { background: linear-gradient(135deg,#041208,#020a06); border: 1px solid #0c3818; }
+.craft-upgrade-title { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 9px; }
+#smithy-panel   .craft-upgrade-title { color: #7a4020; }
+#alchemist-panel .craft-upgrade-title { color: #20684a; }
+.craft-preview { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.craft-preview-icon { font-size: 20px; }
+.craft-preview-arrow { font-size: 14px; }
+#smithy-panel   .craft-preview-arrow { color: #5a2808; }
+#alchemist-panel .craft-preview-arrow { color: #0c4820; }
+.craft-preview-text { flex: 1; font-size: 11px; font-family: 'Crimson Text',serif; line-height: 1.65; }
+#smithy-panel   .craft-preview-text { color: #9a6040; }
+#alchemist-panel .craft-preview-text { color: #409860; }
+.craft-preview-val { font-weight: 600; }
+#smithy-panel   .craft-preview-val { color: #f08030; }
+#alchemist-panel .craft-preview-val { color: #40c870; }
+.craft-preview-new { font-weight: 700; color: #50e890; }
+
+.craft-btn {
+  width: 100%; padding: 11px; border: none; outline: none; cursor: pointer;
+  border-radius: 8px; font-family: 'Cinzel',serif; font-size: 13px; font-weight: 700;
+  letter-spacing: .07em; transition: all .18s; position: relative; overflow: hidden;
+}
+#smithy-panel   .craft-btn { background: linear-gradient(135deg,#c06020,#8a3e10); color: #ffd0a0; box-shadow: 0 0 18px rgba(192,96,32,.4), inset 0 1px 0 rgba(255,255,255,.08); }
+#smithy-panel   .craft-btn:hover:not(:disabled) { background: linear-gradient(135deg,#e07828,#aa5020); box-shadow: 0 0 28px rgba(224,120,40,.6); transform: translateY(-1px); }
+#alchemist-panel .craft-btn { background: linear-gradient(135deg,#20a050,#0e6030); color: #c0ffd0; box-shadow: 0 0 18px rgba(32,160,80,.4), inset 0 1px 0 rgba(255,255,255,.08); }
+#alchemist-panel .craft-btn:hover:not(:disabled) { background: linear-gradient(135deg,#28c860,#18803a); box-shadow: 0 0 28px rgba(40,200,96,.6); transform: translateY(-1px); }
+.craft-btn:active:not(:disabled) { transform: translateY(0); }
+.craft-btn:disabled { background: #141414; color: #3a3a3a; box-shadow: none; cursor: not-allowed; }
+.craft-btn .craft-btn-cost { font-size: 11px; opacity: .8; display: block; margin-top: 2px; font-family: 'VT323',monospace; letter-spacing: .04em; }
+.craft-btn.cant-afford .craft-btn-cost { color: #e74c3c; opacity: 1; }
+.craft-maxed { text-align: center; padding: 14px; font-size: 12px; letter-spacing: .08em; }
+#smithy-panel   .craft-maxed { color: #f08030; text-shadow: 0 0 10px rgba(240,128,48,.5); }
+#alchemist-panel .craft-maxed { color: #40c870; text-shadow: 0 0 10px rgba(64,200,112,.5); }
+.craft-maxed-sub { font-size: 10px; font-family: 'Crimson Text',serif; font-style: italic; margin-top: 4px; opacity: .6; }
+.craft-msg { text-align: center; padding: 5px; font-size: 11px; font-family: 'Crimson Text',serif; border-radius: 5px; margin-top: 9px; display: none; }
+.craft-msg.ok  { background: rgba(39,174,96,.12); color: #27ae60; border: 1px solid rgba(39,174,96,.2); }
+.craft-msg.err { background: rgba(231,76,60,.10); color: #e74c3c; border: 1px solid rgba(231,76,60,.2); }
+
+/* Alchemist enchant type selector */
+.ench-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 12px; }
+.ench-btn {
+  padding: 7px 4px; border-radius: 6px; border: 1px solid #0c3818;
+  background: #041208; color: #409860; font-family: 'VT323',monospace; font-size: 13px;
+  cursor: pointer; text-align: center; transition: all .15s; letter-spacing: .04em;
+}
+.ench-btn:hover { border-color: #40c870; color: #80ffa0; background: #081e10; }
+.ench-btn.active { border-color: #40c870; color: #c0ffd0; background: linear-gradient(135deg,#0c2e18,#061a0c); box-shadow: 0 0 8px rgba(64,200,112,.3); }
+.ench-btn.incompatible { opacity: .3; cursor: not-allowed; }
+</style>
+
+<!-- Smithy Panel -->
+<div id="smithy-panel" class="craftnpc-panel">
+  <div class="craftnpc-win">
+    <div class="craftnpc-header">
+      <div class="craftnpc-portrait">🔨</div>
+      <div class="craftnpc-npcinfo">
+        <div class="craftnpc-name">🔥 Brom, o Ferreiro</div>
+        <div class="craftnpc-title">Mestre das Forjas · Guilda dos Artífices</div>
+        <div class="craftnpc-quote" id="smithy-quote">"Ferro e fogo revelam o verdadeiro potencial…"</div>
+      </div>
+      <span class="craftnpc-close" onclick="closeSmithyPanel()">✕</span>
+    </div>
+    <div class="craftnpc-body" id="smithy-body"></div>
+  </div>
+</div>
+
+<!-- Alchemist Panel -->
+<div id="alchemist-panel" class="craftnpc-panel">
+  <div class="craftnpc-win">
+    <div class="craftnpc-header">
+      <div class="craftnpc-portrait">⚗️</div>
+      <div class="craftnpc-npcinfo">
+        <div class="craftnpc-name">🌿 Sylva, a Alquimista</div>
+        <div class="craftnpc-title">Encantadora de Runas · Ordem dos Véus</div>
+        <div class="craftnpc-quote" id="alchemist-quote">"Cada arma carrega um segredo que só o éter pode revelar…"</div>
+      </div>
+      <span class="craftnpc-close" onclick="closeAlchemistPanel()">✕</span>
+    </div>
+    <div class="craftnpc-body" id="alchemist-body"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CRAFTING NPC SYSTEM — Smithy & Alchemist
+// Future-ready: player.craftCurrency available for special drop currency
+// ═══════════════════════════════════════════════════════════
+
+// ── Future currency hook ─────────────────────────────────
+// To add a special boss-drop currency in the future:
+//   1. Add drops to boss/guardian enemy tables: {id:'dragon_shard', chance:.3}
+//   2. Add ITEM_DB entry: dragon_shard: {name:'Fragmento do Dragão', type:'currency', ...}
+//   3. Read from: player.craftCurrency (initialised in createPlayer below)
+//   4. Spend via: spendCraftCurrency(amount)
+function spendCraftCurrency(amount) {
+  if (!player) return false;
+  if ((player.craftCurrency || 0) < amount) return false;
+  player.craftCurrency -= amount;
+  return true;
+}
+
+// ── SMITHY CONFIG ────────────────────────────────────────
+const SMITHY_CONFIG = {
+  maxLevel: 10,
+  upgradeCost: [0, 200, 400, 700, 1000, 1400, 1900, 2500, 3200, 4000, 5000],
+  // Bonus per level by item type
+  weaponAtkPerLevel: 4,   // +4 ATK per forge level
+  armorDefPerLevel:  3,   // +3 DEF per forge level
+  armorHpPerLevel:   15,  // +15 HP per forge level
+};
+
+// smithyState: per-item upgrade levels stored on player.forgeData
+// player.forgeData = { [uid]: { level, itemId } }
+function getForgeData() {
+  if (!player.forgeData) player.forgeData = {};
+  return player.forgeData;
+}
+function getItemForgeLevel(uid) {
+  const d = getForgeData();
+  return d[uid]?.level || 0;
+}
+function setItemForgeLevel(uid, itemId, level) {
+  const d = getForgeData();
+  d[uid] = { level, itemId };
+}
+function getForgeBonus(uid, itemId) {
+  const lvl = getItemForgeLevel(uid);
+  if (lvl === 0) return { atk: 0, def: 0, hp: 0 };
+  const db = ITEM_DB[itemId];
+  if (!db) return { atk: 0, def: 0, hp: 0 };
+  if (db.type === 'weapon') {
+    return { atk: lvl * SMITHY_CONFIG.weaponAtkPerLevel, def: 0, hp: 0 };
+  } else {
+    return { atk: 0, def: lvl * SMITHY_CONFIG.armorDefPerLevel, hp: lvl * SMITHY_CONFIG.armorHpPerLevel };
+  }
+}
+
+// State
+const smithyState = { open: false, x: 0, y: 0, nearPlayer: false };
+
+function placeSmithyNpc() {
+  const T = typeof TILE_SIZE !== 'undefined' ? TILE_SIZE : 48;
+  smithyState.x = 18 * T + T / 2;
+  smithyState.y = 22 * T + T / 2;
+}
+
+function openSmithyPanel() {
+  if (typeof closeAllPanels === 'function') closeAllPanels();
+  smithyState.open = true;
+  document.getElementById('smithy-panel').classList.add('open');
+  renderSmithyPanel();
+}
+function closeSmithyPanel() {
+  smithyState.open = false;
+  document.getElementById('smithy-panel').classList.remove('open');
+}
+
+function upgradeItem(uid, itemId) {
+  const lvl = getItemForgeLevel(uid);
+  const max = SMITHY_CONFIG.maxLevel;
+  if (lvl >= max) return;
+  const cost = SMITHY_CONFIG.upgradeCost[lvl + 1];
+  if (player.gold < cost) { showCraftMsg('smithy', '❌ Ouro insuficiente!', 'err'); return; }
+  player.gold -= cost;
+  setItemForgeLevel(uid, itemId, lvl + 1);
+
+  // Apply bonus to ITEM_DB entry for this specific instance (mutate stored effect)
+  // We store forge delta separately and call applyEquipBonuses
+  applyEquipBonuses();
+  // Re-apply so player stats reflect updated item
+  _applyForgeToEquipBonuses();
+
+  if (typeof playLevelUpSound === 'function') playLevelUpSound();
+  if (typeof updateHUD === 'function') updateHUD();
+  showCraftMsg('smithy', `⚒ Item forjado para nível ${lvl + 1}!`, 'ok');
+  renderSmithyPanel();
+  // Spark particles near smithy
+  _craftParticles(smithyState.x, smithyState.y, '#f08030', 30);
+}
+
+// Patch applyEquipBonuses to include forge bonuses
+function _applyForgeToEquipBonuses() {
+  if (!player?.equippedSlots) return;
+  let forgeAtk = 0, forgeDef = 0, forgeHp = 0;
+  for (const slotId of Object.keys(player.equippedSlots)) {
+    const entry = player.equippedSlots[slotId];
+    if (!entry) continue;
+    const itemId = entry.itemId || entry;
+    const uid    = entry.uid;
+    if (!uid) continue;
+    const bonus = getForgeBonus(uid, itemId);
+    forgeAtk += bonus.atk;
+    forgeDef += bonus.def;
+    forgeHp  += bonus.hp;
+  }
+  // Apply as delta from previous forge bonus
+  const prev = player._forgeBonus || { atk: 0, def: 0, hp: 0 };
+  player.atk  = player.atk  - prev.atk  + forgeAtk;
+  player.def  = player.def  - prev.def  + forgeDef;
+  const hpDelta = forgeHp - prev.hp;
+  player.maxHp = Math.max(1, player.maxHp + hpDelta);
+  player.hp    = Math.min(player.hp + Math.max(0, hpDelta), player.maxHp);
+  player._forgeBonus = { atk: forgeAtk, def: forgeDef, hp: forgeHp };
+}
+
+function renderSmithyPanel() {
+  const body = document.getElementById('smithy-body');
+  if (!body || !player) return;
+
+  // Find equipped weapon and armor slots
+  const equippedItems = [];
+  if (player.equippedSlots) {
+    for (const [slotId, entry] of Object.entries(player.equippedSlots)) {
+      if (!entry) continue;
+      const itemId = entry.itemId || entry;
+      const uid    = entry.uid;
+      const db     = ITEM_DB[itemId];
+      if (!db || (db.type !== 'weapon' && db.type !== 'armor')) continue;
+      equippedItems.push({ slotId, itemId, uid, db });
+    }
+  }
+
+  if (!equippedItems.length) {
+    body.innerHTML = `<div style="text-align:center;padding:28px 16px;color:#5a2808;font-family:'Crimson Text',serif;font-style:italic;font-size:13px;">
+      Equipe uma arma ou armadura primeiro para que eu possa forjar!
+    </div>`;
+    return;
+  }
+
+  // Show first weapon, then first armor (max 2 items shown, tabbed via clicks)
+  const curIdx = smithyState.selectedIdx || 0;
+  const item   = equippedItems[Math.min(curIdx, equippedItems.length - 1)];
+  const lvl    = getItemForgeLevel(item.uid);
+  const max    = SMITHY_CONFIG.maxLevel;
+  const cost   = lvl < max ? SMITHY_CONFIG.upgradeCost[lvl + 1] : 0;
+  const bonus  = getForgeBonus(item.uid, item.itemId);
+  const canAfford = player.gold >= cost;
+  const rarityColor = { common:'#aaa', rare:'#5dade2', epic:'#bb8fce' }[item.db.rarity] || '#aaa';
+
+  // Tab buttons if multiple equipped items
+  let tabsHtml = '';
+  if (equippedItems.length > 1) {
+    tabsHtml = `<div style="display:flex;gap:6px;margin-bottom:11px;">` +
+      equippedItems.map((it, idx) => {
+        const active = idx === Math.min(curIdx, equippedItems.length-1);
+        return `<button onclick="smithyState.selectedIdx=${idx};renderSmithyPanel()" style="
+          flex:1;padding:5px;border-radius:5px;border:1px solid ${active?'#c06020':'#3a1808'};
+          background:${active?'linear-gradient(135deg,#2a1006,#180a04)':'#0e0602'};
+          color:${active?'#f08030':'#7a4020'};font-family:VT323,monospace;font-size:13px;cursor:pointer;
+        ">${it.db.icon} ${it.db.name.split(' ')[0]}</button>`;
+      }).join('') + `</div>`;
+  }
+
+  // Level pips
+  let pipsHtml = '';
+  for (let i = 1; i <= max; i++) {
+    pipsHtml += `<div class="craft-level-pip ${i <= lvl ? 'filled' : i === lvl+1 && lvl < max ? 'current' : ''}"></div>`;
+  }
+
+  // Stat display
+  const baseAtk = item.db.effect?.atk || 0;
+  const baseDef = item.db.effect?.def || 0;
+  const baseHp  = item.db.effect?.hp  || 0;
+  let statLines = '';
+  if (item.db.type === 'weapon') {
+    const next = bonus.atk + SMITHY_CONFIG.weaponAtkPerLevel;
+    statLines = `ATK base: <span style="color:#f0c060">${baseAtk}</span>  Forja: <span class="craft-preview-val">+${bonus.atk}</span>  Total: <span class="craft-preview-new">${baseAtk+bonus.atk}</span>`;
+    if (lvl < max) statLines += `<br>Próximo: +${SMITHY_CONFIG.weaponAtkPerLevel} ATK → <span class="craft-preview-new">${baseAtk+next}</span>`;
+  } else {
+    const nextDef = bonus.def + SMITHY_CONFIG.armorDefPerLevel;
+    const nextHp  = bonus.hp  + SMITHY_CONFIG.armorHpPerLevel;
+    statLines = `DEF base: <span style="color:#5dade2">${baseDef}</span>  Forja: <span class="craft-preview-val">+${bonus.def}</span>  Total: <span class="craft-preview-new">${baseDef+bonus.def}</span>`;
+    statLines += `<br>HP Bônus: <span style="color:#e74c3c">+${baseHp}</span>  Forja: <span class="craft-preview-val">+${bonus.hp}</span>`;
+    if (lvl < max) statLines += `<br>Próximo: +${SMITHY_CONFIG.armorDefPerLevel} DEF, +${SMITHY_CONFIG.armorHpPerLevel} HP`;
+  }
+
+  const upgradeHtml = lvl >= max
+    ? `<div class="craft-maxed">⭐ Item no Nível Máximo de Forja ⭐<div class="craft-maxed-sub">Este item atingiu o ápice da arte da forja.</div></div>`
+    : `<div class="craft-upgrade-box">
+        <div class="craft-upgrade-title">Próxima Forja — Nível ${lvl+1}</div>
+        <div class="craft-preview">
+          <span class="craft-preview-icon">${item.db.icon}</span>
+          <span class="craft-preview-arrow">→</span>
+          <div class="craft-preview-text">${statLines}</div>
+        </div>
+        <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="upgradeItem('${item.uid}','${item.itemId}')">
+          ⚒ Forjar Item
+          <span class="craft-btn-cost">${canAfford ? '🪙 '+cost+' ouro' : '❌ Precisa de '+cost+' 🪙'}</span>
+        </button>
+      </div>`;
+
+  body.innerHTML = `
+    ${tabsHtml}
+    <div class="craft-item-card">
+      <div class="craft-item-icon-wrap">
+        <span>${item.db.icon}</span>
+        <div class="craft-item-level-badge">${lvl > 0 ? '+'+lvl : '—'}</div>
+      </div>
+      <div class="craft-item-details">
+        <div class="craft-item-name">${item.db.name}</div>
+        <div class="craft-item-rarity" style="color:${rarityColor}">${item.db.rarity.toUpperCase()} · ${item.db.slot?.toUpperCase()||item.db.type.toUpperCase()}</div>
+        <div class="craft-item-bonus">${statLines}</div>
+      </div>
+    </div>
+    <div class="craft-level-track">${pipsHtml}</div>
+    ${upgradeHtml}
+    <div id="smithy-msg" class="craft-msg"></div>`;
+}
+
+// ── ALCHEMIST CONFIG ─────────────────────────────────────
+const ALCHEMIST_CONFIG = {
+  maxLevel: 3,
+  upgradeCost: [0, 1000, 2500, 5000],
+
+  // Enchantments — each has: label, icon, description, stat key, values per level
+  // subclasses: array of compatible subclass ids, or 'all'
+  enchantments: {
+    poison: {
+      label: 'Veneno',     icon: '☠',  color: '#8e44ad',
+      desc:  'Aumenta dano de veneno',
+      stat:  'poisonMult', values: [0, 1.20, 1.40, 1.60],
+      compatible: ['poison'],
+      apply: (p, lvl) => { p.art.poisonMult = 1 + (lvl * 0.20); },
+    },
+    fire: {
+      label: 'Fogo',       icon: '🔥', color: '#e74c3c',
+      desc:  'Aumenta dano de fogo',
+      stat:  'fireMult',   values: [0, 1.20, 1.40, 1.60],
+      compatible: ['fire_mage', 'fire_archer'],
+      apply: (p, lvl) => { p.art.fireMult = 1 + (lvl * 0.20); },
+    },
+    ice: {
+      label: 'Gelo',       icon: '❄️', color: '#5dade2',
+      desc:  'Aumenta dano de gelo',
+      stat:  'iceMult',    values: [0, 1.20, 1.40, 1.60],
+      compatible: ['ice'],
+      apply: (p, lvl) => { p.art.iceMult = 1 + (lvl * 0.20); },
+    },
+    sword: {
+      label: 'Espada',     icon: '⚔', color: '#e8a020',
+      desc:  'Aumenta dano de espada',
+      stat:  'swordMult',  values: [0, 1.20, 1.40, 1.60],
+      compatible: ['defensive', 'berserker', 'holy'],
+      apply: (p, lvl) => { p.art.swordMult = 1 + (lvl * 0.20); },
+    },
+    bow: {
+      label: 'Arco',       icon: '🏹', color: '#27ae60',
+      desc:  'Aumenta dano de arco',
+      stat:  'bowMult',    values: [0, 1.20, 1.40, 1.60],
+      compatible: ['wind', 'fire_archer', 'poison'],
+      apply: (p, lvl) => { p.art.bowMult = 1 + (lvl * 0.20); },
+    },
+    arcane: {
+      label: 'Magia',      icon: '🌀', color: '#c070ff',
+      desc:  'Aumenta todo o dano mágico',
+      stat:  'atkMult',    values: [0, 1.15, 1.30, 1.45],
+      compatible: ['arcane', 'ice', 'fire_mage'],
+      apply: (p, lvl) => { p.art.atkMult = 1 + (lvl * 0.15); },
+    },
+    heal: {
+      label: 'Cura',       icon: '💚', color: '#2ecc71',
+      desc:  'Aumenta cura passiva',
+      stat:  'holyRegen',  values: [0, 6, 10, 16],
+      compatible: ['holy'],
+      apply: (p, lvl) => {
+        p.holyRegen = lvl > 0;
+        p._enchHealRate = [0, 6, 10, 16][lvl]; // overrides base 5 HP
+      },
+    },
+    shield: {
+      label: 'Escudo',     icon: '🛡', color: '#3498db',
+      desc:  'Reduz dano recebido',
+      stat:  'dmgReduce',  values: [0, 0.10, 0.20, 0.30],
+      compatible: ['defensive'],
+      apply: (p, lvl) => { p.art.dmgReduce = lvl * 0.10; },
+    },
+  },
+};
+
+// Alchemist state
+const alchemistState = { open: false, x: 0, y: 0, nearPlayer: false, selectedEnch: null };
+
+function placeAlchemistNpc() {
+  const T = typeof TILE_SIZE !== 'undefined' ? TILE_SIZE : 48;
+  alchemistState.x = 35 * T + T / 2;
+  alchemistState.y = 23 * T + T / 2;
+}
+
+function openAlchemistPanel() {
+  if (typeof closeAllPanels === 'function') closeAllPanels();
+  alchemistState.open = true;
+  document.getElementById('alchemist-panel').classList.add('open');
+  renderAlchemistPanel();
+}
+function closeAlchemistPanel() {
+  alchemistState.open = false;
+  document.getElementById('alchemist-panel').classList.remove('open');
+}
+
+function applyEnchantment(enchKey, level) {
+  const cfg = ALCHEMIST_CONFIG.enchantments[enchKey];
+  if (!cfg) return;
+  const cost = ALCHEMIST_CONFIG.upgradeCost[level];
+  if (player.gold < cost) { showCraftMsg('alchemist', '❌ Ouro insuficiente!', 'err'); return; }
+  player.gold -= cost;
+  if (!player.enchantment) player.enchantment = { key: null, level: 0 };
+  // Remove previous enchant if switching type
+  if (player.enchantment.key && player.enchantment.key !== enchKey) {
+    _clearEnchantment(player.enchantment.key);
+  }
+  player.enchantment = { key: enchKey, level };
+  cfg.apply(player, level);
+
+  if (typeof playLevelUpSound === 'function') playLevelUpSound();
+  if (typeof updateHUD === 'function') updateHUD();
+  showCraftMsg('alchemist', `✨ ${cfg.label} Nv.${level} aplicado!`, 'ok');
+  renderAlchemistPanel();
+  _craftParticles(alchemistState.x, alchemistState.y, cfg.color, 35);
+  // Visual glow on weapon icon in HUD
+  _enchWeaponGlow(cfg.color);
+}
+
+function _clearEnchantment(key) {
+  const cfg = ALCHEMIST_CONFIG.enchantments[key];
+  if (!cfg) return;
+  // Reset the affected stat
+  if (cfg.stat === 'poisonMult') player.art.poisonMult = 1;
+  else if (cfg.stat === 'fireMult')   player.art.fireMult   = 1;
+  else if (cfg.stat === 'iceMult')    player.art.iceMult    = 1;
+  else if (cfg.stat === 'swordMult')  player.art.swordMult  = 1;
+  else if (cfg.stat === 'bowMult')    player.art.bowMult    = 1;
+  else if (cfg.stat === 'atkMult')    player.art.atkMult    = 1;
+  else if (cfg.stat === 'dmgReduce')  player.art.dmgReduce  = 0;
+  else if (cfg.stat === 'holyRegen')  { player.holyRegen = false; player._enchHealRate = 0; }
+}
+
+function _enchWeaponGlow(color) {
+  const hudIcon = document.getElementById('hud-icon');
+  if (!hudIcon) return;
+  hudIcon.style.textShadow = `0 0 12px ${color}, 0 0 24px ${color}`;
+  setTimeout(() => { hudIcon.style.textShadow = ''; }, 3000);
+}
+
+function renderAlchemistPanel() {
+  const body = document.getElementById('alchemist-body');
+  if (!body || !player) return;
+
+  // Current weapon
+  const eqEntry = player.equippedSlots?.weapon || player.equippedSlots?.['weapon'];
+  let weaponId  = null, weaponUid = null;
+  if (eqEntry) { weaponId = eqEntry.itemId || eqEntry; weaponUid = eqEntry.uid; }
+  else if (player.equippedWeapon) weaponId = player.equippedWeapon;
+  const weaponDb = weaponId ? ITEM_DB[weaponId] : null;
+
+  if (!weaponDb) {
+    body.innerHTML = `<div style="text-align:center;padding:28px 16px;color:#206840;font-family:'Crimson Text',serif;font-style:italic;font-size:13px;">
+      Equipe uma arma para que eu possa encantá-la…
+    </div>`;
+    return;
+  }
+
+  const curEnch  = player.enchantment || { key: null, level: 0 };
+  const curCfg   = curEnch.key ? ALCHEMIST_CONFIG.enchantments[curEnch.key] : null;
+  const subclass = player.subclass || '';
+  const selKey   = alchemistState.selectedEnch || curEnch.key || Object.keys(ALCHEMIST_CONFIG.enchantments)[0];
+  const selCfg   = ALCHEMIST_CONFIG.enchantments[selKey];
+  const curSelLvl = (curEnch.key === selKey) ? curEnch.level : 0;
+  const nextLvl   = Math.min(curSelLvl + 1, ALCHEMIST_CONFIG.maxLevel);
+  const cost      = ALCHEMIST_CONFIG.upgradeCost[nextLvl];
+  const canAfford = player.gold >= cost;
+  const isMaxed   = curEnch.key === selKey && curSelLvl >= ALCHEMIST_CONFIG.maxLevel;
+  const isSwitch  = curEnch.key && curEnch.key !== selKey;
+
+  // Current enchant display
+  const enchStatusHtml = curCfg
+    ? `<div style="font-size:11px;font-family:'Crimson Text',serif;color:#40c870;margin-bottom:10px;">
+        Encantamento atual: <strong>${curCfg.icon} ${curCfg.label} Nv.${curEnch.level}</strong>
+      </div>`
+    : `<div style="font-size:11px;font-family:'Crimson Text',serif;color:#206840;margin-bottom:10px;font-style:italic;">Sem encantamento ativo.</div>`;
+
+  // Weapon card
+  const rarityColor = { common:'#aaa', rare:'#5dade2', epic:'#bb8fce' }[weaponDb.rarity] || '#aaa';
+  const enchGlow = curCfg ? `0 0 14px ${curCfg.color}40` : 'none';
+
+  // Enchantment grid
+  const enchKeys = Object.keys(ALCHEMIST_CONFIG.enchantments);
+  const gridHtml = `<div class="ench-grid">` + enchKeys.map(key => {
+    const cfg = ALCHEMIST_CONFIG.enchantments[key];
+    const isActive   = key === selKey;
+    const hasCurrent = curEnch.key === key;
+    const incomp     = cfg.compatible !== 'all' && subclass && !cfg.compatible.includes(subclass);
+    return `<button class="ench-btn ${isActive?'active':''} ${incomp?'incompatible':''}"
+      onclick="${incomp ? '' : `alchemistState.selectedEnch='${key}';renderAlchemistPanel()`}"
+      title="${cfg.desc}${hasCurrent ? ' [Equipado Nv.'+curEnch.level+']':''}"
+    >${cfg.icon}<br><span style="font-size:10px">${cfg.label}${hasCurrent?` ✦`:''}</span></button>`;
+  }).join('') + `</div>`;
+
+  // Upgrade section
+  const selValues = selCfg.values;
+  const curVal = selValues[curSelLvl];
+  const nextVal = selValues[nextLvl];
+  let previewText = '';
+  if (selCfg.stat === 'dmgReduce') {
+    previewText = `Redução atual: <span class="craft-preview-val">${Math.round((curVal||0)*100)}%</span> → Nível ${nextLvl}: <span class="craft-preview-new">${Math.round(nextVal*100)}%</span>`;
+  } else if (selCfg.stat === 'holyRegen') {
+    previewText = `Cura atual: <span class="craft-preview-val">${curVal||0} HP/s</span> → Nível ${nextLvl}: <span class="craft-preview-new">${nextVal} HP/s</span>`;
+  } else {
+    const pct = v => v ? `${Math.round((v-1)*100)}%` : '0%';
+    previewText = `Bônus atual: <span class="craft-preview-val">+${pct(curVal)}</span> → Nível ${nextLvl}: <span class="craft-preview-new">+${pct(nextVal)}</span>`;
+  }
+  if (isSwitch) previewText += `<br><span style="color:#e74c3c;font-size:10px">⚠ Substituirá ${curCfg?.icon} ${curCfg?.label}</span>`;
+
+  const upgradeHtml = isMaxed
+    ? `<div class="craft-maxed">✨ Encantamento no Nível Máximo<div class="craft-maxed-sub">Esta runa atingiu sua plena potência.</div></div>`
+    : `<div class="craft-upgrade-box">
+        <div class="craft-upgrade-title">${selCfg.icon} ${selCfg.label} · Nível ${nextLvl}</div>
+        <div class="craft-preview">
+          <span class="craft-preview-icon">${selCfg.icon}</span>
+          <span class="craft-preview-arrow">→</span>
+          <div class="craft-preview-text">${previewText}</div>
+        </div>
+        <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="applyEnchantment('${selKey}',${nextLvl})">
+          ✨ Encantar Arma
+          <span class="craft-btn-cost">${canAfford ? '🪙 '+cost+' ouro' : '❌ Precisa de '+cost+' 🪙'}</span>
+        </button>
+      </div>`;
+
+  body.innerHTML = `
+    <div class="craft-item-card">
+      <div class="craft-item-icon-wrap" style="box-shadow:${enchGlow}">
+        <span>${weaponDb.icon}</span>
+        ${curCfg ? `<div class="craft-item-level-badge" style="background:${curCfg.color}">${curEnch.level}</div>` : ''}
+      </div>
+      <div class="craft-item-details">
+        <div class="craft-item-name">${weaponDb.name}</div>
+        <div class="craft-item-rarity" style="color:${rarityColor}">${weaponDb.rarity.toUpperCase()}</div>
+        ${enchStatusHtml}
+      </div>
+    </div>
+    ${gridHtml}
+    ${upgradeHtml}
+    <div id="alchemist-msg" class="craft-msg"></div>`;
+}
+
+// ── Shared helpers ───────────────────────────────────────
+function showCraftMsg(which, text, type) {
+  const id = which === 'smithy' ? 'smithy-msg' : 'alchemist-msg';
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text; el.className = 'craft-msg ' + type; el.style.display = 'block';
+  clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+function _craftParticles(x, y, color, count) {
+  if (typeof particles === 'undefined') return;
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2, spd = 50 + Math.random() * 100;
+    particles.push({ type:'hit', x, y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd-30, life:500, maxLife:500, r:3+Math.random()*3, color, gravity:60 });
+  }
+}
+
+// ── Draw NPCs in world ───────────────────────────────────
+function drawSmithyNpc() {
+  if (!ctx || !player || !smithyState.x) return;
+  const nx = smithyState.x, ny = smithyState.y;
+  if (nx < cam.x-80 || nx > cam.x+W+80 || ny < cam.y-80 || ny > cam.y+H+80) return;
+  const now = Date.now();
+
+  // Forge glow
+  const pulse = Math.sin(now / 400) * 0.4 + 0.6;
+  const aura = ctx.createRadialGradient(nx, ny+8, 4, nx, ny+8, 38);
+  aura.addColorStop(0, `rgba(240,100,20,${0.3 * pulse})`);
+  aura.addColorStop(1, 'rgba(240,100,20,0)');
+  ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(nx, ny+8, 38, 0, Math.PI*2); ctx.fill();
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,.35)';
+  ctx.beginPath(); ctx.ellipse(nx, ny+20, 18, 5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Anvil base
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(nx-10, ny+10, 20, 8);
+  ctx.fillStyle = '#3a3a3a';
+  ctx.fillRect(nx-12, ny+6, 24, 6);
+
+  // Sparks from anvil
+  for (let i = 0; i < 3; i++) {
+    const sa = (now/200 + i*1.5) % (Math.PI*2);
+    const sr = 8 + Math.sin(now/300 + i) * 4;
+    const sp = Math.sin(now/180 + i*2) * 0.5 + 0.5;
+    ctx.fillStyle = `rgba(255,${140 + Math.floor(sp*80)},20,${0.5+sp*0.5})`;
+    ctx.beginPath(); ctx.arc(nx+Math.cos(sa)*sr*0.5, ny+Math.sin(sa)*sr*0.3+4, 1.5+sp, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Body — stocky blacksmith
+  ctx.fillStyle = '#3a2010';
+  ctx.beginPath(); ctx.roundRect(nx-14, ny-8, 28, 22, [3,3,4,4]); ctx.fill();
+  // Leather apron
+  ctx.fillStyle = '#6a3a18';
+  ctx.beginPath(); ctx.roundRect(nx-10, ny-6, 20, 20, [2]); ctx.fill();
+  // Apron straps
+  ctx.strokeStyle = '#8a5028'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(nx-6, ny-6); ctx.lineTo(nx-2, ny-16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(nx+6, ny-6); ctx.lineTo(nx+2, ny-16); ctx.stroke();
+
+  // Head
+  ctx.fillStyle = '#c89060';
+  ctx.beginPath(); ctx.arc(nx, ny-20, 11, 0, Math.PI*2); ctx.fill();
+  // Beard
+  ctx.fillStyle = '#8a5020';
+  ctx.beginPath(); ctx.ellipse(nx, ny-12, 8, 6, 0, 0, Math.PI); ctx.fill();
+  // Eyes
+  ctx.fillStyle = '#2a1a08';
+  ctx.beginPath(); ctx.arc(nx-3.5, ny-22, 1.8, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(nx+3.5, ny-22, 1.8, 0, Math.PI*2); ctx.fill();
+
+  // Arm holding hammer
+  ctx.strokeStyle = '#c89060'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(nx+14, ny-4); ctx.lineTo(nx+22, ny-12); ctx.stroke();
+  // Hammer
+  ctx.fillStyle = '#888'; ctx.fillRect(nx+18, ny-20, 10, 6);
+  ctx.fillStyle = '#6a4020'; ctx.fillRect(nx+20, ny-14, 3, 12);
+
+  // Left arm
+  ctx.strokeStyle = '#c89060';
+  ctx.beginPath(); ctx.moveTo(nx-14, ny-4); ctx.lineTo(nx-20, ny+2); ctx.stroke();
+
+  // Name tag
+  const dist = Math.hypot(player.x-nx, player.y-ny);
+  const alpha = dist < 130 ? Math.min(1, (130-dist)/65) : 0;
+  if (alpha > 0) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(10,6,2,.9)';
+    ctx.beginPath(); ctx.roundRect(nx-42, ny-54, 84, 16, [4]); ctx.fill();
+    ctx.strokeStyle = 'rgba(200,96,32,.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(nx-42, ny-54, 84, 16, [4]); ctx.stroke();
+    ctx.fillStyle = '#f08030'; ctx.font = 'bold 10px Cinzel, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🔥 Brom', nx, ny-46);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawAlchemistNpc() {
+  if (!ctx || !player || !alchemistState.x) return;
+  const nx = alchemistState.x, ny = alchemistState.y;
+  if (nx < cam.x-80 || nx > cam.x+W+80 || ny < cam.y-80 || ny > cam.y+H+80) return;
+  const now = Date.now();
+
+  // Potion glow — green/teal
+  const pulse = Math.sin(now/700)*0.4+0.6;
+  const aura = ctx.createRadialGradient(nx, ny, 5, nx, ny, 40);
+  aura.addColorStop(0, `rgba(32,180,80,${0.2*pulse})`);
+  aura.addColorStop(1, 'rgba(32,180,80,0)');
+  ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(nx, ny, 40, 0, Math.PI*2); ctx.fill();
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,.28)';
+  ctx.beginPath(); ctx.ellipse(nx, ny+19, 15, 5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Robe body
+  ctx.fillStyle = '#0c2a14';
+  ctx.beginPath(); ctx.roundRect(nx-11, ny-9, 22, 24, [3,3,5,5]); ctx.fill();
+  // Robe trim
+  ctx.strokeStyle = '#20a050'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(nx-11, ny-9, 22, 24, [3,3,5,5]); ctx.stroke();
+  // Rune symbols on robe
+  ctx.fillStyle = `rgba(64,200,112,${0.3+pulse*0.3})`;
+  ctx.font = '7px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('⚗', nx-4, ny+4); ctx.fillText('✦', nx+4, ny+8);
+
+  // Head
+  ctx.fillStyle = '#e8c090';
+  ctx.beginPath(); ctx.arc(nx, ny-21, 10, 0, Math.PI*2); ctx.fill();
+  // Silver hair
+  ctx.fillStyle = '#c8d8c0';
+  ctx.beginPath(); ctx.arc(nx, ny-28, 8, Math.PI, 0); ctx.fill();
+  ctx.fillRect(nx-9, ny-30, 5, 10);
+  ctx.fillRect(nx+4, ny-30, 5, 10);
+  // Eyes — glowing teal
+  ctx.fillStyle = '#20e880';
+  ctx.beginPath(); ctx.arc(nx-3, ny-22, 1.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(nx+3, ny-22, 1.5, 0, Math.PI*2); ctx.fill();
+
+  // Arm holding potion vial
+  ctx.strokeStyle = '#e8c090'; ctx.lineWidth = 4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(nx-11, ny-4); ctx.lineTo(nx-20, ny+4); ctx.stroke();
+  // Potion vial
+  const vPulse = Math.sin(now/500)*0.3+0.7;
+  ctx.fillStyle = `rgba(40,${180+Math.floor(vPulse*60)},80,0.9)`;
+  ctx.beginPath(); ctx.roundRect(nx-24, ny-2, 8, 12, [3,3,4,4]); ctx.fill();
+  ctx.strokeStyle = 'rgba(64,240,128,.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(nx-24, ny-2, 8, 12, [3,3,4,4]); ctx.stroke();
+  ctx.fillStyle = '#e8fce8'; ctx.fillRect(nx-22, ny-4, 4, 4);
+
+  // Other arm — holding a tome
+  ctx.strokeStyle = '#e8c090'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(nx+11, ny-2); ctx.lineTo(nx+20, ny+4); ctx.stroke();
+  ctx.fillStyle = '#1a4a28'; ctx.fillRect(nx+18, ny+2, 10, 8);
+  ctx.strokeStyle = '#30a050'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(nx+23, ny+2); ctx.lineTo(nx+23, ny+10); ctx.stroke();
+
+  // Floating rune particles
+  for (let i=0;i<4;i++) {
+    const ang = (now/1400 + i*Math.PI/2);
+    const r = 26 + Math.sin(now/600+i)*4;
+    const fx = nx + Math.cos(ang)*r, fy = ny-8 + Math.sin(ang)*r*0.45;
+    const fp = Math.sin(now/350+i*1.5)*0.5+0.5;
+    ctx.fillStyle = `rgba(64,220,112,${0.25+fp*0.5})`;
+    ctx.beginPath(); ctx.arc(fx, fy, 1.5+fp, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Name tag
+  const dist = Math.hypot(player.x-nx, player.y-ny);
+  const alpha = dist < 130 ? Math.min(1, (130-dist)/65) : 0;
+  if (alpha > 0) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(2,8,4,.9)';
+    ctx.beginPath(); ctx.roundRect(nx-44, ny-54, 88, 16, [4]); ctx.fill();
+    ctx.strokeStyle = 'rgba(32,160,80,.3)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(nx-44, ny-54, 88, 16, [4]); ctx.stroke();
+    ctx.fillStyle = '#40c870'; ctx.font='bold 10px Cinzel, serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🌿 Sylva', nx, ny-46);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ── Hook into existing systems ───────────────────────────
+
+// 1. Place on map generation
+const _csOrigGenerateMap = typeof generateMap === 'function' ? generateMap : null;
+if (_csOrigGenerateMap) {
+  generateMap = function(...a) {
+    _csOrigGenerateMap.apply(this, a);
+    placeSmithyNpc();
+    placeAlchemistNpc();
+  };
+}
+
+// 2. Draw in render loop (after world translate is active)
+const _csOrigRender = typeof render === 'function' ? render : null;
+if (_csOrigRender) {
+  render = function(...a) {
+    _csOrigRender.apply(this, a);
+    if (ctx) {
+      ctx.save();
+      ctx.translate(-(cam?.x||0), -(cam?.y||0));
+      drawSmithyNpc();
+      drawAlchemistNpc();
+      ctx.restore();
+    }
+  };
+}
+
+// 3. Proximity prompt + F-key via updateNpcProximity + tryOpenChest
+const _csOrigUpdateNpcProx = typeof updateNpcProximity === 'function' ? updateNpcProximity : null;
+if (_csOrigUpdateNpcProx) {
+  updateNpcProximity = function() {
+    _csOrigUpdateNpcProx.apply(this, arguments);
+    if (!player) return;
+    const dSmith = smithyState.x   ? Math.hypot(player.x-smithyState.x,   player.y-smithyState.y)   : Infinity;
+    const dAlch  = alchemistState.x ? Math.hypot(player.x-alchemistState.x, player.y-alchemistState.y) : Infinity;
+    smithyState.nearPlayer    = dSmith  < 65;
+    alchemistState.nearPlayer = dAlch   < 65;
+    const nearChest = typeof chests!=='undefined' && chests.find(c=>!c.open&&Math.hypot(c.x-player.x,c.y-player.y)<55);
+    const nearNpc   = typeof npcObj!=='undefined'&&npcObj&&Math.hypot(player.x-npcObj.x,player.y-npcObj.y)<60;
+    const nearPT    = typeof petTrainerState!=='undefined'&&petTrainerState.nearPlayer;
+    const prompt    = document.getElementById('chest-prompt');
+    if (!nearChest && !nearNpc && !nearPT && prompt) {
+      if (dSmith < 65) {
+        prompt.style.display='block'; prompt.textContent='[F] Falar com Brom'; prompt.style.color='#f08030';
+      } else if (dAlch < 65) {
+        prompt.style.display='block'; prompt.textContent='[F] Falar com Sylva'; prompt.style.color='#40c870';
+      }
+    }
+  };
+}
+
+// 4. F key — patch tryOpenChest
+const _csOrigTryOpen = typeof tryOpenChest === 'function' ? tryOpenChest : null;
+if (_csOrigTryOpen) {
+  tryOpenChest = function() {
+    if (player) {
+      if (smithyState.nearPlayer)    { openSmithyPanel();    return; }
+      if (alchemistState.nearPlayer) { openAlchemistPanel(); return; }
+    }
+    _csOrigTryOpen.apply(this, arguments);
+  };
+}
+
+// 5. ESC key
+document.addEventListener('keydown', function(ev) {
+  if (ev.key === 'Escape') {
+    if (smithyState.open)    { closeSmithyPanel();    ev.preventDefault(); ev.stopImmediatePropagation(); return; }
+    if (alchemistState.open) { closeAlchemistPanel(); ev.preventDefault(); ev.stopImmediatePropagation(); return; }
+  }
+}, true);
+
+// 6. Hook closeAllPanels
+const _csOrigCloseAll = typeof closeAllPanels === 'function' ? closeAllPanels : null;
+if (_csOrigCloseAll) {
+  closeAllPanels = function() {
+    _csOrigCloseAll.apply(this, arguments);
+    if (smithyState.open)    closeSmithyPanel();
+    if (alchemistState.open) closeAlchemistPanel();
+  };
+}
+
+// 7. Minimap dots
+const _csOrigMinimap = typeof updateMinimapCanvas === 'function' ? updateMinimapCanvas : null;
+if (_csOrigMinimap) {
+  updateMinimapCanvas = function(...a) {
+    _csOrigMinimap.apply(this, a);
+    const mmEl = document.getElementById('mm-canvas');
+    if (!mmEl || typeof mmCtx==='undefined' || !mmCtx) return;
+    const mW=mmEl.width||120, mH=mmEl.height||80;
+    const wW=typeof WORLD_W!=='undefined'?WORLD_W:3840;
+    const wH=typeof WORLD_H!=='undefined'?WORLD_H:2560;
+    if (smithyState.x) {
+      mmCtx.fillStyle='#f08030';
+      mmCtx.fillRect(smithyState.x/wW*mW-3, smithyState.y/wH*mH-3, 6, 6);
+    }
+    if (alchemistState.x) {
+      mmCtx.fillStyle='#40c870';
+      mmCtx.fillRect(alchemistState.x/wW*mW-3, alchemistState.y/wH*mH-3, 6, 6);
+    }
+  };
+}
+
+// 8. Patch createPlayer to add craftCurrency and enchantment fields
+const _csOrigCreatePlayer = typeof createPlayer === 'function' ? createPlayer : null;
+if (_csOrigCreatePlayer) {
+  createPlayer = function(classId) {
+    const p = _csOrigCreatePlayer.apply(this, arguments);
+    p.craftCurrency = 0;  // Future special currency (dragon shards, etc.)
+    p.enchantment   = { key: null, level: 0 };
+    p.forgeData     = {};
+    p._forgeBonus   = { atk: 0, def: 0, hp: 0 };
+    return p;
+  };
+}
+
+// 9. Apply forge + enchant bonuses on equip changes
+const _csOrigApplyEquip = typeof applyEquipBonuses === 'function' ? applyEquipBonuses : null;
+if (_csOrigApplyEquip) {
+  applyEquipBonuses = function() {
+    _csOrigApplyEquip.apply(this, arguments);
+    _applyForgeToEquipBonuses();
+    // Re-apply enchantment (in case class change reset art)
+    if (player?.enchantment?.key) {
+      const cfg = ALCHEMIST_CONFIG.enchantments[player.enchantment.key];
+      if (cfg) cfg.apply(player, player.enchantment.level);
+    }
+  };
+}
+
+// 10. Apply dmgReduce from enchantment to incoming hits
+// Patch the enemy damage line in updateEnemies via a global helper
+window._getPlayerDmgReduce = function() {
+  return (player?.art?.dmgReduce || 0);
+};
+
+console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 </script>
 </body>
 </html>
