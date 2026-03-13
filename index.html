@@ -795,6 +795,37 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
   width:9px; height:9px; border-radius:50%; flex-shrink:0;
   box-shadow:0 0 4px currentColor;
 }
+
+/* ═══ WORLD LEVEL BANNER ═══ */
+#worldlvl-banner {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  z-index:200; pointer-events:none; opacity:0;
+  font-family:'Cinzel',serif; text-align:center;
+}
+#worldlvl-banner.show { animation:wlPop 3.2s ease forwards; }
+@keyframes wlPop {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(.5); }
+  12%  { opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+  75%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-65%) scale(.9); }
+}
+#worldlvl-title {
+  font-size:clamp(26px,4vw,48px); color:#e74c3c;
+  text-shadow:0 0 30px rgba(231,76,60,.9), 0 0 60px rgba(231,76,60,.4);
+  letter-spacing:.12em;
+}
+#worldlvl-sub {
+  font-size:clamp(13px,2vw,20px); color:#f0c060; margin-top:6px;
+  text-shadow:0 0 16px rgba(240,192,96,.7); letter-spacing:.08em;
+}
+/* World level badge no HUD */
+#worldlvl-badge {
+  display:inline-block; margin-left:6px;
+  font-family:'VT323',monospace; font-size:12px;
+  color:#e74c3c; background:rgba(100,10,10,.5);
+  border:1px solid #e74c3c; border-radius:4px;
+  padding:0 5px; vertical-align:middle; letter-spacing:.06em;
+}
 </style>
 </head>
 <body>
@@ -1647,6 +1678,20 @@ function updatePetHUD() {
 let centralBoss = null; // reference to the guardian enemy object
 let centralBossPos = { x: 0, y: 0 }; // fixed center-map position
 let centralBossWarned = false; // showed level warning already this approach
+let worldLevel = 1;          // progressão de dificuldade após cada boss
+
+// Nível mínimo do jogador para enfrentar o boss de cada world level
+const BOSS_MIN_LEVEL = [0, 8, 12, 20, 25, 30]; // índice = worldLevel (1-based)
+
+// XP e gold base multiplicados conforme world level (escala +10% por nível)
+function getWorldScale() {
+  return 1 + (worldLevel - 1) * 0.10;
+}
+
+// Nível mínimo exigido para o boss do worldLevel atual
+function getBossMinLevel(wl) {
+  return BOSS_MIN_LEVEL[Math.min(wl, BOSS_MIN_LEVEL.length - 1)];
+}
 
 function spawnCentralBoss() {
   const def = ENEMY_DEF.find(e => e.id === 'guardian');
@@ -1662,10 +1707,10 @@ function spawnCentralBoss() {
     guardingChest: null, poisonTimer: 0, poisonStacks: 0, frozenTimer: 0,
     isCentralBoss: true
   };
-  centralBoss.aggroRange = 0; // dorme até player chegar no nível 8
+  centralBoss.aggroRange = 0; // dorme até player atingir nível mínimo
   enemies.push(centralBoss);
   // NÃO chama onBossSpawned aqui — música boss só toca quando player se aproxima
-  addLog('☠ Guardião Eterno dorme no centro — chegue ao Nível 8!', 'lboss');
+  addLog(`☠ Guardião Eterno dorme no centro — chegue ao Nível ${getBossMinLevel(worldLevel)}!`, 'lboss');
   updateCentralBossBar();
 }
 
@@ -1688,8 +1733,9 @@ function updateCentralBossBar() {
 function checkCentralBossProximity() {
   if (!centralBoss || !centralBoss.isAlive) return;
   const dist = Math.hypot(player.x - centralBoss.x, player.y - centralBoss.y);
-  if (player.level < 8) {
-    // Abaixo do nível 8: empurra e bloqueia
+  const minLvl = getBossMinLevel(worldLevel);
+  if (player.level < minLvl) {
+    // Abaixo do nível mínimo: empurra e bloqueia
     if (dist < 140) {
       const dx = player.x - centralBoss.x, dy = player.y - centralBoss.y;
       const len = Math.hypot(dx, dy) || 1;
@@ -1697,8 +1743,8 @@ function checkCentralBossProximity() {
       player.y += (dy / len) * 5;
       if (!centralBossWarned) {
         centralBossWarned = true;
-        addLog('⚠ Você precisa estar no nível 8 para enfrentar o Guardião!', 'ldmg');
-        showLevelUpBanner('⚠ Nível 8 necessário!');
+        addLog(`⚠ Você precisa estar no nível ${minLvl} para enfrentar o boss! (Nv. atual: ${player.level})`, 'ldmg');
+        showLevelUpBanner(`⚠ Nível ${minLvl} necessário!`);
         setTimeout(() => { centralBossWarned = false; }, 5000);
       }
       centralBoss.aggroRange = 0;
@@ -1821,6 +1867,110 @@ function switchExploreTrack() {
   } else {
     playTrack(currentTrackIdx >= 0 ? currentTrackIdx : 0);
   }
+}
+
+
+// ─────────────────────────────────────────────────────────
+// WORLD PROGRESSION — aumenta a cada boss derrotado
+// ─────────────────────────────────────────────────────────
+function showWorldLevelBanner(wl) {
+  const el  = document.getElementById('worldlvl-banner');
+  const sub = document.getElementById('worldlvl-sub');
+  const _next = getBossMinLevel(wl);
+  sub.textContent = `Nível do Mundo ${wl}  ·  Inimigos +${Math.round((wl-1)*10)}% mais fortes  ·  Próximo boss: Nível ${_next}`;
+  el.classList.remove('show');
+  void el.offsetWidth; // reflow para reiniciar animação
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3300);
+}
+
+function updateWorldLevelBadge() {
+  // Insere/atualiza badge "W2" ao lado do nome da classe no HUD
+  let badge = document.getElementById('worldlvl-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.id = 'worldlvl-badge';
+    const nameEl = document.querySelector('.hud-class-name');
+    if (nameEl) nameEl.parentNode.insertBefore(badge, nameEl.nextSibling);
+  }
+  if (worldLevel > 1) {
+    badge.textContent = 'W' + worldLevel;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function respawnCentralBoss() {
+  // Remove instância morta do array se ainda estiver lá
+  const idx = enemies.findIndex(e => e.isCentralBoss);
+  if (idx !== -1) enemies.splice(idx, 1);
+
+  const def   = ENEMY_DEF.find(e => e.id === 'guardian');
+  const ws    = getWorldScale();
+  const lvlSc = 1 + (player.level - 1) * 0.06;
+  const scale = ws * lvlSc;
+
+  const newName = worldLevel <= 2 ? '☠ GUARDIÃO ETERNO ☠'
+                : worldLevel <= 4 ? '💀 GUARDIÃO SOMBRIO 💀'
+                : worldLevel <= 6 ? '🔥 GUARDIÃO CAÓTICO 🔥'
+                :                   '👁 GUARDIÃO ABISSAL 👁';
+
+  centralBoss = {
+    ...def,
+    uid: 'guardian_wl' + worldLevel + '_' + Date.now(),
+    defId: 'guardian',
+    name: newName,
+    x: centralBossPos.x, y: centralBossPos.y,
+    maxHp: Math.floor(def.hp * scale),
+    hp:    Math.floor(def.hp * scale),
+    atk:   Math.floor(def.atk * scale),
+    xp:    Math.floor(def.xp  * ws),
+    goldRange: [Math.floor(def.goldRange[0] * ws), Math.floor(def.goldRange[1] * ws)],
+    vx: 0, vy: 0, atkTimer: 0,
+    aggroRange: 0, // dorme até o player se aproximar
+    isAlive: true, hitFlash: 0, deathTimer: 0,
+    roamTimer: 0, roamDX: 0, roamDY: 0,
+    spawnX: centralBossPos.x, spawnY: centralBossPos.y,
+    guardingChest: null, poisonTimer: 0, poisonStacks: 0, frozenTimer: 0,
+    isCentralBoss: true
+  };
+  enemies.push(centralBoss);
+  centralBossActive = false;
+  centralBossWarned = false;
+  updateCentralBossBar();
+
+  const _minLvl = getBossMinLevel(worldLevel);
+  addLog(`☠ ${newName} ressurgiu — W${worldLevel} · Nível ${_minLvl} necessário!`, 'lboss');
+  playLevelUpSound();
+}
+
+function onCentralBossKilled() {
+  worldLevel += 1;
+
+  // Reforça todos os inimigos vivos imediatamente
+  const ws = getWorldScale();
+  for (const e of enemies) {
+    if (!e.isAlive || e.isCentralBoss) continue;
+    const def = ENEMY_DEF.find(d => d.id === e.defId);
+    if (!def) continue;
+    const lvlSc = 1 + (player.level - 1) * 0.08;
+    const newAtk = Math.floor(def.atk * ws * lvlSc);
+    e.atk = newAtk;
+    // HP: escala o máximo e mantém proporção
+    const ratio = e.hp / e.maxHp;
+    e.maxHp = Math.floor(def.hp * ws * lvlSc);
+    e.hp    = Math.max(1, Math.floor(e.maxHp * ratio));
+    e.xp    = Math.floor(def.xp * ws);
+    e.goldRange = [Math.floor(def.goldRange[0]*ws), Math.floor(def.goldRange[1]*ws)];
+  }
+
+  showWorldLevelBanner(worldLevel);
+  addLog(`⬆ World Level ${worldLevel}! Próximo boss: Nível ${getBossMinLevel(worldLevel)}`, 'lboss');
+  updateWorldLevelBadge();
+
+  // Respawna boss após 4 s (dá tempo do banner aparecer)
+  setTimeout(respawnCentralBoss, 4000);
 }
 
 function onBossSpawned() {
@@ -2239,7 +2389,7 @@ function fireProjectile(ox,oy,tx,ty,dmg,color,type,target=null,isCrit=false,targ
 
 function explodeProjectile(pr){spawnHitParticles(pr.x,pr.y,pr.color,8);}
 function aoeExplosion(x,y,radius,dmg,color){for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-x,e.y-y)<radius)applyDamageToEnemy(e,Math.floor(dmg),false);}particles.push({type:'explosion',x,y,r:radius,life:400,maxLife:400,color});}
-function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;if(e.isCentralBoss&&player&&player.level<8){spawnDmgNumber(e.x,e.y-e.size-4,'⚠ Nv.8!','#e74c3c');return;}e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(e.hp<=0){e.hp=0;killEnemy(e);}}
+function applyDamageToEnemy(e,dmg,isCrit){if(!e.isAlive)return;if(e.isCentralBoss&&player&&player.level<getBossMinLevel(worldLevel)){spawnDmgNumber(e.x,e.y-e.size-4,`⚠ Nv.${getBossMinLevel(worldLevel)}!`,'#e74c3c');return;}e.hp-=dmg;e.hitFlash=150;spawnDmgNumber(e.x,e.y-e.size-4,dmg,isCrit?'#f0e040':'#e74c3c');if(e.hp<=0){e.hp=0;killEnemy(e);}}
 
 function killEnemy(e){
   e.isAlive=false;e.deathTimer=600;kills++;player.kills++;
@@ -2266,7 +2416,7 @@ function killEnemy(e){
   spawnDeathParticles(e.x,e.y,e.color);
   addLog(`${e.isBoss?'💀 BOSS':'💀'} ${e.name}! +${xpGain}xp`,e.isBoss?'lboss':'ldmg');
   if(e.guardingChest){e.guardingChest.bossKilled=true;addLog('🎁 Baú liberado! Pressione F para abrir.','lchest');}
-  if(e.isCentralBoss){ centralBoss = null; centralBossActive = false; document.getElementById('central-boss-bar').classList.remove('visible'); addLog('🏆 O GUARDIÃO ETERNO foi derrotado! Lenda!','lboss'); onBossDied(); }
+  if(e.isCentralBoss){ centralBoss = null; centralBossActive = false; document.getElementById('central-boss-bar').classList.remove('visible'); addLog('🏆 O GUARDIÃO ETERNO foi derrotado! Lenda!','lboss'); onBossDied(); onCentralBossKilled(); }
   checkLevelUp();
 }
 
@@ -2527,7 +2677,7 @@ function renderEnemies(){
     if(!e.isAlive&&e.deathTimer<=0)continue;
     ctx.save();ctx.globalAlpha=e.isAlive?1:e.deathTimer/600;
     if(e.hitFlash>0){ctx.shadowColor='#fff';ctx.shadowBlur=12*(e.hitFlash/150);}
-    if(e.isCentralBoss && player.level < 8 && e.isAlive) {
+    if(e.isCentralBoss && player.level < getBossMinLevel(worldLevel) && e.isAlive) {
       // Show warning ring around central boss
       const pulse = Math.sin(Date.now()/400)*.3+.7;
       ctx.save();
@@ -2535,7 +2685,7 @@ function renderEnemies(){
       ctx.beginPath();ctx.arc(e.x,e.y,e.size*3.5,0,Math.PI*2);ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle=`rgba(255,60,60,${pulse*.9})`;ctx.font='bold 13px serif';ctx.textAlign='center';
-      ctx.fillText('⚠ Nv.8',e.x,e.y+e.size*4.2);
+      ctx.fillText(`⚠ Nv.${getBossMinLevel(worldLevel)}`,e.x,e.y+e.size*4.2);
       ctx.restore();
     }
     if(e.frozenTimer>0){ctx.globalAlpha*=.7;ctx.shadowColor='#5dade2';ctx.shadowBlur=10;}
@@ -5139,7 +5289,7 @@ function spawnEnemy(forceBossId=null) {
     ? [ENEMY_DEF.find(e=>e.id===forceBossId)]
     : ENEMY_DEF.filter(e=>!e.isBoss&&!e.isCentralBoss&&e.minLevel<=player.level+1);
   const def = available[Math.floor(Math.random()*available.length)];
-  const scale = 1+(player.level-1)*0.08;
+  const scale = (1+(player.level-1)*0.08) * getWorldScale();
   const pos = findFreePos(T*8,player.x,player.y);
   const drops = ENEMY_DROP_POOLS[def.id] || def.drops || [];
   const enemy = {
@@ -5151,7 +5301,9 @@ function spawnEnemy(forceBossId=null) {
     hitFlash:0, deathTimer:0, roamTimer:0, roamDX:0, roamDY:0,
     spawnX:pos.x, spawnY:pos.y, guardingChest:null,
     poisonTimer:0, poisonStacks:0, frozenTimer:0,
-    drops
+    drops,
+    xp: Math.floor(def.xp * getWorldScale()),
+    goldRange: [Math.floor(def.goldRange[0]*getWorldScale()), Math.floor(def.goldRange[1]*getWorldScale())]
   };
   if (def.isBoss) onBossSpawned();
   return enemy;
@@ -6718,6 +6870,12 @@ window.addEventListener('DOMContentLoaded',()=>{
         <div class="bml-item"><div class="bml-dot" style="background:#1a2a10;color:#1a2a10"></div> Terreno</div>
       </div>
     </div>
+  </div>
+
+  <!-- World Level Up Banner -->
+  <div id="worldlvl-banner">
+    <div id="worldlvl-title">⚔ WORLD LEVEL UP! ⚔</div>
+    <div id="worldlvl-sub"></div>
   </div>
 </body>
 </html>
