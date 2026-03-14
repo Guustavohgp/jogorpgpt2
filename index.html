@@ -1443,7 +1443,7 @@ const ENEMY_DEF = [
   {id:'slime',name:'Slime',color:'#2ecc71',hp:28,atk:6,def:1,spd:60,xp:15,atkRange:28,atkSpeed:1500,goldRange:[1,5],size:14,drawFn:drawSlime,drops:[{id:'potion',chance:.35},{id:'mana_potion',chance:.15}],minLevel:1},
   {id:'goblin',name:'Goblin',color:'#f39c12',hp:45,atk:10,def:3,spd:95,xp:28,atkRange:30,atkSpeed:1200,goldRange:[3,10],size:16,drawFn:drawGoblin,drops:[{id:'potion',chance:.25},{id:'mana_potion',chance:.15},{id:'old_sword',chance:.12}],minLevel:1},
   {id:'skeleton',name:'Esqueleto',color:'#bdc3c7',hp:65,atk:14,def:5,spd:80,xp:42,atkRange:32,atkSpeed:1400,goldRange:[5,15],size:17,drawFn:drawSkeleton,drops:[{id:'potion',chance:.2},{id:'mana_potion',chance:.18},{id:'shield',chance:.12}],minLevel:1},
-  {id:'orc',name:'Orc',color:'#e74c3c',hp:110,atk:20,def:8,spd:75,xp:70,atkRange:35,atkSpeed:1600,goldRange:[10,22],size:20,drawFn:drawOrc,drops:[{id:'big_potion',chance:.3},{id:'mana_potion',chance:.25},{id:'steel_sword',chance:.18}],minLevel:2},
+  {id:'orc',name:'Lobo das Sombras',color:'#3a3a4a',hp:110,atk:20,def:8,spd:110,xp:70,atkRange:35,atkSpeed:1600,goldRange:[10,22],size:20,drawFn:drawTroll,drops:[{id:'big_potion',chance:.3},{id:'mana_potion',chance:.25},{id:'steel_sword',chance:.18}],minLevel:2},
   {id:'troll',name:'Troll',color:'#d35400',hp:200,atk:28,def:12,spd:55,xp:120,atkRange:40,atkSpeed:2000,goldRange:[18,35],size:24,drawFn:drawTroll,drops:[{id:'big_potion',chance:.4},{id:'mana_potion',chance:.30},{id:'troll_club',chance:.22}],minLevel:3},
   {id:'boss',name:'▲ DRAGÃO ▲',color:'#c0392b',hp:500,atk:40,def:18,spd:70,xp:400,atkRange:50,atkSpeed:1800,goldRange:[60,120],size:30,drawFn:drawBoss,drops:[{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
   {id:'lich',name:'▲ LICH ▲',color:'#9b59b6',hp:380,atk:35,def:14,spd:85,xp:350,atkRange:55,atkSpeed:1600,goldRange:[50,100],size:26,drawFn:drawLich,drops:[{id:'mage_staff',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
@@ -3216,7 +3216,7 @@ function renderEnemies(){
 function drawSlime(ctx,e){const pulse=Math.sin(Date.now()/300)*2;ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.ellipse(e.x,e.y+pulse*.3,e.size+pulse*.5,e.size*.8-pulse*.2,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(e.x-4,e.y-2+pulse*.3,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e.x+4,e.y-2+pulse*.3,2.5,0,Math.PI*2);ctx.fill();}
 function drawGoblin(ctx,e){const t=e.size;ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.roundRect(e.x-t*.55,e.y-t*.4,t*1.1,t,[4,4,2,2]);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#c8963c';ctx.beginPath();ctx.ellipse(e.x,e.y-t*.7,t*.65,t*.6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(e.x-t*.22,e.y-t*.75,t*.14,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e.x+t*.22,e.y-t*.75,t*.14,0,Math.PI*2);ctx.fill();}
 function drawSkeleton(ctx,e){const t=e.size,bc=e.hitFlash>0?'#fff':'#ddd';ctx.strokeStyle=bc;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(e.x,e.y-t*.4);ctx.lineTo(e.x,e.y+t*.2);ctx.stroke();ctx.fillStyle=bc;ctx.beginPath();ctx.arc(e.x,e.y-t*.7,t*.55,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.ellipse(e.x-t*.18,e.y-t*.72,t*.14,t*.16,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(e.x+t*.18,e.y-t*.72,t*.14,t*.16,0,0,Math.PI*2);ctx.fill();}
-function drawOrc(ctx,e){const t=e.size;ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.roundRect(e.x-t*.7,e.y-t*.5,t*1.4,t,[6,6,4,4]);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#c05020';ctx.beginPath();ctx.ellipse(e.x,e.y-t*.85,t*.7,t*.65,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f39c12';ctx.beginPath();ctx.arc(e.x-t*.28,e.y-t,t*.17,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e.x+t*.28,e.y-t,t*.17,0,Math.PI*2);ctx.fill();}
+function drawOrc(ctx,e){ drawTroll(ctx,e); }
 function drawTroll(ctx,e){const t=e.size;ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.roundRect(e.x-t,e.y-t*.8,t*2,t*1.3,[8]);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#c04010';ctx.beginPath();ctx.ellipse(e.x,e.y-t*1.1,t*.85,t*.75,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(e.x-t*.3,e.y-t*1.15,t*.22,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e.x+t*.3,e.y-t*1.15,t*.22,0,Math.PI*2);ctx.fill();}
 function drawBoss(ctx,e){const t=e.size,pulse=Math.sin(Date.now()/200)*.08+.92;const aura=ctx.createRadialGradient(e.x,e.y,t,e.x,e.y,t*3);aura.addColorStop(0,'rgba(192,57,43,.3)');aura.addColorStop(1,'rgba(192,57,43,0)');ctx.fillStyle=aura;ctx.beginPath();ctx.arc(e.x,e.y,t*3,0,Math.PI*2);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':e.color;ctx.beginPath();ctx.ellipse(e.x,e.y,t*pulse,t*.85*pulse,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#8b1a1a';ctx.beginPath();ctx.ellipse(e.x,e.y-t*1.2,t*.8,t*.65,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f0e040';ctx.beginPath();ctx.ellipse(e.x-t*.32,e.y-t*1.25,t*.2,t*.25,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(e.x+t*.32,e.y-t*1.25,t*.2,t*.25,0,0,Math.PI*2);ctx.fill();}
 function drawLich(ctx,e){const t=e.size,now=Date.now();const aura=ctx.createRadialGradient(e.x,e.y,t*.5,e.x,e.y,t*2.5);aura.addColorStop(0,'rgba(155,89,182,.4)');aura.addColorStop(1,'rgba(155,89,182,0)');ctx.fillStyle=aura;ctx.beginPath();ctx.arc(e.x,e.y,t*2.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#4a1a70';ctx.beginPath();ctx.roundRect(e.x-t*.55,e.y-t*.5,t*1.1,t,[6,6,3,3]);ctx.fill();ctx.fillStyle=e.hitFlash>0?'#fff':'#ddd';ctx.beginPath();ctx.arc(e.x,e.y-t*.9,t*.6,0,Math.PI*2);ctx.fill();const eyePulse=Math.sin(now/200)*.3+.7;ctx.fillStyle=`rgba(155,89,182,${eyePulse})`;ctx.beginPath();ctx.ellipse(e.x-t*.2,e.y-t*.92,t*.15,t*.18,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(e.x+t*.2,e.y-t*.92,t*.15,t*.18,0,0,Math.PI*2);ctx.fill();}
@@ -7037,443 +7037,655 @@ function drawHealthOrb(ctx, x, y, hp, maxHp, size) {
 // ── Slime ────────────────────────────────────────────────────
 
 function drawSlime(ctx, e) {
-  const t = Date.now() / 600;
-  const bob = Math.sin(t) * 2;
-  const x = e.x + e.size / 2;
-  const y = e.y + e.size / 2 + bob;
-  const r = e.size * 0.42;
+  const now = Date.now();
+  const bob  = Math.sin(now / 400) * 2.2;
+  const sqsh = Math.sin(now / 400);          // squash/stretch
+  const x = e.x, y = e.y;
+  const r = e.size * 1.05;
 
-  drawShadow(ctx, x, e.y + e.size, e.size, e.size);
-
-  // corpo
+  drawShadow(ctx, x, y + r * 0.85, r * 0.95, r * 0.22);
   ctx.save();
-  ctx.globalAlpha = 0.88;
-  const grad = _safeGrad(ctx, x - r * 0.2, y - r * 0.2, r * 0.1, x, y, r);
-  grad.addColorStop(0, '#88ff88');
-  grad.addColorStop(0.6, '#22cc44');
-  grad.addColorStop(1, '#0a5520');
-  if (grad) ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.ellipse(x, y + r * 0.1, r, r * 0.85, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  if (e.hitFlash > 0) ctx.globalAlpha = 0.5;
 
-  // brilho
-  ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.ellipse(x - r * 0.25, y - r * 0.25, r * 0.3, r * 0.18, -0.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  // ── corpo principal ────────────────────────────────────
+  const cx = x, cy = y - r * 0.1 + bob;
+  const rX = r * (1.0 + sqsh * 0.05);
+  const rY = r * (0.88 - sqsh * 0.04);
 
-  // olhos
-  const eyeY = y - r * 0.15;
-  [-r * 0.28, r * 0.28].forEach(ox => {
+  // outline pixel-art
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rX + 2.5, rY + 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // camadas de cor (escuro → médio → claro)
+  const g = ctx.createRadialGradient(cx - r*0.18, cy - r*0.22, r*0.05, cx, cy, rX);
+  g.addColorStop(0,   '#8eea6e');   // claro centro
+  g.addColorStop(0.35,'#4fbb38');   // verde médio
+  g.addColorStop(0.72,'#2a8c20');   // verde escuro
+  g.addColorStop(1,   '#0f4a10');   // borda escura
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rX, rY, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // manchas de brilho (como na imagem)
+  ctx.fillStyle = 'rgba(180,255,160,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(cx - r*0.28, cy - r*0.30, r*0.22, r*0.13, -0.4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx + r*0.18, cy - r*0.42, r*0.10, r*0.07, 0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // rabinho/protuberância superior direita
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.ellipse(cx + r*0.52, cy - r*0.55, r*0.14, r*0.10, 0.6, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#3aa828';
+  ctx.beginPath();
+  ctx.ellipse(cx + r*0.52, cy - r*0.55, r*0.10, r*0.07, 0.6, 0, Math.PI*2);
+  ctx.fill();
+
+  // ── base achatada ──────────────────────────────────────
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + rY * 0.82, rX * 0.55, rY * 0.18, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#1e6e15';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + rY * 0.82, rX * 0.45, rY * 0.12, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // ── olhos raivosos (como na imagem) ───────────────────
+  const eyeY = cy - r * 0.08;
+  const eyeOX = r * 0.30;
+  const eyeRX = r * 0.16, eyeRY = r * 0.19;
+
+  // outline olho
+  [-eyeOX, eyeOX].forEach(ox => {
     ctx.fillStyle = '#111';
     ctx.beginPath();
-    ctx.ellipse(x + ox, eyeY, 5, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + ox, eyeY, eyeRX + 1.5, eyeRY + 1.5, 0, 0, Math.PI*2);
     ctx.fill();
+    // íris verde escura
+    ctx.fillStyle = '#1a5510';
+    ctx.beginPath();
+    ctx.ellipse(cx + ox, eyeY, eyeRX, eyeRY, 0, 0, Math.PI*2);
+    ctx.fill();
+    // pupila
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.ellipse(cx + ox, eyeY + r*0.03, eyeRX*0.55, eyeRY*0.65, 0, 0, Math.PI*2);
+    ctx.fill();
+    // brilho pupila
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.ellipse(x + ox - 1.5, eyeY - 2, 2, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + ox - eyeRX*0.30, eyeY - eyeRY*0.28, eyeRX*0.22, eyeRY*0.22, 0, 0, Math.PI*2);
     ctx.fill();
   });
 
-  // gotas
-  const dropOff = Math.abs(Math.sin(t * 1.3));
-  ctx.save();
-  ctx.globalAlpha = 0.6;
-  ctx.fillStyle = '#22cc44';
+  // sobrancelha raivosa
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = r * 0.09;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.ellipse(x + r * 0.3, y + r * 0.7 + dropOff * 8, 3, 5 + dropOff * 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  ctx.moveTo(cx - eyeOX - eyeRX, eyeY - eyeRY * 0.9);
+  ctx.lineTo(cx - eyeOX + eyeRX * 0.6, eyeY - eyeRY * 1.35);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + eyeOX + eyeRX, eyeY - eyeRY * 0.9);
+  ctx.lineTo(cx + eyeOX - eyeRX * 0.6, eyeY - eyeRY * 1.35);
+  ctx.stroke();
 
-  drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
+  ctx.restore();
+  drawHealthOrb(ctx, x, e.y - e.size, e.hp, e.maxHp, e.size);
 }
 
 // ── Goblin ────────────────────────────────────────────────────
 
 function drawGoblin(ctx, e) {
-  const t = Date.now() / 500;
-  const bob = Math.sin(t) * 1.5;
-  const x = e.x + e.size / 2;
-  const y = e.y + e.size + bob;
-  const s = Math.max(0.1, (e.size||16) / 40);
+  const now = Date.now();
+  const bob = Math.sin(now / 480) * 1.5;
+  const x = e.x, y = e.y + bob;
+  const s = Math.max(0.5, e.size / 22);
+  ctx.save();
+  if (e.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 14; }
+  ctx.translate(x, y);
+  ctx.scale(s, s);
 
-  drawShadow(ctx, x, e.y + e.size, e.size, e.size);
+  const G   = '#3a9a20';
+  const GD  = '#206010';
+  const GL  = '#5ed040';
+  const BLK = '#111';
+  const STL = '#909090';
+  const STLD= '#606060';
+  const STLH= '#c0c0c8';
 
-  // pernas
-  ctx.fillStyle = '#5c3d1e';
-  ctx.fillRect(x - 7 * s, y - 14 * s, 5 * s, 14 * s);
-  ctx.fillRect(x + 2 * s, y - 14 * s, 5 * s, 14 * s);
+  // ── pés / dedos verdes ─────────────────────────────────
+  ctx.fillStyle = GD;
+  ctx.beginPath(); ctx.ellipse(-10, 14, 8, 5, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 10, 14, 8, 5,  0.2, 0, Math.PI*2); ctx.fill();
+  // garras
+  [-16,-11,-6, 4,9,14].forEach((dx,i) => {
+    ctx.fillStyle = '#e8e0b0';
+    ctx.beginPath(); ctx.ellipse(dx, 16+(i<3?0:0), 2, 3, i<3?-0.3:0.3, 0, Math.PI*2); ctx.fill();
+  });
 
-  // botas
-  ctx.fillStyle = '#3a2008';
-  ctx.fillRect(x - 8 * s, y - 5 * s, 6 * s, 5 * s);
-  ctx.fillRect(x + 2 * s, y - 5 * s, 6 * s, 5 * s);
+  // ── pernas curtas e grossas ────────────────────────────
+  ctx.fillStyle = G;
+  ctx.fillRect(-14,  0, 10, 16);
+  ctx.fillRect(  4,  0, 10, 16);
+  ctx.fillStyle = GD;
+  ctx.fillRect(-13,  6,  8,  4);
+  ctx.fillRect(  5,  6,  8,  4);
 
-  // torso (casaco)
-  ctx.fillStyle = '#8b4513';
-  ctx.fillRect(x - 9 * s, y - 28 * s, 18 * s, 14 * s);
-
-  // cinto
-  ctx.fillStyle = '#2a1a00';
-  ctx.fillRect(x - 9 * s, y - 17 * s, 18 * s, 3 * s);
-  ctx.fillStyle = '#c8a000';
-  ctx.fillRect(x - 2 * s, y - 17 * s, 4 * s, 3 * s);
-
-  // braços
-  ctx.fillStyle = '#4a7a2a';
-  ctx.fillRect(x - 14 * s, y - 27 * s, 5 * s, 12 * s);
-  ctx.fillRect(x + 9 * s, y - 27 * s, 5 * s, 12 * s);
-
-  // adaga (mão direita)
-  ctx.fillStyle = '#888';
-  ctx.fillRect(x + 14 * s, y - 24 * s, 2 * s, 10 * s);
-  ctx.fillStyle = '#5c3d1e';
-  ctx.fillRect(x + 13 * s, y - 25 * s, 4 * s, 2 * s);
-
-  // cabeça
-  ctx.fillStyle = '#4a7a2a';
+  // ── saia de couro rasgada ──────────────────────────────
+  ctx.fillStyle = '#5a3210';
   ctx.beginPath();
-  ctx.ellipse(x, y - 35 * s, 10 * s, 9 * s, 0, 0, Math.PI * 2);
+  ctx.moveTo(-14, 0); ctx.lineTo(14, 0);
+  ctx.lineTo(12, 14); ctx.lineTo(6, 8); ctx.lineTo(0, 14);
+  ctx.lineTo(-6, 8); ctx.lineTo(-12, 14); ctx.closePath();
   ctx.fill();
+  // crânio decorativo
+  ctx.fillStyle = '#d4c090';
+  ctx.beginPath(); ctx.ellipse(0, 5, 5, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(-2,4, 1.5,1.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 2,4, 1.5,1.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillRect(-3,7,6,2);
 
-  // orelhas pontudas
-  ctx.fillStyle = '#3a6a1a';
+  // ── torso musculoso (verde) ────────────────────────────
+  ctx.fillStyle = G;
   ctx.beginPath();
-  ctx.moveTo(x - 10 * s, y - 36 * s);
-  ctx.lineTo(x - 16 * s, y - 44 * s);
-  ctx.lineTo(x - 7 * s, y - 32 * s);
+  ctx.roundRect(-16,-18, 32, 20, [4,4,2,2]);
   ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x + 10 * s, y - 36 * s);
-  ctx.lineTo(x + 16 * s, y - 44 * s);
-  ctx.lineTo(x + 7 * s, y - 32 * s);
-  ctx.fill();
+  // músculos peitorais
+  ctx.fillStyle = GL;
+  ctx.beginPath(); ctx.ellipse(-6,-12, 6,5, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 6,-12, 6,5,  0.2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = GD;
+  ctx.beginPath(); ctx.ellipse(-6,-11, 4,3, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 6,-11, 4,3,  0.2, 0, Math.PI*2); ctx.fill();
 
-  // olhos amarelos
-  ctx.fillStyle = '#ffdd00';
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, y - 36 * s, 3 * s, 3 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 4 * s, y - 36 * s, 3 * s, 3 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, y - 36 * s, 1.5 * s, 1.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 4 * s, y - 36 * s, 1.5 * s, 1.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // ── ombros com armadura de metal ──────────────────────
+  [[-22,-20],[22,-20]].forEach(([ox,oy],i) => {
+    // base do ombro
+    ctx.fillStyle = STLD;
+    ctx.beginPath(); ctx.ellipse(ox, oy, 12, 10, i===0?-0.2:0.2, 0, Math.PI*2); ctx.fill();
+    // placa superior
+    ctx.fillStyle = STL;
+    ctx.beginPath(); ctx.ellipse(ox, oy-2, 10, 8, i===0?-0.2:0.2, 0, Math.PI*2); ctx.fill();
+    // brilho da placa
+    ctx.fillStyle = STLH;
+    ctx.beginPath(); ctx.ellipse(ox+(i===0?-2:2), oy-4, 5, 3, i===0?-0.3:0.3, 0, Math.PI*2); ctx.fill();
+    // rebites
+    ctx.fillStyle = STLD;
+    [[-4,0],[4,0],[0,-4]].forEach(([rx,ry]) => {
+      ctx.beginPath(); ctx.arc(ox+rx, oy+ry, 1.5, 0, Math.PI*2); ctx.fill();
+    });
+  });
 
-  // touca
-  ctx.fillStyle = '#5c0000';
-  ctx.beginPath();
-  ctx.moveTo(x - 10 * s, y - 42 * s);
-  ctx.lineTo(x, y - 52 * s);
-  ctx.lineTo(x + 10 * s, y - 42 * s);
-  ctx.fill();
+  // ── braços musculosos ──────────────────────────────────
+  ctx.fillStyle = G;
+  ctx.beginPath(); ctx.ellipse(-22, -8, 8, 12, -0.25, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 22, -8,  8, 12,  0.25, 0, Math.PI*2); ctx.fill();
+  // antebraços com armadura
+  ctx.fillStyle = STLD;
+  ctx.fillRect(-28, 2, 10, 6);
+  ctx.fillRect( 18, 2, 10, 6);
+  ctx.fillStyle = STL;
+  ctx.fillRect(-27, 2,  8, 4);
+  ctx.fillRect( 19, 2,  8, 4);
+  // mãos
+  ctx.fillStyle = G;
+  ctx.beginPath(); ctx.ellipse(-24, 9, 6, 5, 0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 24, 9, 6, 5,-0.2, 0, Math.PI*2); ctx.fill();
 
-  drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
+  // ── machado duplo (segurado horizontal) ───────────────
+  // cabo
+  ctx.fillStyle = '#7a4010';
+  ctx.save();
+  ctx.translate(0, 5);
+  ctx.rotate(0.08);
+  ctx.fillRect(-30, -3, 60, 6);
+  // argola do cabo
+  ctx.fillStyle = STL;
+  ctx.fillRect(-31,-4, 4, 8);
+  ctx.beginPath(); ctx.arc(-29, 0, 4, 0, Math.PI*2); ctx.fill();
+
+  // lâmina esquerda
+  ctx.fillStyle = STLD;
+  ctx.beginPath();
+  ctx.moveTo(-30,  0); ctx.bezierCurveTo(-42,-18,-52,-8,-50, 0);
+  ctx.bezierCurveTo(-52, 8,-42,18,-30, 0); ctx.fill();
+  ctx.fillStyle = STL;
+  ctx.beginPath();
+  ctx.moveTo(-30, -1); ctx.bezierCurveTo(-40,-14,-48,-6,-46, 0);
+  ctx.bezierCurveTo(-48, 6,-40,14,-30, 1); ctx.fill();
+  // brilhos lâmina esq
+  ctx.fillStyle = STLH;
+  ctx.beginPath(); ctx.ellipse(-40,-5, 4,2, -0.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-40, 5, 4,2,  0.5, 0, Math.PI*2); ctx.fill();
+
+  // lâmina direita (maior)
+  ctx.fillStyle = STLD;
+  ctx.beginPath();
+  ctx.moveTo(30,  0); ctx.bezierCurveTo(44,-22,56,-10,54, 0);
+  ctx.bezierCurveTo(56,10,44,22,30, 0); ctx.fill();
+  ctx.fillStyle = STL;
+  ctx.beginPath();
+  ctx.moveTo(30,-1); ctx.bezierCurveTo(42,-18,52,-8,50, 0);
+  ctx.bezierCurveTo(52, 8,42,18,30, 1); ctx.fill();
+  // brilhos lâmina dir
+  ctx.fillStyle = STLH;
+  ctx.beginPath(); ctx.ellipse(42,-6, 5,2.5, 0.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(42, 6, 5,2.5,-0.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(48,-2, 3,1.5, 0.3, 0, Math.PI*2); ctx.fill();
+  // conector central
+  ctx.fillStyle = STL;
+  ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = STLD;
+  ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ── cabeça ────────────────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(0,-30, 15,13, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = G;
+  ctx.beginPath(); ctx.ellipse(0,-31, 13.5,11.5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = GL;
+  ctx.beginPath(); ctx.ellipse(-2,-35, 7,4.5, 0, 0, Math.PI*2); ctx.fill();
+
+  // ── presas salientes ──────────────────────────────────
+  ctx.fillStyle = '#f0eac0';
+  ctx.beginPath(); ctx.moveTo(-5,-23); ctx.lineTo(-7,-17); ctx.lineTo(-2,-23); ctx.fill();
+  ctx.beginPath(); ctx.moveTo( 5,-23); ctx.lineTo( 7,-17); ctx.lineTo( 2,-23); ctx.fill();
+
+  // ── olhos vermelhos ───────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(-5,-31,5,4.5,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 5,-31,5,4.5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#cc1111';
+  ctx.beginPath(); ctx.ellipse(-5,-31,3.5,3,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 5,-31,3.5,3,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ff4444';
+  ctx.beginPath(); ctx.ellipse(-6,-32,1.5,1.2,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 4,-32,1.5,1.2,0,0,Math.PI*2); ctx.fill();
+
+  // ── sobrancelhas grossas ───────────────────────────────
+  ctx.strokeStyle = GD;
+  ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-10,-35); ctx.lineTo(-2,-33); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo( 10,-35); ctx.lineTo( 2,-33); ctx.stroke();
+
+  ctx.restore();
+  drawHealthOrb(ctx, x, e.y - e.size * 0.6, e.hp, e.maxHp, e.size);
 }
+
 
 // ── Esqueleto ─────────────────────────────────────────────────
 
 function drawSkeleton(ctx, e) {
-  const t = Date.now() / 700;
-  const bob = Math.sin(t) * 2;
-  const x = e.x + e.size / 2;
-  const y = e.y + e.size + bob;
-  const s = Math.max(0.1, (e.size||16) / 44);
+  const now = Date.now();
+  const bob = Math.sin(now / 600) * 2;
+  const x = e.x, y = e.y + bob;
+  const s = Math.max(0.5, e.size / 23);
 
-  drawShadow(ctx, x, e.y + e.size, e.size, e.size);
+  drawShadow(ctx, x, e.y + e.size * 1.1, e.size * 0.85, e.size * 0.20);
+  ctx.save();
+  if (e.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 14; }
 
-  const bone = '#d4c9a8';
-  const dark = '#8a7d60';
+  ctx.translate(x, y);
+  ctx.scale(s, s);
 
-  // pernas
-  ctx.fillStyle = bone;
-  ctx.fillRect(x - 7 * s, y - 16 * s, 4 * s, 16 * s);
-  ctx.fillRect(x + 3 * s, y - 16 * s, 4 * s, 16 * s);
+  const BONE  = '#e8dfc0';
+  const BONE2 = '#c8b890';    // sombra do osso
+  const BLK   = '#111';
+  const RUST  = '#b05818';
+  const RUSTH = '#d07830';
 
-  // pelve
-  ctx.fillStyle = dark;
-  ctx.fillRect(x - 8 * s, y - 18 * s, 16 * s, 4 * s);
+  // ── pernas ────────────────────────────────────────────
+  // outline
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-10, -2, 7, 20);
+  ctx.fillRect(  3, -2, 7, 20);
+  // osso
+  ctx.fillStyle = BONE;
+  ctx.fillRect( -9,  -1, 5, 18);
+  ctx.fillRect(  4,  -1, 5, 18);
+  // juntas joelho
+  ctx.fillStyle = BONE2;
+  ctx.fillRect( -9,  7, 5,  3);
+  ctx.fillRect(  4,  7, 5,  3);
+  // pés
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-12, 14, 9, 6);
+  ctx.fillRect(  3, 14, 9, 6);
+  ctx.fillStyle = BONE;
+  ctx.fillRect(-11, 15, 7, 4);
+  ctx.fillRect(  4, 15, 7, 4);
 
-  // costelas
-  ctx.fillStyle = bone;
+  // ── pelve / quadril ────────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-11, -5, 22, 7);
+  ctx.fillStyle = BONE2;
+  ctx.fillRect(-10, -4, 20, 5);
+  // orifício da pelve
+  ctx.fillStyle = BLK;
+  ctx.fillRect( -5, -4, 4, 3);
+  ctx.fillRect(  1, -4, 4, 3);
+
+  // ── costelas ───────────────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-10,-22, 20, 18);
+  ctx.fillStyle = BONE;
+  // espinha
+  ctx.fillRect( -2,-21,  4, 16);
+  // 4 pares de costelas
   for (let i = 0; i < 4; i++) {
-    ctx.fillRect(x - 8 * s, y - (22 + i * 4) * s, 16 * s, 2 * s);
+    const ry = -20 + i * 4;
+    ctx.fillStyle = BONE;
+    ctx.fillRect(-9, ry, 7, 2);
+    ctx.fillRect( 2, ry, 7, 2);
+    ctx.fillStyle = BONE2;
+    ctx.fillRect(-9, ry+1, 7, 1);
+    ctx.fillRect( 2, ry+1, 7, 1);
   }
 
-  // espinha
-  ctx.fillStyle = dark;
-  ctx.fillRect(x - 1.5 * s, y - 38 * s, 3 * s, 20 * s);
+  // ── braço esquerdo ─────────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-17,-20, 7, 18);
+  ctx.fillStyle = BONE;
+  ctx.fillRect(-16,-19, 5, 16);
+  ctx.fillStyle = BONE2;
+  ctx.fillRect(-16, -9, 5,  3);
+  // mão esq (dedos)
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-18, -4, 10, 6);
+  ctx.fillStyle = BONE;
+  for (let i = 0; i < 4; i++) ctx.fillRect(-17 + i*2.5, -3, 1.5, 5);
 
-  // braços
-  ctx.fillStyle = bone;
-  ctx.fillRect(x - 13 * s, y - 36 * s, 4 * s, 14 * s);
-  ctx.fillRect(x + 9 * s, y - 36 * s, 4 * s, 14 * s);
+  // ── braço direito + espada enferrujada ────────────────
+  ctx.fillStyle = BLK;
+  ctx.fillRect( 10,-22, 7, 18);
+  ctx.fillStyle = BONE;
+  ctx.fillRect( 11,-21, 5, 16);
+  ctx.fillStyle = BONE2;
+  ctx.fillRect( 11,-11, 5,  3);
+  // mão dir
+  ctx.fillStyle = BLK;
+  ctx.fillRect(  8, -6, 10, 6);
+  ctx.fillStyle = BONE;
+  for (let i = 0; i < 4; i++) ctx.fillRect(9 + i*2.5, -5, 1.5, 5);
 
-  // espada enferrujada
-  ctx.fillStyle = '#7a7060';
-  ctx.fillRect(x + 13 * s, y - 38 * s, 3 * s, 22 * s);
-  ctx.fillStyle = bone;
-  ctx.fillRect(x + 10 * s, y - 38 * s, 9 * s, 2.5 * s);
-
-  // crânio
-  ctx.fillStyle = bone;
-  ctx.beginPath();
-  ctx.ellipse(x, y - 43 * s, 9 * s, 9 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // mandíbula
-  ctx.fillStyle = dark;
-  ctx.fillRect(x - 5 * s, y - 37 * s, 10 * s, 4 * s);
-  ctx.fillStyle = bone;
-  ctx.fillRect(x - 4 * s, y - 36 * s, 2 * s, 3 * s);
-  ctx.fillRect(x + 2 * s, y - 36 * s, 2 * s, 3 * s);
-
-  // olhos azuis brilhantes
-  ctx.fillStyle = '#0044ff';
-  ctx.shadowColor = '#0088ff';
-  ctx.shadowBlur = 8;
-  ctx.beginPath();
-  ctx.ellipse(x - 3.5 * s, y - 44 * s, 3 * s, 3.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 3.5 * s, y - 44 * s, 3 * s, 3.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // capa esfarrapada
+  // ── espada enferrujada (da imagem) ────────────────────
   ctx.save();
-  ctx.globalAlpha = 0.6;
-  ctx.fillStyle = '#2a1a0a';
-  ctx.beginPath();
-  ctx.moveTo(x - 10 * s, y - 38 * s);
-  ctx.lineTo(x + 10 * s, y - 38 * s);
-  ctx.lineTo(x + 8 * s, y - 18 * s);
-  ctx.lineTo(x + 4 * s, y - 22 * s);
-  ctx.lineTo(x, y - 18 * s);
-  ctx.lineTo(x - 4 * s, y - 22 * s);
-  ctx.lineTo(x - 8 * s, y - 18 * s);
-  ctx.fill();
+  ctx.translate(20, -12);
+  ctx.rotate(0.45);   // inclinada igual à imagem
+
+  // lâmina dentada
+  ctx.fillStyle = '#b0a890';
+  ctx.fillRect(-3, -24, 6, 32);
+  // reflexo
+  ctx.fillStyle = '#d8d0b0';
+  ctx.fillRect(-1, -24, 2, 32);
+  // enferrujamento
+  ctx.fillStyle = RUST;
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(-2, -22 + i*6, 2+Math.floor(i%2)*2, 3);
+  }
+  // dentes serrilhados (característica da imagem)
+  ctx.fillStyle = RUSTH;
+  for (let i = 0; i < 4; i++) {
+    const sy = -18 + i * 7;
+    ctx.beginPath();
+    ctx.moveTo(3, sy); ctx.lineTo(8, sy+2); ctx.lineTo(3, sy+4);
+    ctx.fill();
+    ctx.fillStyle = RUST;
+    ctx.beginPath();
+    ctx.moveTo(3, sy+1); ctx.lineTo(6, sy+2); ctx.lineTo(3, sy+3);
+    ctx.fill();
+    ctx.fillStyle = RUSTH;
+  }
+  // guarda
+  ctx.fillStyle = RUST;
+  ctx.fillRect(-7, 7, 14, 5);
+  ctx.fillStyle = RUSTH;
+  ctx.fillRect(-6, 7,  5, 3);
+  // círculo da guarda (detalhe da imagem)
+  ctx.fillStyle = RUST;
+  ctx.beginPath(); ctx.arc(0, 9, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#6a3808';
+  ctx.beginPath(); ctx.arc(0, 9, 2.5, 0, Math.PI*2); ctx.fill();
+  // cabo
+  ctx.fillStyle = '#6a3808';
+  ctx.fillRect(-2, 12, 4, 12);
+  ctx.fillStyle = RUST;
+  ctx.fillRect(-3, 12, 2, 12);
+
   ctx.restore();
 
-  drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
-}
-
-// ── Orc ──────────────────────────────────────────────────────
-
-function drawOrc(ctx, e) {
-  const t = Date.now() / 600;
-  const bob = Math.sin(t) * 1.5;
-  const x = e.x + e.size / 2;
-  const y = e.y + e.size + bob;
-  const s = Math.max(0.1, (e.size||16) / 48);
-
-  drawShadow(ctx, x, e.y + e.size, e.size, e.size);
-
-  // pernas grossas
-  ctx.fillStyle = '#556b2f';
-  ctx.fillRect(x - 10 * s, y - 18 * s, 8 * s, 18 * s);
-  ctx.fillRect(x + 2 * s, y - 18 * s, 8 * s, 18 * s);
-
-  // botas de couro
-  ctx.fillStyle = '#2a1a00';
-  ctx.fillRect(x - 11 * s, y - 6 * s, 10 * s, 6 * s);
-  ctx.fillRect(x + 1 * s, y - 6 * s, 10 * s, 6 * s);
-
-  // torso musculoso
-  ctx.fillStyle = '#4a7a2a';
+  // ── crânio ────────────────────────────────────────────
+  // outline cranio
+  ctx.fillStyle = BLK;
   ctx.beginPath();
-  ctx.ellipse(x, y - 28 * s, 14 * s, 12 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -33, 13, 13, 0, 0, Math.PI*2);
+  ctx.fill();
+  // crânio osso
+  ctx.fillStyle = BONE;
+  ctx.beginPath();
+  ctx.ellipse(0, -34, 11, 11, 0, 0, Math.PI*2);
+  ctx.fill();
+  // sombra crânio
+  ctx.fillStyle = BONE2;
+  ctx.beginPath();
+  ctx.ellipse(3, -31, 7, 8, 0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = BONE;
+  ctx.beginPath();
+  ctx.ellipse(1, -31, 5, 7, 0.3, 0, Math.PI*2);
   ctx.fill();
 
-  // armadura de ombro (espinhos)
-  ctx.fillStyle = '#555';
+  // ── órbitas oculares ──────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(-4, -35, 4.5, 5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 4, -35, 4.5, 5, 0, 0, Math.PI*2); ctx.fill();
+
+  // ── maxilar / sorriso ─────────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.fillRect(-7,-26, 14, 5);
+  ctx.fillStyle = BONE;
+  ctx.fillRect(-6,-25,  5, 3);
+  ctx.fillRect( 1,-25,  5, 3);
+  // dentes
+  ctx.fillStyle = BONE;
+  for (let i = 0; i < 4; i++) ctx.fillRect(-5 + i*2.8, -26, 2.2, 3);
+
+  // ── nariz (triângulo vazio) ────────────────────────────
+  ctx.fillStyle = BLK;
   ctx.beginPath();
-  ctx.arc(x - 13 * s, y - 36 * s, 6 * s, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 13 * s, y - 36 * s, 6 * s, 0, Math.PI * 2);
+  ctx.moveTo(0,-30); ctx.lineTo(-2,-27); ctx.lineTo(2,-27);
   ctx.fill();
 
-  // espinhos dos ombros
-  ctx.fillStyle = '#333';
-  [[x - 13 * s, y - 42 * s], [x - 7 * s, y - 40 * s], [x + 13 * s, y - 42 * s], [x + 7 * s, y - 40 * s]].forEach(([sx, sy]) => {
-    ctx.beginPath();
-    ctx.moveTo(sx - 2 * s, sy + 4 * s);
-    ctx.lineTo(sx, sy - 4 * s);
-    ctx.lineTo(sx + 2 * s, sy + 4 * s);
-    ctx.fill();
-  });
-
-  // braços
-  ctx.fillStyle = '#4a7a2a';
-  ctx.beginPath();
-  ctx.ellipse(x - 15 * s, y - 28 * s, 6 * s, 10 * s, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 15 * s, y - 28 * s, 6 * s, 10 * s, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // clava
-  ctx.fillStyle = '#5c3d1e';
-  ctx.fillRect(x + 18 * s, y - 38 * s, 4 * s, 22 * s);
-  ctx.fillStyle = '#2a1a00';
-  ctx.beginPath();
-  ctx.arc(x + 20 * s, y - 40 * s, 7 * s, 0, Math.PI * 2);
-  ctx.fill();
-  // espinhos da clava
-  ctx.fillStyle = '#555';
-  for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
-    ctx.beginPath();
-    ctx.arc(x + 20 * s + Math.cos(a) * 7 * s, y - 40 * s + Math.sin(a) * 7 * s, 2 * s, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // cabeça
-  ctx.fillStyle = '#4a7a2a';
-  ctx.beginPath();
-  ctx.ellipse(x, y - 42 * s, 11 * s, 10 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // cicatriz
-  ctx.strokeStyle = '#2a5010';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x - 3 * s, y - 45 * s);
-  ctx.lineTo(x + 2 * s, y - 38 * s);
-  ctx.stroke();
-
-  // olhos vermelhos
-  ctx.fillStyle = '#cc2200';
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, y - 43 * s, 3 * s, 3 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 4 * s, y - 43 * s, 3 * s, 3 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // presas
-  ctx.fillStyle = '#fffacc';
-  ctx.beginPath();
-  ctx.moveTo(x - 4 * s, y - 35 * s);
-  ctx.lineTo(x - 2 * s, y - 32 * s);
-  ctx.lineTo(x, y - 35 * s);
-  ctx.fill();
-
-  drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
+  ctx.restore();
+  drawHealthOrb(ctx, x, e.y - e.size * 0.5, e.hp, e.maxHp, e.size);
 }
 
 // ── Troll ─────────────────────────────────────────────────────
 
 function drawTroll(ctx, e) {
-  const t = Date.now() / 800;
-  const bob = Math.sin(t) * 2;
-  const x = e.x + e.size / 2;
-  const y = e.y + e.size + bob;
-  const s = Math.max(0.1, (e.size||16) / 52);
+  const now = Date.now();
+  const bob = Math.sin(now / 500) * 1.5;
+  const snarl = Math.sin(now / 300);   // animação do focinho
+  const x = e.x, y = e.y + bob;
+  const s = Math.max(0.5, e.size / 32);
 
-  drawShadow(ctx, x, e.y + e.size, e.size * 1.2, e.size);
+  drawShadow(ctx, x, e.y + e.size * 0.9, e.size * 1.4, e.size * 0.18);
+  ctx.save();
+  if (e.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 14; }
+  ctx.translate(x, y);
+  ctx.scale(s, s);
 
-  // pernas rochosas
-  ctx.fillStyle = '#556633';
-  ctx.fillRect(x - 13 * s, y - 22 * s, 11 * s, 22 * s);
-  ctx.fillRect(x + 2 * s, y - 22 * s, 11 * s, 22 * s);
+  const WD  = '#2a2a32';   // cinza escuro (pelo)
+  const WM  = '#3c3c48';   // cinza médio
+  const WL  = '#5a5a6a';   // cinza claro
+  const WH  = '#7a7a8a';   // highlight pelo
+  const BLK = '#111';
 
-  // torso enorme
-  const tGrad = _safeGrad(ctx, x - 4 * s, y - 36 * s, 2, x, y - 34 * s, 18 * s);
-  tGrad.addColorStop(0, '#778855');
-  tGrad.addColorStop(1, '#445522');
-  if (tGrad) ctx.fillStyle = tGrad;
+  // ── cauda arqueada para cima ───────────────────────────
+  ctx.fillStyle = WM;
   ctx.beginPath();
-  ctx.ellipse(x, y - 34 * s, 18 * s, 16 * s, 0, 0, Math.PI * 2);
+  ctx.moveTo(24, -8);
+  ctx.bezierCurveTo(36,-4, 44,-18, 38,-28);
+  ctx.bezierCurveTo(34,-32, 30,-28, 32,-22);
+  ctx.bezierCurveTo(36,-20, 36,-10, 24,-6);
+  ctx.fill();
+  ctx.fillStyle = WL;
+  ctx.beginPath();
+  ctx.moveTo(24,-8);
+  ctx.bezierCurveTo(34,-6, 42,-16, 36,-24);
+  ctx.bezierCurveTo(33,-20, 34,-12, 24,-7);
   ctx.fill();
 
-  // musgo e pedras no torso
-  ctx.fillStyle = '#336622';
-  ctx.globalAlpha = 0.5;
-  [[x - 8 * s, y - 38 * s, 4 * s], [x + 5 * s, y - 32 * s, 3 * s], [x - 2 * s, y - 44 * s, 3 * s]].forEach(([mx, my, mr]) => {
+  // ── corpo principal (agachado/arqueado) ───────────────
+  ctx.fillStyle = WD;
+  ctx.beginPath();
+  ctx.ellipse(8, -14, 26, 14, -0.25, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = WM;
+  ctx.beginPath();
+  ctx.ellipse(6, -16, 22, 11, -0.25, 0, Math.PI*2);
+  ctx.fill();
+  // mancha mais clara no flanco
+  ctx.fillStyle = WL;
+  ctx.beginPath();
+  ctx.ellipse(12, -16, 12, 7, -0.2, 0, Math.PI*2);
+  ctx.fill();
+  // pelo do dorso (mais escuro)
+  ctx.fillStyle = WD;
+  ctx.beginPath();
+  ctx.ellipse(4, -22, 20, 5, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  // topete de pelo no dorso
+  for (let i = 0; i < 5; i++) {
+    const px = -8 + i*8, py = -26 + Math.sin(i)*2;
+    ctx.fillStyle = WD;
     ctx.beginPath();
-    ctx.ellipse(mx, my, mr, mr * 0.7, 0, 0, Math.PI * 2);
+    ctx.moveTo(px-3, py+2); ctx.lineTo(px, py-6); ctx.lineTo(px+3, py+2);
     ctx.fill();
+  }
+
+  // ── patas traseiras ────────────────────────────────────
+  ctx.fillStyle = WM;
+  ctx.beginPath(); ctx.ellipse(20, 0, 8, 10, 0.3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = WD;
+  ctx.beginPath(); ctx.ellipse(22, 8, 7, 5, 0.4, 0, Math.PI*2); ctx.fill();
+  // garras traseiras
+  ctx.fillStyle = '#e0dcc0';
+  [16,20,24,28].forEach(dx => {
+    ctx.beginPath(); ctx.moveTo(dx,11); ctx.lineTo(dx-1,16); ctx.lineTo(dx+1,16); ctx.fill();
   });
-  ctx.globalAlpha = 1;
 
-  // rachaduras
-  ctx.strokeStyle = '#223311';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x + 4 * s, y - 30 * s);
-  ctx.lineTo(x + 7 * s, y - 40 * s);
-  ctx.lineTo(x + 5 * s, y - 44 * s);
-  ctx.stroke();
+  // ── patas dianteiras (na frente, postura de ataque) ───
+  ctx.fillStyle = WM;
+  ctx.beginPath(); ctx.ellipse(-18, 2, 7, 12, -0.15, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-8, 4, 6, 10, -0.1, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = WD;
+  ctx.beginPath(); ctx.ellipse(-20, 12, 8, 5, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-8, 13, 7, 4, -0.1, 0, Math.PI*2); ctx.fill();
+  // garras dianteiras
+  ctx.fillStyle = '#e0dcc0';
+  [-25,-21,-17,-13].forEach(dx => {
+    ctx.beginPath(); ctx.moveTo(dx,15); ctx.lineTo(dx-1.5,20); ctx.lineTo(dx+1,20); ctx.fill();
+  });
+  [-12,-8,-4].forEach(dx => {
+    ctx.beginPath(); ctx.moveTo(dx,16); ctx.lineTo(dx-1,21); ctx.lineTo(dx+1,21); ctx.fill();
+  });
 
-  // braços
-  ctx.fillStyle = '#556633';
+  // ── pescoço / cabeça inclinada para frente ────────────
+  ctx.fillStyle = WD;
   ctx.beginPath();
-  ctx.ellipse(x - 22 * s, y - 32 * s, 8 * s, 12 * s, -0.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 22 * s, y - 32 * s, 8 * s, 12 * s, 0.4, 0, Math.PI * 2);
-  ctx.fill();
-
-  // pedra gigante
-  ctx.fillStyle = '#888877';
-  ctx.beginPath();
-  ctx.ellipse(x + 30 * s, y - 38 * s, 10 * s, 12 * s, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#555544';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // cabeça
-  ctx.fillStyle = '#556633';
-  ctx.beginPath();
-  ctx.ellipse(x, y - 52 * s, 13 * s, 12 * s, 0, 0, Math.PI * 2);
+  ctx.moveTo(-14,-12); ctx.bezierCurveTo(-20,-18,-28,-14,-30,-8);
+  ctx.bezierCurveTo(-28,-4,-20,-6,-14,-8);
   ctx.fill();
 
-  // chifres tortos
-  ctx.fillStyle = '#44331a';
-  ctx.beginPath();
-  ctx.moveTo(x - 8 * s, y - 60 * s);
-  ctx.quadraticCurveTo(x - 18 * s, y - 72 * s, x - 12 * s, y - 75 * s);
-  ctx.lineTo(x - 8 * s, y - 62 * s);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x + 8 * s, y - 60 * s);
-  ctx.quadraticCurveTo(x + 18 * s, y - 72 * s, x + 12 * s, y - 75 * s);
-  ctx.lineTo(x + 8 * s, y - 62 * s);
-  ctx.fill();
+  // ── cabeça ────────────────────────────────────────────
+  ctx.fillStyle = WD;
+  ctx.beginPath(); ctx.ellipse(-28,-16, 14, 11, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = WM;
+  ctx.beginPath(); ctx.ellipse(-28,-17, 12, 9.5, -0.2, 0, Math.PI*2); ctx.fill();
 
-  // olhos laranja
-  ctx.fillStyle = '#ff8800';
-  ctx.shadowColor = '#ff8800';
-  ctx.shadowBlur = 6;
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, y - 53 * s, 4 * s, 4 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 4 * s, y - 53 * s, 4 * s, 4 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // ── orelhas pontudas ──────────────────────────────────
+  ctx.fillStyle = WD;
+  ctx.beginPath(); ctx.moveTo(-36,-22); ctx.lineTo(-40,-34); ctx.lineTo(-30,-22); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-22,-22); ctx.lineTo(-20,-32); ctx.lineTo(-16,-20); ctx.fill();
+  ctx.fillStyle = '#4a1818';  // interior rosado
+  ctx.beginPath(); ctx.moveTo(-36,-23); ctx.lineTo(-39,-31); ctx.lineTo(-31,-23); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-22,-23); ctx.lineTo(-21,-30); ctx.lineTo(-17,-21); ctx.fill();
+
+  // ── pelo do pescoço / juba ─────────────────────────────
+  ctx.fillStyle = WD;
+  for (let i = 0; i < 6; i++) {
+    const a = -0.8 + i * 0.28;
+    ctx.beginPath();
+    ctx.moveTo(-28 + Math.cos(a)*10, -16 + Math.sin(a)*9);
+    ctx.lineTo(-28 + Math.cos(a)*16, -16 + Math.sin(a)*15);
+    ctx.lineTo(-28 + Math.cos(a+0.15)*10, -16 + Math.sin(a+0.15)*9);
+    ctx.fill();
+  }
+
+  // ── focinho ────────────────────────────────────────────
+  ctx.fillStyle = WD;
+  ctx.beginPath(); ctx.ellipse(-36,-13, 10, 7, -0.15, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = WM;
+  ctx.beginPath(); ctx.ellipse(-36,-14, 8, 5.5, -0.15, 0, Math.PI*2); ctx.fill();
+  // narinas
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(-39,-12, 2,1.5, 0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-34,-12, 2,1.5,-0.2, 0, Math.PI*2); ctx.fill();
+
+  // ── boca aberta com presas ────────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(-36,-8, 8, 5+snarl*1.5, 0.1, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#6a0808';  // interior boca
+  ctx.beginPath(); ctx.ellipse(-36,-8, 6, 3.5+snarl, 0.1, 0, Math.PI*2); ctx.fill();
+  // dentes / presas
+  ctx.fillStyle = '#f0ece0';
+  [[-42,-7],[-39,-6],[-36,-6],[-33,-6],[-30,-7]].forEach(([px,py],i) => {
+    const h = i===1||i===3 ? 6 : 4;
+    ctx.beginPath(); ctx.moveTo(px-1.5,py); ctx.lineTo(px,py+h); ctx.lineTo(px+1.5,py); ctx.fill();
+  });
+
+  // ── olho vermelho com cicatriz ────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.beginPath(); ctx.ellipse(-24,-20, 5,4.5, -0.1, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#cc0000';
+  ctx.shadowColor = '#ff2020';
+  ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.ellipse(-24,-20, 3.5,3, -0.1, 0, Math.PI*2); ctx.fill();
   ctx.shadowBlur = 0;
   ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, y - 53 * s, 2 * s, 2.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 4 * s, y - 53 * s, 2 * s, 2.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-24,-20, 1.5,2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ff8080';
+  ctx.beginPath(); ctx.ellipse(-25,-21, 1.2,1.0, 0, 0, Math.PI*2); ctx.fill();
 
-  drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
+  // ── cicatriz vermelha diagonal (como na imagem) ───────
+  ctx.strokeStyle = '#cc1010';
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-20,-26); ctx.lineTo(-26,-14); ctx.stroke();
+  // ramo da cicatriz
+  ctx.beginPath(); ctx.moveTo(-22,-21); ctx.lineTo(-18,-16); ctx.stroke();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = '#ff3030';
+  ctx.beginPath(); ctx.moveTo(-20,-25); ctx.lineTo(-25,-15); ctx.stroke();
+
+  ctx.restore();
+  drawHealthOrb(ctx, x, e.y - e.size * 0.5, e.hp, e.maxHp, e.size);
 }
+
 
 // ── Boss (Dragão) ─────────────────────────────────────────────
 
@@ -7611,126 +7823,223 @@ function drawBoss(ctx, e) {
   drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
 }
 
-// ── Lich ─────────────────────────────────────────────────────
+// ── Lich → Cultista ──────────────────────────────────────────
 
 function drawLich(ctx, e) {
-  const t = Date.now() / 600;
-  const float = Math.sin(t) * 5;
-  const x = e.x + e.size / 2;
-  const y = e.y + e.size / 2 + float;
-  const s = Math.max(0.1, (e.size||16) / 55);
+  const now  = Date.now();
+  const float = Math.sin(now / 700) * 2.5;
+  const pulse = Math.sin(now / 400);
+  const x = e.x, y = e.y + float;
+  const s = Math.max(0.5, e.size / 26);
 
-  drawShadow(ctx, x, e.y + e.size, e.size * 0.7, e.size * 0.3);
+  drawShadow(ctx, x, e.y + e.size * 0.95, e.size * 0.75, e.size * 0.20);
+  ctx.save();
+  if (e.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 14; }
+  ctx.translate(x, y);
+  ctx.scale(s, s);
 
-  // partículas arcanas
-  for (let i = 0; i < 6; i++) {
-    const angle = t + (i / 6) * Math.PI * 2;
-    const px = x + Math.cos(angle) * 20 * s;
-    const py = y + Math.sin(angle) * 10 * s;
-    const alpha = 0.4 + Math.sin(t * 2 + i) * 0.3;
+  const RD  = '#3a2860';   // roxo escuro manto
+  const RM  = '#4e3880';   // roxo médio
+  const RL  = '#6a50a0';   // roxo claro
+  const RH  = '#8868b8';   // highlight
+  const BLK = '#0a0810';
+  const GRN = '#30e060';   // verde do cajado
+  const GRNG= '#80ff90';   // brilho verde
+
+  // ── partículas flutuantes verdes em torno do cajado ───
+  for (let i = 0; i < 5; i++) {
+    const ang = (now / 900) + i * Math.PI * 2 / 5;
+    const pr = 14 + Math.sin(now/600+i)*4;
+    const px2 = 22 + Math.cos(ang)*pr, py2 = -40 + Math.sin(ang)*pr*0.5;
+    const a = 0.35 + Math.sin(now/400+i)*0.25;
     ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#aa44ff';
-    ctx.shadowColor = '#cc66ff';
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.arc(px, py, 2 * s, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = GRN;
+    ctx.shadowColor = GRN; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.arc(px2, py2, 2, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
 
-  // robe
-  const robeGrad = ctx.createLinearGradient(x - 14 * s, y - 10 * s, x + 14 * s, y + 20 * s);
-  robeGrad.addColorStop(0, '#220033');
-  robeGrad.addColorStop(1, '#110022');
-  if (robeGrad) ctx.fillStyle = robeGrad;
+  // ── manto base (largo, chega ao chão) ─────────────────
+  // outline
+  ctx.fillStyle = BLK;
   ctx.beginPath();
-  ctx.moveTo(x - 12 * s, y - 15 * s);
-  ctx.lineTo(x + 12 * s, y - 15 * s);
-  ctx.lineTo(x + 16 * s, y + 20 * s);
-  ctx.lineTo(x - 16 * s, y + 20 * s);
+  ctx.moveTo(-20, -22);
+  ctx.bezierCurveTo(-24,-10, -26,10, -22, 30);
+  ctx.lineTo(22, 30);
+  ctx.bezierCurveTo(26,10, 24,-10, 20,-22);
+  ctx.closePath();
   ctx.fill();
 
-  // detalhes do robe
-  ctx.strokeStyle = '#7722bb';
+  // manto principal
+  const rg = ctx.createLinearGradient(-18,-22, 18,28);
+  rg.addColorStop(0, RM);
+  rg.addColorStop(0.5, RD);
+  rg.addColorStop(1, '#1e1640');
+  ctx.fillStyle = rg;
+  ctx.beginPath();
+  ctx.moveTo(-18,-22);
+  ctx.bezierCurveTo(-22,-10,-24,10,-20,28);
+  ctx.lineTo(20,28);
+  ctx.bezierCurveTo(24,10,22,-10,18,-22);
+  ctx.closePath();
+  ctx.fill();
+
+  // vincos verticais do manto
+  ctx.strokeStyle = RD;
   ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(x, y - 15 * s);
-  ctx.lineTo(x, y + 20 * s);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x - 12 * s, y - 2 * s);
-  ctx.lineTo(x + 12 * s, y - 2 * s);
-  ctx.stroke();
+  [-8, 0, 8].forEach(ox => {
+    ctx.beginPath();
+    ctx.moveTo(ox,-20); ctx.bezierCurveTo(ox-1,0, ox+1,14, ox,28);
+    ctx.stroke();
+  });
 
-  // braços esqueléticos
-  ctx.fillStyle = '#c8b89a';
-  ctx.fillRect(x - 18 * s, y - 14 * s, 6 * s, 12 * s);
-  ctx.fillRect(x + 12 * s, y - 14 * s, 6 * s, 12 * s);
-
-  // cajado
-  ctx.fillStyle = '#5c3d1e';
-  ctx.fillRect(x + 18 * s, y - 34 * s, 3 * s, 30 * s);
-  // gema do cajado
-  ctx.fillStyle = '#cc44ff';
-  ctx.shadowColor = '#cc44ff';
-  ctx.shadowBlur = 15;
+  // borda inferior do manto (mais escura)
+  ctx.fillStyle = '#120e28';
   ctx.beginPath();
-  ctx.arc(x + 19.5 * s, y - 36 * s, 6 * s, 0, Math.PI * 2);
+  ctx.moveTo(-20,24); ctx.bezierCurveTo(-18,28, 18,28, 20,24);
+  ctx.bezierCurveTo(16,32, -16,32, -20,24);
   ctx.fill();
+
+  // ── braço esquerdo saindo do manto ────────────────────
+  ctx.fillStyle = RD;
+  ctx.beginPath();
+  ctx.moveTo(-18,-14); ctx.bezierCurveTo(-24,-8,-22,2,-18,6);
+  ctx.bezierCurveTo(-14,8,-12,4,-14,-2);
+  ctx.bezierCurveTo(-14,-8,-14,-14,-18,-14);
+  ctx.fill();
+  ctx.fillStyle = RL;
+  // luva / mão esq
+  ctx.beginPath(); ctx.ellipse(-18,8, 5,4, 0.2, 0, Math.PI*2); ctx.fill();
+
+  // ── braço direito segurando o cajado ─────────────────
+  ctx.fillStyle = RD;
+  ctx.beginPath();
+  ctx.moveTo(18,-14); ctx.bezierCurveTo(24,-8,22,2,18,6);
+  ctx.bezierCurveTo(14,8,12,4,14,-2);
+  ctx.bezierCurveTo(14,-8,14,-14,18,-14);
+  ctx.fill();
+  ctx.fillStyle = RL;
+  ctx.beginPath(); ctx.ellipse(18,8, 5,4, -0.2, 0, Math.PI*2); ctx.fill();
+
+  // ── cajado arcano ──────────────────────────────────────
+  // haste
+  ctx.fillStyle = '#6a4820';
+  ctx.fillRect(19,-52, 4, 64);
+  ctx.fillStyle = '#8a6030';
+  ctx.fillRect(20,-52, 2, 64);
+
+  // curva do cajado no topo
+  ctx.strokeStyle = '#5a3a10';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(21,-52);
+  ctx.bezierCurveTo(38,-60, 44,-44, 34,-38);
+  ctx.stroke();
+  ctx.strokeStyle = '#7a5020';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(21,-51);
+  ctx.bezierCurveTo(36,-58, 42,-44, 33,-38);
+  ctx.stroke();
+
+  // gema verde brilhante
+  const gemPulse = 0.7 + pulse * 0.3;
+  ctx.shadowColor = GRN;
+  ctx.shadowBlur = 18 * gemPulse;
+  ctx.fillStyle = '#1a8030';
+  ctx.beginPath(); ctx.arc(32,-40, 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = GRN;
+  ctx.beginPath(); ctx.arc(32,-40, 6, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = GRNG;
+  ctx.beginPath(); ctx.ellipse(29,-43, 2.5,2, -0.4, 0, Math.PI*2); ctx.fill();
   ctx.shadowBlur = 0;
-  ctx.fillStyle = '#fff';
-  ctx.globalAlpha = 0.4;
+
+  // ── capuz grande e encurvado ──────────────────────────
+  // outline capuz
+  ctx.fillStyle = BLK;
   ctx.beginPath();
-  ctx.arc(x + 17.5 * s, y - 38 * s, 2 * s, 0, Math.PI * 2);
+  ctx.moveTo(-18,-22);
+  ctx.bezierCurveTo(-20,-38,-12,-52, 0,-54);
+  ctx.bezierCurveTo(14,-52, 20,-38, 18,-22);
+  ctx.closePath();
   ctx.fill();
+
+  // capuz roxo
+  const hg = ctx.createLinearGradient(-14,-52, 14,-18);
+  hg.addColorStop(0, RM);
+  hg.addColorStop(0.45, RD);
+  hg.addColorStop(1, '#2a1e50');
+  ctx.fillStyle = hg;
+  ctx.beginPath();
+  ctx.moveTo(-16,-22);
+  ctx.bezierCurveTo(-18,-36,-10,-50, 0,-52);
+  ctx.bezierCurveTo(12,-50, 18,-36, 16,-22);
+  ctx.closePath();
+  ctx.fill();
+
+  // ponta do capuz
+  ctx.fillStyle = RM;
+  ctx.beginPath();
+  ctx.moveTo(-6,-50); ctx.bezierCurveTo(-2,-62, 4,-62, 6,-50);
+  ctx.lineTo(0,-48); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = RL;
+  ctx.beginPath();
+  ctx.moveTo(-4,-50); ctx.bezierCurveTo(-1,-60, 3,-60, 4,-50);
+  ctx.lineTo(0,-48); ctx.closePath();
+  ctx.fill();
+
+  // dobras do capuz
+  ctx.strokeStyle = RD;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-12,-42); ctx.bezierCurveTo(-8,-32,-4,-26,-2,-22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10,-40); ctx.bezierCurveTo(7,-32, 3,-26, 2,-22); ctx.stroke();
+
+  // ── interior escuro do capuz ──────────────────────────
+  ctx.fillStyle = BLK;
+  ctx.beginPath();
+  ctx.moveTo(-12,-26);
+  ctx.bezierCurveTo(-10,-38,-6,-44, 0,-44);
+  ctx.bezierCurveTo(6,-44, 10,-38, 12,-26);
+  ctx.bezierCurveTo(8,-24, -8,-24, -12,-26);
+  ctx.fill();
+
+  // ── olhos verdes brilhantes na sombra do capuz ────────
+  const eyePulse = 0.7 + pulse * 0.3;
+  ctx.shadowColor = GRN;
+  ctx.shadowBlur = 12 * eyePulse;
+  ctx.fillStyle = '#00a030';
+  ctx.beginPath(); ctx.ellipse(-5,-34, 4,3, -0.1, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 5,-34, 4,3,  0.1, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = GRN;
+  ctx.beginPath(); ctx.ellipse(-5,-34, 3,2.2, -0.1, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 5,-34, 3,2.2,  0.1, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+  // reflexo nos olhos
+  ctx.fillStyle = GRNG;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath(); ctx.ellipse(-6,-35, 1.2,0.9, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 4,-35, 1.2,0.9, 0, 0, Math.PI*2); ctx.fill();
   ctx.globalAlpha = 1;
 
-  // crânio
-  ctx.fillStyle = '#d4c9a8';
+  // ── echarpe / gola enrolada ───────────────────────────
+  ctx.fillStyle = RL;
   ctx.beginPath();
-  ctx.ellipse(x, y - 26 * s, 10 * s, 10 * s, 0, 0, Math.PI * 2);
+  ctx.moveTo(-16,-22); ctx.bezierCurveTo(-18,-18,-16,-14,-12,-14);
+  ctx.bezierCurveTo(-6,-12, 6,-12, 12,-14);
+  ctx.bezierCurveTo(16,-14, 18,-18, 16,-22);
+  ctx.bezierCurveTo(10,-20, -10,-20, -16,-22);
+  ctx.fill();
+  ctx.fillStyle = RH;
+  ctx.beginPath();
+  ctx.moveTo(-14,-22); ctx.bezierCurveTo(-12,-18,-8,-16,-4,-16);
+  ctx.bezierCurveTo(0,-15, 4,-16, 8,-16);
+  ctx.bezierCurveTo(4,-18, -4,-18, -14,-22);
   ctx.fill();
 
-  // mandíbula
-  ctx.fillStyle = '#b8a888';
-  ctx.beginPath();
-  ctx.moveTo(x - 6 * s, y - 19 * s);
-  ctx.lineTo(x + 6 * s, y - 19 * s);
-  ctx.lineTo(x + 5 * s, y - 14 * s);
-  ctx.lineTo(x - 5 * s, y - 14 * s);
-  ctx.fill();
-  // dentes
-  ctx.fillStyle = '#fffacc';
-  for (let i = -2; i <= 2; i++) {
-    ctx.fillRect(x + i * 2.5 * s - 1, y - 19 * s, 2 * s, 4 * s);
-  }
-
-  // olhos roxos
-  ctx.fillStyle = '#aa44ff';
-  ctx.shadowColor = '#cc66ff';
-  ctx.shadowBlur = 12;
-  ctx.beginPath();
-  ctx.ellipse(x - 3.5 * s, y - 27 * s, 3.5 * s, 3.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 3.5 * s, y - 27 * s, 3.5 * s, 3.5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // coroa
-  ctx.fillStyle = '#8844aa';
-  ctx.beginPath();
-  ctx.moveTo(x - 10 * s, y - 33 * s);
-  ctx.lineTo(x - 10 * s, y - 40 * s);
-  ctx.lineTo(x - 5 * s, y - 36 * s);
-  ctx.lineTo(x, y - 42 * s);
-  ctx.lineTo(x + 5 * s, y - 36 * s);
-  ctx.lineTo(x + 10 * s, y - 40 * s);
-  ctx.lineTo(x + 10 * s, y - 33 * s);
-  ctx.fill();
-
-  drawHealthOrb(ctx, x, e.y, e.sizep, e.maxHp, e.size);
+  ctx.restore();
+  drawHealthOrb(ctx, x, e.y - e.size * 0.6, e.hp, e.maxHp, e.size);
 }
 
 // ── Ogre Boss ─────────────────────────────────────────────────
