@@ -396,7 +396,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .log-line.lboss  { color:#e74c3c; font-weight:bold; }
 .log-line.lchest { color:#e8a020; }
 #dash-indicator {
-  position:absolute; top:38px; left:50%; transform:translateX(-50%);
+  position:absolute; top:50px; left:50%; transform:translateX(-50%);
   font-family:'VT323',monospace; font-size:13px;
   background:rgba(8,10,13,.88); border:1px solid var(--border);
   border-radius:6px; padding:3px 10px; color:var(--text-dim); display:flex; align-items:center; gap:6px;
@@ -716,77 +716,81 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .inv-cell.drag-over { border-color:var(--amber)!important; background:#2a1a08!important; box-shadow:inset 0 0 12px rgba(232,160,32,.3)!important; }
 .inv-cell.dragging  { opacity:.35; }
 
-/* SHOP */
-#shop-panel {
-  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-  z-index:400; width:760px; max-width:96vw; max-height:90vh;
-  background:linear-gradient(160deg,#0f1010,#080a08);
-  border:2px solid #4a3a10; border-radius:12px;
-  box-shadow:0 0 80px rgba(0,0,0,.9), 0 0 40px rgba(232,160,32,.08), inset 0 1px 0 rgba(255,220,80,.07);
-  pointer-events:all; overflow:hidden; font-family:'Crimson Text',serif;
+/* SHOP — removido: agora é NPC na zona segura */
+
+/* ── MERCHANT NPC PANEL ─────────────────────────────── */
+#merchant-panel {
+  display:none; position:fixed; inset:0; z-index:400;
+  align-items:center; justify-content:center;
+  background:rgba(2,3,4,.85); backdrop-filter:blur(3px);
+  font-family:'Crimson Text',serif;
 }
-#shop-panel.open { display:flex; flex-direction:column; }
-.shop-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:16px 22px 12px; border-bottom:1px solid #3a2a08;
-  background:rgba(0,0,0,.3);
+#merchant-panel.open { display:flex; }
+.merch-win {
+  width:780px; max-width:97vw; max-height:93vh;
+  background:linear-gradient(160deg,#0d0f0a,#080a06);
+  border:2px solid #3a4a18; border-radius:14px; overflow:hidden;
+  box-shadow:0 0 80px rgba(0,0,0,.9),0 0 40px rgba(100,180,40,.07),inset 0 1px 0 rgba(180,220,60,.06);
+  display:flex; flex-direction:column;
 }
-.shop-title { font-family:'Cinzel',serif; font-size:20px; color:var(--amber); letter-spacing:.1em; }
-.shop-gold-display { font-family:'VT323',monospace; font-size:22px; color:var(--amber); }
-.shop-close { cursor:pointer; color:var(--text-dim); font-family:'VT323',monospace; font-size:22px; transition:color .2s; }
-.shop-close:hover { color:var(--red-glow); }
-.shop-tabs { display:flex; gap:0; border-bottom:1px solid #3a2a08; }
-.shop-tab {
-  padding:8px 22px; font-family:'Cinzel',serif; font-size:12px; letter-spacing:.08em;
-  cursor:pointer; color:var(--text-dim); border-bottom:2px solid transparent;
-  transition:color .2s, border-color .2s; background:none; border-top:none; border-left:none; border-right:none;
+.merch-header {
+  display:flex; align-items:center; gap:14px;
+  padding:12px 18px 10px;
+  background:linear-gradient(90deg,#0e1406,#080a04,#0e1406);
+  border-bottom:1px solid #2a3808; flex-shrink:0;
 }
-.shop-tab.active { color:var(--amber); border-bottom-color:var(--amber); }
-.shop-tab:hover { color:var(--text); }
-.shop-body { display:flex; flex:1; overflow:hidden; }
-.shop-grid-wrap { flex:1; padding:16px; overflow-y:auto; }
-.shop-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
-.shop-item {
-  background:#0d1010; border:1px solid #3a2a10; border-radius:8px;
-  padding:12px 10px; text-align:center; cursor:pointer;
-  transition:border-color .2s, background .2s, transform .15s;
-  position:relative;
+.merch-portrait {
+  width:52px; height:52px; border-radius:50%; flex-shrink:0;
+  background:radial-gradient(circle at 38% 32%,#1a2408,#080a04);
+  border:2px solid #4a6010; box-shadow:0 0 18px rgba(100,180,40,.35);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  animation:merchPulse 2.5s ease-in-out infinite;
 }
-.shop-item:hover { border-color:var(--amber-dim); background:#1a1408; transform:translateY(-2px); }
-.shop-item.cant-afford { opacity:.45; cursor:not-allowed; }
-.shop-item.cant-afford:hover { transform:none; border-color:#3a2a10; background:#0d1010; }
-.shop-item-icon { font-size:28px; display:block; margin-bottom:6px; }
-.shop-item-name { font-family:'Cinzel',serif; font-size:11px; color:var(--text); margin-bottom:4px; line-height:1.3; }
-.shop-item-desc { font-size:11px; color:var(--text-dim); font-style:italic; margin-bottom:6px; line-height:1.3; }
-.shop-item-price { font-family:'VT323',monospace; font-size:18px; color:var(--amber); }
-.shop-item-rarity { font-size:9px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:3px; }
-.shop-item-class { font-size:9px; color:#5dade2; margin-bottom:3px; }
-.shop-sidebar {
-  width:190px; min-width:190px; background:rgba(0,0,0,.25);
-  border-left:1px solid #3a2a08; padding:16px 14px;
-  display:flex; flex-direction:column; gap:8px;
+@keyframes merchPulse {
+  0%,100%{box-shadow:0 0 12px rgba(100,180,40,.25);}
+  50%{box-shadow:0 0 24px rgba(100,180,40,.6);}
 }
-.shop-sidebar-title { font-family:'Cinzel',serif; font-size:12px; color:var(--amber); border-bottom:1px solid #3a2a08; padding-bottom:6px; margin-bottom:4px; }
-.shop-sidebar .stat-row { font-size:12px; }
-.shop-sidebar .stat-val { font-size:16px; }
-.shop-buy-confirm {
-  margin-top:auto; background:#1a1408; border:1px solid #4a3010; border-radius:6px;
-  padding:10px; font-size:12px; color:var(--text-dim); text-align:center; display:none;
-}
-.shop-buy-confirm.visible { display:block; }
-.shop-buy-confirm .item-preview { font-size:24px; margin-bottom:4px; }
-.shop-buy-confirm .confirm-name { font-family:'Cinzel',serif; font-size:13px; color:var(--amber); }
-.shop-buy-confirm .confirm-price { color:var(--amber); font-family:'VT323',monospace; font-size:18px; }
-.shop-buy-btn {
-  margin-top:8px; width:100%; font-family:'VT323',monospace; font-size:18px;
-  background:linear-gradient(160deg,#2a1a08,#1a1006); border:1px solid var(--amber-dim);
-  color:var(--amber); padding:7px 0; border-radius:4px; cursor:pointer; transition:all .2s;
-}
-.shop-buy-btn:hover { background:linear-gradient(160deg,#3a2a12,#2a1a0a); border-color:var(--amber); box-shadow:0 0 12px rgba(232,160,32,.2); }
-.shop-buy-btn:disabled { opacity:.4; cursor:not-allowed; }
-.shop-msg { font-size:11px; margin-top:6px; min-height:16px; }
-.shop-msg.ok   { color:#2ecc71; }
-.shop-msg.err  { color:#e74c3c; }
+.merch-info { flex:1; min-width:0; }
+.merch-name { font-family:'Cinzel',serif; font-size:15px; color:#b8e060; text-shadow:0 0 12px rgba(140,200,40,.5); letter-spacing:.07em; }
+.merch-title { font-size:10px; color:#607030; font-family:'Crimson Text',serif; margin-top:1px; }
+.merch-quote { font-size:10px; color:#708040; font-family:'Crimson Text',serif; font-style:italic; margin-top:3px; }
+.merch-gold { font-family:'VT323',monospace; font-size:20px; color:var(--amber); background:#0e0c02; border:1px solid #3a2800; border-radius:6px; padding:4px 12px; white-space:nowrap; }
+.merch-close { cursor:pointer; color:#405020; font-size:20px; padding:4px 8px; border-radius:4px; transition:color .15s; border:none; background:none; line-height:1; }
+.merch-close:hover { color:#b8e060; }
+.merch-tabs { display:flex; gap:0; border-bottom:1px solid #2a3808; background:#090b05; flex-shrink:0; overflow-x:auto; }
+.merch-tab { padding:8px 18px; font-family:'Cinzel',serif; font-size:11px; letter-spacing:.06em; cursor:pointer; color:#506030; border-bottom:2px solid transparent; transition:all .15s; background:none; border-top:none; border-left:none; border-right:none; white-space:nowrap; }
+.merch-tab:hover { color:#a0c840; }
+.merch-tab.active { color:#b8e060; border-bottom-color:#8ab830; background:rgba(120,180,30,.06); }
+.merch-body-wrap { display:flex; flex:1; min-height:0; overflow:hidden; }
+.merch-items-col { flex:1; padding:14px 16px; overflow-y:auto; }
+.merch-section { margin-bottom:16px; }
+.merch-section-title { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.12em; color:#506030; text-transform:uppercase; border-bottom:1px solid #1e2808; padding-bottom:4px; margin-bottom:8px; }
+.merch-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.merch-item { background:#0a0d06; border:1px solid #2a3010; border-radius:8px; padding:10px 8px 8px; text-align:center; cursor:pointer; transition:all .18s; }
+.merch-item:hover { border-color:#6a9020; background:#121808; transform:translateY(-2px); box-shadow:0 4px 14px rgba(80,140,20,.2); }
+.merch-item.cant-afford { opacity:.4; cursor:not-allowed; }
+.merch-item.cant-afford:hover { transform:none; border-color:#2a3010; background:#0a0d06; box-shadow:none; }
+.merch-item-icon { font-size:24px; display:block; margin-bottom:5px; }
+.merch-item-rarity { font-size:8px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:2px; }
+.merch-item-name { font-family:'Cinzel',serif; font-size:10px; color:#c0d080; margin-bottom:3px; line-height:1.3; }
+.merch-item-desc { font-size:9px; color:#607040; font-style:italic; margin-bottom:5px; line-height:1.3; }
+.merch-item-price { font-family:'VT323',monospace; font-size:17px; color:var(--amber); }
+.merch-sidebar { width:180px; min-width:180px; background:rgba(0,0,0,.3); border-left:1px solid #1e2808; padding:14px 12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.merch-sidebar-title { font-family:'Cinzel',serif; font-size:11px; color:#8ab830; border-bottom:1px solid #2a3808; padding-bottom:5px; margin-bottom:2px; }
+.merch-confirm { background:#0c1006; border:1px solid #3a4808; border-radius:7px; padding:10px 8px; text-align:center; display:none; }
+.merch-confirm.visible { display:block; }
+.merch-confirm-icon { font-size:26px; margin-bottom:4px; }
+.merch-confirm-name { font-family:'Cinzel',serif; font-size:11px; color:#b8e060; margin-bottom:3px; line-height:1.3; }
+.merch-confirm-desc { font-size:9px; color:#607040; font-style:italic; margin-bottom:5px; line-height:1.3; }
+.merch-confirm-price { font-family:'VT323',monospace; font-size:17px; color:var(--amber); margin-bottom:6px; }
+.merch-buy-btn { width:100%; font-family:'VT323',monospace; font-size:17px; background:linear-gradient(160deg,#1e2e08,#121c04); border:1px solid #4a6010; color:#a0c840; padding:6px 0; border-radius:5px; cursor:pointer; transition:all .2s; }
+.merch-buy-btn:hover:not(:disabled) { border-color:#8ab830; color:#c8e860; box-shadow:0 0 12px rgba(120,180,40,.25); }
+.merch-buy-btn:disabled { opacity:.4; cursor:not-allowed; }
+.merch-buy-msg { font-size:10px; margin-top:5px; min-height:14px; }
+.merch-buy-msg.ok  { color:#2ecc71; }
+.merch-buy-msg.err { color:#e74c3c; }
+.merch-hint { font-size:9px; color:#304018; line-height:1.7; margin-top:auto; padding-top:8px; }
+
 
 /* GAME OVER */
 #screen-gameover {
@@ -1167,23 +1171,23 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
         <div class="inv-equip-body">
           <div class="equip-row">
             <div class="equip-slot-empty"></div>
-            <div class="equip-slot" id="eslot-head" data-slot="head" title="Cabeça"><span class="equip-slot-label">👑</span></div>
+            <div class="equip-slot" id="eslot-head" data-slot="head" title="Elmo"><span class="equip-slot-label">👑</span></div>
             <div class="equip-slot-empty"></div>
           </div>
           <div class="equip-row">
             <div class="equip-slot" id="eslot-weapon" data-slot="weapon" title="Arma"><span class="equip-slot-label">⚔</span></div>
-            <div class="equip-slot equip-slot-chest" id="eslot-chest" data-slot="chest" title="Peitoral"><span class="equip-slot-label">🧥</span></div>
-            <div class="equip-slot" id="eslot-offhand" data-slot="offhand" title="Mão Secundária"><span class="equip-slot-label">🛡</span></div>
+            <div class="equip-slot equip-slot-chest" id="eslot-armor" data-slot="armor" title="Armadura"><span class="equip-slot-label">🧥</span></div>
+            <div class="equip-slot" id="eslot-offhand" data-slot="offhand" title="Escudo"><span class="equip-slot-label">🛡</span></div>
           </div>
           <div class="equip-row">
             <div class="equip-slot" id="eslot-gloves" data-slot="gloves" title="Luvas"><span class="equip-slot-label">🧤</span></div>
-            <div class="equip-slot" id="eslot-legs" data-slot="legs" title="Calças"><span class="equip-slot-label">👖</span></div>
-            <div class="equip-slot" id="eslot-boots" data-slot="boots" title="Botas"><span class="equip-slot-label">👢</span></div>
+            <div class="equip-slot" id="eslot-legs" data-slot="legs" title="Calça"><span class="equip-slot-label">👖</span></div>
+            <div class="equip-slot" id="eslot-boots" data-slot="boots" title="Bota"><span class="equip-slot-label">👢</span></div>
           </div>
           <div class="equip-row">
-            <div class="equip-slot" id="eslot-ring1" data-slot="ring1" title="Anel 1"><span class="equip-slot-label">💍</span></div>
+            <div class="equip-slot" id="eslot-ring1" data-slot="ring1" title="Anel"><span class="equip-slot-label">💍</span></div>
             <div class="equip-slot" id="eslot-amulet" data-slot="amulet" title="Amuleto"><span class="equip-slot-label">📿</span></div>
-            <div class="equip-slot" id="eslot-ring2" data-slot="ring2" title="Anel 2"><span class="equip-slot-label">💍</span></div>
+            <div class="equip-slot-empty"></div>
           </div>
           <div class="equipped-items-list" id="equipped-items-list"></div>
           <div class="equip-bonuses">
@@ -1238,41 +1242,37 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 <div id="drag-ghost"></div>
 
 <!-- SHOP -->
-<div id="shop-panel">
-  <div class="shop-header">
-    <div class="shop-title">🏪 Mercador das Sombras</div>
-    <div class="shop-gold-display">🪙 <span id="shop-gold-val">0</span></div>
-    <span class="shop-close" onclick="closeShop()">✕</span>
-  </div>
-  <div class="shop-tabs">
-    <button class="shop-tab active" onclick="switchShopTab('consumable',this)">🧪 Poções</button>
-    <button class="shop-tab" onclick="switchShopTab('weapon',this)">⚔ Armas</button>
-    <button class="shop-tab" onclick="switchShopTab('armor',this)">🛡 Armaduras</button>
-    <button class="shop-tab" onclick="switchShopTab('pet',this)">🐾 Pets</button>
-    <button class="shop-tab" onclick="switchShopTab('artifact',this)">💎 Artefatos</button>
-    <button class="shop-tab" onclick="switchShopTab('all',this)">📦 Tudo</button>
-  </div>
-  <div class="shop-body">
-    <div class="shop-grid-wrap">
-      <div class="shop-grid" id="shop-grid"></div>
-    </div>
-    <div class="shop-sidebar">
-      <div class="shop-sidebar-title">📊 Seus Atributos</div>
-      <div class="stat-row"><span>❤ HP</span><span class="stat-val" id="sh-hp">—</span></div>
-      <div class="stat-row"><span>💧 MP</span><span class="stat-val" id="sh-mp">—</span></div>
-      <div class="stat-row"><span>⚔ ATK</span><span class="stat-val" id="sh-atk">—</span></div>
-      <div class="stat-row"><span>🛡 DEF</span><span class="stat-val" id="sh-def">—</span></div>
-      <div class="stat-row"><span>Nível</span><span class="stat-val" id="sh-lvl">—</span></div>
-      <div class="shop-buy-confirm" id="shop-confirm">
-        <div class="item-preview" id="shop-confirm-icon">?</div>
-        <div class="confirm-name" id="shop-confirm-name">—</div>
-        <div style="font-size:11px;color:var(--text-dim);font-style:italic;margin:4px 0" id="shop-confirm-desc">—</div>
-        <div class="confirm-price">🪙 <span id="shop-confirm-price">0</span></div>
-        <button class="shop-buy-btn" id="shop-buy-btn" onclick="confirmBuy()">Comprar</button>
-        <div class="shop-msg" id="shop-msg"></div>
+<div id="merchant-panel">
+  <div class="merch-win">
+    <div class="merch-header">
+      <div class="merch-portrait">🧙</div>
+      <div class="merch-info">
+        <div class="merch-name">🌿 Thalion, o Andarilho</div>
+        <div class="merch-title">Mercador Itinerante · Zona Segura</div>
+        <div class="merch-quote" id="merch-quote">"Boas mercadorias para quem sabe o que quer…"</div>
       </div>
-      <div style="margin-top:auto;font-size:10px;color:#444;font-style:italic;line-height:1.6;">
-        [P] abre/fecha loja<br>[ESC] fecha painéis<br>Clique p/ selecionar<br>2x clique p/ comprar
+      <div class="merch-gold">🪙 <span id="merch-gold-val">0</span></div>
+      <button class="merch-close" onclick="closeMerchant()">✕</button>
+    </div>
+    <div class="merch-tabs" id="merch-tabs"></div>
+    <div class="merch-body-wrap">
+      <div class="merch-items-col" id="merch-items-col"></div>
+      <div class="merch-sidebar">
+        <div class="merch-sidebar-title">📊 Seus Stats</div>
+        <div class="stat-row"><span>❤ HP</span><span class="stat-val" id="msh-hp">—</span></div>
+        <div class="stat-row"><span>💧 MP</span><span class="stat-val" id="msh-mp">—</span></div>
+        <div class="stat-row"><span>⚔ ATK</span><span class="stat-val" id="msh-atk">—</span></div>
+        <div class="stat-row"><span>🛡 DEF</span><span class="stat-val" id="msh-def">—</span></div>
+        <div class="stat-row"><span>Nível</span><span class="stat-val" id="msh-lvl">—</span></div>
+        <div class="merch-confirm" id="merch-confirm">
+          <div class="merch-confirm-icon" id="mc-icon">?</div>
+          <div class="merch-confirm-name" id="mc-name">—</div>
+          <div class="merch-confirm-desc" id="mc-desc">—</div>
+          <div class="merch-confirm-price">🪙 <span id="mc-price">0</span></div>
+          <button class="merch-buy-btn" id="mc-buy-btn" onclick="merchantConfirmBuy()">Comprar</button>
+          <div class="merch-buy-msg" id="merch-buy-msg"></div>
+        </div>
+        <div class="merch-hint">[F] abre/fecha loja<br>[ESC] fecha painéis<br>Clique p/ selecionar<br>2× clique p/ comprar</div>
       </div>
     </div>
   </div>
@@ -1477,17 +1477,35 @@ const ITEM_DB = {
   pet_attack:{name:'Lobo de Batalha', icon:'🐺',type:'pet',petType:'attack',effect:{},desc:'Ataca inimigos próximos auto',   rarity:'rare',forClass:null},
   pet_tank:  {name:'Golem de Pedra',  icon:'🗿',type:'pet',petType:'tank',  effect:{},desc:'Tanque: absorve dano e atrai',   rarity:'rare',forClass:null},
   // ── ARTIFACTS ───────────────────────────────────────────
-  art_xp:    {name:'Tomo da Sabedoria', icon:'📚',type:'artifact',effect:{xpMult:1.40},         desc:'+40% XP ganho',            rarity:'epic',forClass:null},
-  art_gold:  {name:'Anel da Ganância',  icon:'💍',type:'artifact',effect:{goldMult:1.50},        desc:'+50% Gold ganho',          rarity:'epic',forClass:null},
-  art_atk:   {name:'Gema do Guerreiro', icon:'🔴',type:'artifact',effect:{atkMult:1.25},         desc:'+25% Dano global',         rarity:'epic',forClass:null},
-  art_hp:    {name:'Orbe da Vitalidade',icon:'🟤',type:'artifact',effect:{maxHpFlat:80},         desc:'+80 HP máximo',            rarity:'epic',forClass:null},
-  art_def:   {name:'Escudo Eterno',     icon:'🔵',type:'artifact',effect:{dmgReduce:0.15},       desc:'-15% dano recebido',       rarity:'epic',forClass:null},
-  art_poison:{name:'Gema do Veneno',    icon:'🟢',type:'artifact',effect:{poisonMult:1.60},      desc:'+60% dano de veneno',      rarity:'epic',forClass:null},
-  art_fire:  {name:'Gema do Fogo',      icon:'🔥',type:'artifact',effect:{fireMult:1.60},        desc:'+60% dano de fogo',        rarity:'epic',forClass:null},
-  art_ice:   {name:'Gema do Gelo',      icon:'❄️', type:'artifact',effect:{iceMult:1.60},         desc:'+60% dano de gelo',        rarity:'epic',forClass:null},
-  art_sword: {name:'Fio da Espada',     icon:'⚔️', type:'artifact',effect:{swordMult:1.35},      desc:'+35% dano de espada',      rarity:'epic',forClass:null},
-  art_bow:   {name:'Olho do Arqueiro',  icon:'🎯',type:'artifact',effect:{bowMult:1.35},         desc:'+35% dano de arco',        rarity:'epic',forClass:null},
-  art_auto:  {name:'Orbe da Coleta',    icon:'✨',type:'artifact',effect:{autoCollect:true},     desc:'Itens dropados são coletados automaticamente',rarity:'epic',forClass:null},
+  // ── ARTEFATOS ─────────────────────────────────────────────
+  // Utilitários (todas as classes)
+  art_xp:      {name:'Tomo da Sabedoria',   icon:'📚', type:'artifact', effect:{xpMult:1.50},          desc:'+50% XP ganho',                      rarity:'epic', forClass:null},
+  art_gold:    {name:'Anel da Ganância',    icon:'💍', type:'artifact', effect:{goldMult:1.60},         desc:'+60% Gold ganho',                    rarity:'epic', forClass:null},
+  art_auto:    {name:'Orbe da Coleta',      icon:'✨', type:'artifact', effect:{autoCollect:true},      desc:'Itens dropados são coletados automaticamente', rarity:'epic', forClass:null},
+
+  // Defesa (todas as classes)
+  art_hp:      {name:'Orbe da Vitalidade',  icon:'🟤', type:'artifact', effect:{maxHpPct:0.25},         desc:'+25% HP máximo',                     rarity:'epic', forClass:null},
+  art_def:     {name:'Escudo Eterno',       icon:'🔵', type:'artifact', effect:{dmgReduce:0.20},        desc:'-20% dano recebido',                 rarity:'epic', forClass:null},
+
+  // Dano global
+  art_atk:     {name:'Gema do Guerreiro',   icon:'🔴', type:'artifact', effect:{atkMult:1.30},          desc:'+30% Dano global',                   rarity:'epic', forClass:null},
+
+  // ── Elementais ────────────────────────────────────────────
+  art_poison:  {name:'Gema do Veneno',      icon:'🟢', type:'artifact', effect:{poisonMult:1.70},       desc:'+70% dano de veneno',                rarity:'epic', forClass:['archer']},
+  art_fire:    {name:'Gema do Fogo',        icon:'🔥', type:'artifact', effect:{fireMult:1.70},         desc:'+70% dano de fogo',                  rarity:'epic', forClass:['mage','archer']},
+  art_ice:     {name:'Gema do Gelo',        icon:'❄️', type:'artifact', effect:{iceMult:1.70},          desc:'+70% dano de gelo',                  rarity:'epic', forClass:['mage']},
+  art_wind:    {name:'Gema do Vento',       icon:'💨', type:'artifact', effect:{windMult:1.65, atkSpeedMult:1.20}, desc:'+65% dano de vento +20% velocidade de ataque', rarity:'epic', forClass:['archer']},
+  art_arcane:  {name:'Gema Arcana',         icon:'🌀', type:'artifact', effect:{arcaneMult:1.70, atkMult:1.10},   desc:'+70% dano arcano +10% dano global',            rarity:'epic', forClass:['mage']},
+
+  // ── Físicos por classe ─────────────────────────────────────
+  art_sword:   {name:'Fio da Espada',       icon:'⚔️', type:'artifact', effect:{swordMult:1.50},        desc:'+50% dano de espada',                rarity:'epic', forClass:['warrior']},
+  art_bow:     {name:'Olho do Arqueiro',    icon:'🎯', type:'artifact', effect:{bowMult:1.50},          desc:'+50% dano de arco',                  rarity:'epic', forClass:['archer']},
+  art_staff:   {name:'Cajado das Eras',     icon:'🔮', type:'artifact', effect:{staffMult:1.50, atkMult:1.10}, desc:'+50% dano de cajado +10% dano global', rarity:'epic', forClass:['mage']},
+
+  // ── Especiais de subclasse ─────────────────────────────────
+  art_speed:   {name:'Botas do Relâmpago',  icon:'⚡', type:'artifact', effect:{atkSpeedMult:1.35},     desc:'+35% velocidade de ataque',          rarity:'epic', forClass:['archer']},
+  art_heal:    {name:'Amuleto da Renovação',icon:'💚', type:'artifact', effect:{healMult:1.80},         desc:'+80% eficácia de cura',              rarity:'epic', forClass:['warrior']},
+  art_rage:    {name:'Coração de Berserker',icon:'🩸', type:'artifact', effect:{atkMult:1.20, dmgReduce:-0.05}, desc:'+20% dano, -5% defesa (raiva pura)', rarity:'epic', forClass:['warrior']},
 };
 
 const CHEST_LOOT = {
@@ -1525,33 +1543,60 @@ let artifactPanelOpen = false;
 /** Called every time equippedArtifacts changes — writes bonus fields onto player */
 function recalcArtifacts() {
   if (!player) return;
-  // reset all artifact bonuses
+  // Reset all artifact bonuses
   player.art = {
-    xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0,
-    dmgReduce:0, poisonMult:1, fireMult:1, iceMult:1,
-    swordMult:1, bowMult:1, autoCollect:false, hpApplied:0
+    xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0, maxHpPct:0,
+    dmgReduce:0,
+    poisonMult:1, fireMult:1, iceMult:1,
+    windMult:1, arcaneMult:1,
+    swordMult:1, bowMult:1, staffMult:1,
+    atkSpeedMult:1,
+    healMult:1,
+    autoCollect:false, hpApplied:0, hpPctApplied:0,
   };
   for (const id of equippedArtifacts) {
     const ef = ITEM_DB[id]?.effect || {};
-    if (ef.xpMult)       player.art.xpMult       *= ef.xpMult;
-    if (ef.goldMult)     player.art.goldMult      *= ef.goldMult;
-    if (ef.atkMult)      player.art.atkMult       *= ef.atkMult;
-    if (ef.maxHpFlat)    player.art.maxHpFlat     += ef.maxHpFlat;
-    if (ef.dmgReduce)    player.art.dmgReduce     += ef.dmgReduce;
-    if (ef.poisonMult)   player.art.poisonMult    *= ef.poisonMult;
-    if (ef.fireMult)     player.art.fireMult      *= ef.fireMult;
-    if (ef.iceMult)      player.art.iceMult       *= ef.iceMult;
-    if (ef.swordMult)    player.art.swordMult     *= ef.swordMult;
-    if (ef.bowMult)      player.art.bowMult       *= ef.bowMult;
-    if (ef.autoCollect)  player.art.autoCollect    = true;
+    if (ef.xpMult)        player.art.xpMult        *= ef.xpMult;
+    if (ef.goldMult)      player.art.goldMult       *= ef.goldMult;
+    if (ef.atkMult)       player.art.atkMult        *= ef.atkMult;
+    if (ef.maxHpFlat)     player.art.maxHpFlat      += ef.maxHpFlat;
+    if (ef.maxHpPct)      player.art.maxHpPct       += ef.maxHpPct;
+    if (ef.dmgReduce)     player.art.dmgReduce      += ef.dmgReduce;
+    if (ef.poisonMult)    player.art.poisonMult     *= ef.poisonMult;
+    if (ef.fireMult)      player.art.fireMult       *= ef.fireMult;
+    if (ef.iceMult)       player.art.iceMult        *= ef.iceMult;
+    if (ef.windMult)      player.art.windMult       *= ef.windMult;
+    if (ef.arcaneMult)    player.art.arcaneMult     *= ef.arcaneMult;
+    if (ef.swordMult)     player.art.swordMult      *= ef.swordMult;
+    if (ef.bowMult)       player.art.bowMult        *= ef.bowMult;
+    if (ef.staffMult)     player.art.staffMult      *= ef.staffMult;
+    if (ef.atkSpeedMult)  player.art.atkSpeedMult   *= ef.atkSpeedMult;
+    if (ef.healMult)      player.art.healMult       *= ef.healMult;
+    if (ef.autoCollect)   player.art.autoCollect     = true;
   }
-  // Apply flat HP bonus (avoid re-applying on every recalc)
+
+  // Apply flat HP bonus
   const prev = player.art.hpApplied;
   const next  = player.art.maxHpFlat;
   player.maxHp = player.maxHp - prev + next;
+  player.art.hpApplied = next;
+
+  // Apply % HP bonus (e.g. +20% max HP)
+  const prevPct = player.art.hpPctApplied || 0;
+  const nextPct = player.art.maxHpPct || 0;
+  // Remove old pct bonus, add new one
+  if (prevPct > 0) player.maxHp = Math.round(player.maxHp / (1 + prevPct));
+  if (nextPct > 0) player.maxHp = Math.round(player.maxHp * (1 + nextPct));
+  player.art.hpPctApplied = nextPct;
+
   if (player.maxHp < 1) player.maxHp = 1;
   player.hp = Math.min(player.hp, player.maxHp);
-  player.art.hpApplied = next;
+
+  // Apply attack speed multiplier
+  if (player._baseAtkSpeed) {
+    player.atkSpeed = Math.max(150, Math.round(player._baseAtkSpeed / (player.art.atkSpeedMult || 1)));
+  }
+
   renderArtifactPanel();
   if (document.getElementById('inv-panel').classList.contains('open')) updateInventoryPanel();
 }
@@ -1617,12 +1662,22 @@ function renderArtifactPanel() {
   const div = document.createElement('div'); div.className = 'artp-divider'; slotsEl.appendChild(div);
   const effDiv = document.createElement('div'); effDiv.className = 'artp-effects';
   if (equippedArtifacts.length === 0) {
-    effDiv.textContent = 'Nenhum artefato equipado. Compre na loja ou derrote o Guardião.';
+    effDiv.textContent = 'Nenhum artefato equipado. Compre com Thalion ou derrote o Guardião.';
   } else {
-    effDiv.innerHTML = equippedArtifacts.map(id => {
-      const db = ITEM_DB[id];
-      return `${db.icon} <span class="eff-name">${db.name}</span>: ${db.desc}`;
-    }).join('<br>');
+    const a = player.art || {};
+    const lines = equippedArtifacts.map(id => {
+      const db = ITEM_DB[id]; if (!db) return '';
+      const ef = db.effect || {};
+      // Build a live stat line
+      let liveDesc = db.desc;
+      if (ef.maxHpPct)       liveDesc = `+${Math.round(ef.maxHpPct*100)}% HP máximo (atual: ${player.maxHp} HP)`;
+      if (ef.atkSpeedMult)   liveDesc = `+${Math.round((ef.atkSpeedMult-1)*100)}% vel. de ataque`;
+      if (ef.windMult)       liveDesc = `+${Math.round((a.windMult-1)*100)}% dano vento · +${Math.round((a.atkSpeedMult-1)*100)}% vel.`;
+      if (ef.arcaneMult)     liveDesc = `+${Math.round((a.arcaneMult-1)*100)}% dano arcano`;
+      if (ef.staffMult)      liveDesc = `+${Math.round((a.staffMult-1)*100)}% dano cajado`;
+      return `${db.icon} <span class="eff-name">${db.name}</span>: ${liveDesc}`;
+    });
+    effDiv.innerHTML = lines.join('<br>');
   }
   slotsEl.appendChild(effDiv);
 
@@ -2325,7 +2380,10 @@ function createPlayer(classId){
   const def=CLASS_DEF[classId];
   return{classId,...def,x:4.5*T,y:4.5*T,maxHp:def.hp,hp:def.hp,maxMp:def.mp,mp:def.mp,baseAtk:def.atk,atk:def.atk,baseDef:def.def,def:def.def,level:1,xp:0,xpNext:60,gold:0,kills:0,inventory:[],equippedWeapon:null,equippedArmor:null,vx:0,vy:0,facing:{x:1,y:0},atkTimer:0,dashTimer:0,dashMaxCd:3000,isDashing:false,dashDuration:0,dashDirX:0,dashDirY:0,skillCds:[0,0,0],hitFlash:0,isAlive:true,subclass:null,subSkill:null,_subSkillLogic:null,skillDmgMult:1,arrowAoe:0,holyRegen:false,fireAura:false,subclassChosen:false,holyRegenTimer:0,fireAuraTimer:0,poisonProc:.25,ultShieldWall:0,ultBloodlust:0,
     activePetType:null,
-    art:{xpMult:1,goldMult:1,atkMult:1,maxHpFlat:0,dmgReduce:0,poisonMult:1,fireMult:1,iceMult:1,swordMult:1,bowMult:1,autoCollect:false,hpApplied:0}};
+    art:{xpMult:1,goldMult:1,atkMult:1,maxHpFlat:0,maxHpPct:0,
+         dmgReduce:0,poisonMult:1,fireMult:1,iceMult:1,
+         windMult:1,arcaneMult:1,swordMult:1,bowMult:1,staffMult:1,
+         atkSpeedMult:1,healMult:1,autoCollect:false,hpApplied:0,hpPctApplied:0}};
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2355,6 +2413,7 @@ function recalcPlayerForClass(p, newClassId) {
   p.secondColor = def.secondColor;
   p.atkRange  = def.atkRange;
   p.atkSpeed  = def.atkSpeed;
+  p._baseAtkSpeed = def.atkSpeed; // saved for atkSpeedMult recalc
   p.critChance = def.critChance;
   p.critMult  = def.critMult;
   p.skills    = def.skills;
@@ -2538,6 +2597,33 @@ function autoAttack(p){
   const isCrit=Math.random()<p.critChance;
   if(isCrit)dmg=Math.floor(dmg*p.critMult);
   dmg=Math.max(1,dmg-Math.floor(closest.def*.4));
+
+  const art = p.art || {};
+
+  // Global multipliers (stack multiplicatively)
+  dmg = Math.floor(dmg * (art.atkMult || 1));
+
+  // Class-specific physical multipliers
+  const sub = p.subSkill || '';
+  if (p.classId==='warrior' || sub==='defensive' || sub==='berserker' || sub==='holy')
+    dmg = Math.floor(dmg * (art.swordMult || 1));
+
+  // Mage staff multiplier + arcane
+  if (p.classId==='mage') {
+    dmg = Math.floor(dmg * (art.staffMult || 1));
+    if (sub==='arcane') dmg = Math.floor(dmg * (art.arcaneMult || 1));
+    if (sub==='fire_mage') dmg = Math.floor(dmg * (art.fireMult || 1));
+    if (sub==='ice')       dmg = Math.floor(dmg * (art.iceMult  || 1));
+  }
+
+  // Archer bow + elemental
+  if (p.classId==='archer') {
+    dmg = Math.floor(dmg * (art.bowMult || 1));
+    if (sub==='wind')         dmg = Math.floor(dmg * (art.windMult   || 1));
+    if (sub==='poison')       dmg = Math.floor(dmg * (art.poisonMult || 1));
+    if (sub==='fire_archer')  dmg = Math.floor(dmg * (art.fireMult   || 1));
+  }
+
   if(p.classId==='mage'||p.classId==='archer')fireProjectile(p.x,p.y,closest.x,closest.y,dmg,p.color,p.classId,null,isCrit,closest);
   else{applyDamageToEnemy(closest,dmg,isCrit);spawnHitParticles(closest.x,closest.y,p.color,4);}
   const dx=closest.x-p.x,dy=closest.y-p.y,len=Math.hypot(dx,dy);
@@ -2866,7 +2952,34 @@ function spawnDeathParticles(x,y,color){for(let i=0;i<16;i++){const ang=Math.ran
 function spawnDmgNumber(x,y,dmg,color){const el=document.createElement('div');el.className='dmg-float';el.style.color=color;el.style.left=(x-cam.x)+'px';el.style.top=(y-cam.y)+'px';el.textContent=dmg;document.getElementById('screen-game').appendChild(el);setTimeout(()=>el.remove(),900);}
 
 // SKILLS
-function getSkillDmgMult(){return player.skillDmgMult||1;}
+function getSkillDmgMult() {
+  const base = player.skillDmgMult || 1;
+  const art  = player.art || {};
+  const sub  = player.subSkill || '';
+  const cls  = player.classId  || '';
+
+  // Stack highest relevant elemental/class multiplier on top of skillDmgMult
+  let elMult = art.atkMult || 1; // global always applies
+
+  if (cls === 'mage') {
+    elMult *= (art.staffMult || 1); // all mage skills benefit from staff mult
+    if (sub === 'fire_mage')  elMult *= (art.fireMult   || 1);
+    if (sub === 'ice')        elMult *= (art.iceMult    || 1);
+    if (sub === 'arcane')     elMult *= (art.arcaneMult || 1);
+  }
+  if (cls === 'archer') {
+    elMult *= (art.bowMult || 1);
+    if (sub === 'wind')        elMult *= (art.windMult   || 1);
+    if (sub === 'poison')      elMult *= (art.poisonMult || 1);
+    if (sub === 'fire_archer') elMult *= (art.fireMult   || 1);
+  }
+  if (cls === 'warrior') {
+    elMult *= (art.swordMult || 1);
+    if (sub === 'berserker' || sub === 'holy') elMult *= (art.swordMult || 1); // extra boost
+  }
+
+  return base * elMult;
+}
 function getNearestEnemy(p,maxRange){let nearest=null,nd=maxRange;for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<nd){nd=d;nearest=e;}}return nearest;}
 function skillWhirlwind(p){const range=100,mult=getSkillDmgMult();let hit=0;for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-p.x,e.y-p.y)<range){applyDamageToEnemy(e,Math.floor(p.atk*2.0*mult),false);hit++;}}for(let i=0;i<28;i++){const ang=(i/28)*Math.PI*2;particles.push({type:'hit',x:p.x+Math.cos(ang)*range*.5,y:p.y+Math.sin(ang)*range*.5,vx:Math.cos(ang)*100,vy:Math.sin(ang)*100,life:300,maxLife:300,r:5,color:'#e67e22',gravity:0});}addLog(`🌀 Redemoinho! ${hit} inimigos`,'lskill');}
 function skillCharge(p){p.isDashing=true;p.dashDuration=400;p.dashDirX=p.facing.x;p.dashDirY=p.facing.y;const mult=getSkillDmgMult();for(const e of enemies){if(!e.isAlive)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<140){const dot=(e.x-p.x)*p.facing.x+(e.y-p.y)*p.facing.y;if(dot>0)applyDamageToEnemy(e,Math.floor(p.atk*2.8*mult),true);}}addLog('⚡ Investida!','lskill');}
@@ -3058,6 +3171,16 @@ function renderPlayer(){
   const p=player;ctx.save();
   // Hit-flash glow
   if(p.hitFlash>0){ctx.shadowColor='rgba(255,255,255,.9)';ctx.shadowBlur=14*(p.hitFlash/200);}
+  // Enchantment persistent glow
+  else if(p.enchantment?.key) {
+    const eCfg = ALCHEMIST_CONFIG?.enchantments?.[p.enchantment.key];
+    if(eCfg) {
+      const glowColor = eCfg.glowColor || eCfg.color;
+      const pulse = 0.55 + Math.sin(Date.now()/500)*0.25;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur  = 18 * pulse;
+    }
+  }
   // Ground shadow — oval, slightly offset forward
   const sx=p.x+p.facing.x*4, sy=p.y+p.size*.75;
   const shadowAlpha=0.38;
@@ -4156,66 +4279,50 @@ function renderInventory() {
 
 // EQUIP SLOTS
 const SLOT_MAP = {
-  weapon:  {types:['weapon'],  label:'⚔'},
-  offhand: {types:['armor'],   label:'🛡'},
-  chest:   {types:['armor'],   label:'🧥'},
-  head:    {types:['armor'],   label:'👑'},
-  gloves:  {types:['armor'],   label:'🧤'},
-  legs:    {types:['armor'],   label:'👖'},
-  boots:   {types:['armor'],   label:'👢'},
-  ring1:   {types:['accessory'],label:'💍'},
-  ring2:   {types:['accessory'],label:'💍'},
-  amulet:  {types:['accessory'],label:'📿'},
+  weapon:  {label:'⚔'},  offhand:{label:'🛡'},  head:  {label:'👑'},
+  armor:   {label:'🧥'}, gloves: {label:'🧤'}, legs:  {label:'👖'},
+  boots:   {label:'👢'}, ring1:  {label:'💍'}, amulet:{label:'📿'},
 };
 function renderEquipSlots() {
-  for (const slotId of Object.keys(SLOT_MAP)) {
+  for (const slotId of ALL_SLOTS) {
     const el = document.getElementById('eslot-'+slotId);
     if (!el) continue;
-    const def = SLOT_MAP[slotId];
-    let equipped = null;
-    for (const invItem of player.inventory) {
-      if (!invItem) continue;
-      const db = ITEM_DB[invItem.id]; if (!db) continue;
-      if (slotId==='weapon' && player.equippedWeapon===invItem.id) equipped={invItem,db};
-      if (slotId==='chest'  && player.equippedArmor===invItem.id)  equipped={invItem,db};
-    }
+    const entry = player.equippedSlots?.[slotId];
     el.innerHTML = '';
-    if (equipped) {
-      el.className = 'equip-slot filled rarity-'+equipped.db.rarity;
-      const ic = document.createElement('span'); ic.className='slot-icon'; ic.textContent=equipped.db.icon; el.appendChild(ic);
-      const nm = document.createElement('span'); nm.className='slot-name'; nm.textContent=equipped.db.name; el.appendChild(nm);
-    } else {
-      el.className = 'equip-slot' + (slotId==='chest'?' equip-slot-chest':'');
-      const lb = document.createElement('span'); lb.className='equip-slot-label'; lb.textContent=def.label; el.appendChild(lb);
+    if (entry) {
+      const itemId = entry.itemId || entry;
+      const db = ITEM_DB[itemId];
+      if (db) {
+        const rc = {common:'',rare:' rarity-rare',epic:' rarity-epic',mythic:' rarity-epic'}[db.rarity] || '';
+        el.className = 'equip-slot filled' + rc + (slotId==='armor'?' equip-slot-chest':'');
+        const ic = document.createElement('span'); ic.className='slot-icon'; ic.textContent=db.icon; el.appendChild(ic);
+        const nm = document.createElement('span'); nm.className='slot-name'; nm.textContent=db.name; el.appendChild(nm);
+        // click to unequip
+        el.onclick = () => { removeEquip(itemId, entry.uid); renderInventory(); updateInventoryPanel(); renderEquipSlots(); };
+        return el;
+      }
     }
+    el.className = 'equip-slot' + (slotId==='armor'?' equip-slot-chest':'');
+    el.onclick = null;
+    const lb = document.createElement('span'); lb.className='equip-slot-label'; lb.textContent=SLOT_MAP[slotId]?.label||'?'; el.appendChild(lb);
   }
+  // Equipped items list
   const list = document.getElementById('equipped-items-list');
-  if (!list) return;
-  list.innerHTML = '';
-  const eqItems = [];
-  if (player.equippedWeapon) { const db=ITEM_DB[player.equippedWeapon]; if(db) eqItems.push({id:player.equippedWeapon, db}); }
-  if (player.equippedArmor)  { const db=ITEM_DB[player.equippedArmor];  if(db) eqItems.push({id:player.equippedArmor, db}); }
-  if (eqItems.length === 0) { list.innerHTML = '<div class="no-equip-msg">Sem itens equipados</div>'; }
-  else {
-    for (const eq of eqItems) {
-      const row = document.createElement('div'); row.className = 'equipped-item-row';
-      const statKey = eq.db.type==='weapon' ? 'atk' : 'def';
-      const statVal = eq.db.effect[statKey] || 0;
-      row.innerHTML = `<span class="ei-icon">${eq.db.icon}</span><span class="ei-name" style="color:${{common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[eq.db.rarity]}">${eq.db.name}</span><span class="ei-stat">+${statVal}</span><span class="ei-unequip" title="Desequipar">✕</span>`;
-      row.querySelector('.ei-unequip').addEventListener('click', ev => {
-        ev.stopPropagation();
-        removeEquip(eq.id);
-        renderInventory(); updateInventoryPanel(); renderEquipSlots();
-      });
-      list.appendChild(row);
+  if (list) {
+    list.innerHTML = '';
+    let atkB=0, defB=0, hpB=0;
+    for (const slotId of ALL_SLOTS) {
+      const entry = player.equippedSlots?.[slotId]; if (!entry) continue;
+      const itemId = entry.itemId || entry;
+      const db = ITEM_DB[itemId]; if (!db) continue;
+      if (db.effect?.atk) atkB += db.effect.atk;
+      if (db.effect?.def) defB += db.effect.def;
+      if (db.effect?.hp)  hpB  += db.effect.hp;
     }
+    const ea=document.getElementById('eb-atk'); if(ea)ea.textContent='+'+atkB;
+    const ed=document.getElementById('eb-def'); if(ed)ed.textContent='+'+defB;
+    const eh=document.getElementById('eb-hp');  if(eh)eh.textContent='+'+hpB;
   }
-  let atkBonus=0, defBonus=0, hpBonus=0;
-  if (player.equippedWeapon){const db=ITEM_DB[player.equippedWeapon];if(db&&db.effect){atkBonus+=db.effect.atk||0;}}
-  if (player.equippedArmor) {const db=ITEM_DB[player.equippedArmor]; if(db&&db.effect){defBonus+=db.effect.def||0;hpBonus+=db.effect.hp||0;}}
-  const ea=document.getElementById('eb-atk'); if(ea)ea.textContent='+'+atkBonus;
-  const ed=document.getElementById('eb-def'); if(ed)ed.textContent='+'+defBonus;
-  const eh=document.getElementById('eb-hp');  if(eh)eh.textContent='+'+hpBonus;
 }
 
 function openInventory(){
@@ -4429,7 +4536,7 @@ function confirmClassChange() {
 // ─────────────────────────────────────────────────────────
 function closeAllPanels() {
   closeInventory();
-  closeShop();
+  closeMerchant();
   closeMusicPanel();
   if (npcPanelOpen) closeNpcPanel();
   closeArtifactPanel();
@@ -5144,7 +5251,7 @@ document.addEventListener('keydown', ev => {
   if(ev.key==='Escape'){
     if(bigMapOpen){closeBigMap();ev.preventDefault();return;}
     const inv=document.getElementById('inv-panel');
-    const shop=document.getElementById('shop-panel');
+    const merch=document.getElementById('merchant-panel');
     const music=document.getElementById('music-panel');
     const npc=document.getElementById('npc-panel');
     const art=document.getElementById('artifact-panel');
@@ -5153,7 +5260,8 @@ document.addEventListener('keydown', ev => {
     if(music.classList.contains('open')){closeMusicPanel();ev.preventDefault();return;}
     if(art.classList.contains('open')){closeArtifactPanel();ev.preventDefault();return;}
     if(inv.classList.contains('open')){closeInventory();ev.preventDefault();return;}
-    if(shop.classList.contains('open')){closeShop();ev.preventDefault();return;}
+    if(merchantNpcState.open){closeMerchant();ev.preventDefault();return;}
+    if(merch&&merch.classList.contains('open')){closeMerchant();ev.preventDefault();return;}
     return;
   }
   if(gameState!=='playing'&&gameState!=='subclass')return;
@@ -5169,16 +5277,16 @@ document.addEventListener('keydown', ev => {
   }
   if(ev.key==='i'||ev.key==='I'){
     if(npcPanelOpen){closeNpcPanel();return;}
-    const panel=document.getElementById('inv-panel');const shop=document.getElementById('shop-panel');
-    if(shop.classList.contains('open'))closeShop();
+    const panel=document.getElementById('inv-panel');
+    if(merchantNpcState.open)closeMerchant();
     if(panel.classList.contains('open'))closeInventory();else openInventory();
     ev.preventDefault();return;
   }
   if(ev.key==='p'||ev.key==='P'){
     if(npcPanelOpen){closeNpcPanel();return;}
-    const shop=document.getElementById('shop-panel');const inv=document.getElementById('inv-panel');
+    const inv=document.getElementById('inv-panel');
     if(inv.classList.contains('open'))closeInventory();
-    if(shop.classList.contains('open'))closeShop();else openShop();
+    if(merchantNpcState.open){closeMerchant();}else{openMerchant();}
     ev.preventDefault();return;
   }
   if(ev.key==='m'||ev.key==='M'){
@@ -5199,8 +5307,8 @@ document.addEventListener('keydown', ev => {
     const len=Math.hypot(dx,dy);if(len>0){p.isDashing=true;p.dashDuration=200;p.dashDirX=dx/len;p.dashDirY=dy/len;p.dashTimer=p.dashMaxCd;playDashSound();}
     ev.preventDefault();return;
   }
-  const inv2=document.getElementById('inv-panel');const shop2=document.getElementById('shop-panel');
-  if(inv2.classList.contains('open')||shop2.classList.contains('open')||npcPanelOpen)return;
+  const inv2=document.getElementById('inv-panel');
+  if(inv2.classList.contains('open')||merchantNpcState.open||npcPanelOpen)return;
   const sm={'q':0,'Q':0,'e':1,'E':1,'r':2,'R':2};
   if(sm[ev.key]!==undefined){
     const si=sm[ev.key],sk=p.skills[si];
@@ -5264,100 +5372,443 @@ const SHOP_CATALOG = [
   {id:'potion'}, {id:'big_potion'}, {id:'elixir'},
   {id:'mana_potion'}, {id:'big_mana_pot'},
 
-  // ── Armas básicas / intermediárias (sem épicos de endgame) ─
-  {id:'old_sword'}, {id:'iron_axe'}, {id:'wooden_club'},
-  {id:'steel_sword'}, {id:'war_hammer'}, {id:'battle_axe'},
-  {id:'short_bow'}, {id:'hunting_bow'}, {id:'wood_crossbow'},
-  {id:'venom_bow'}, {id:'silver_bow'}, {id:'steel_crossbow'},
-  {id:'oak_staff'}, {id:'crystal_wand'}, {id:'bone_staff'},
-  {id:'mage_staff'}, {id:'ember_wand'}, {id:'frost_rod'},
+  // ── GUERREIRO — build completa (arma+escudo+elmo+armadura+luvas+calça+bota+anel+amuleto) ──
+  {id:'old_sword'}, {id:'steel_sword'}, {id:'war_hammer'},         // arma
+  {id:'wooden_shield'}, {id:'kite_shield'},                         // escudo
+  {id:'iron_helm'}, {id:'steel_helm'}, {id:'knight_helm'},          // elmo
+  {id:'chainmail'}, {id:'plate_armor'},                             // armadura
+  {id:'iron_gauntlets'}, {id:'steel_gauntlets'},                    // luvas
+  {id:'iron_greaves'}, {id:'steel_greaves'},                        // calça
+  {id:'iron_boots'}, {id:'steel_boots'},                            // bota
+  {id:'warrior_ring'}, {id:'silver_ring'},                          // anel
+  {id:'dragon_tooth'}, {id:'silver_amulet'},                        // amuleto
 
-  // ── Escudos / offhand ─────────────────────────────────────
-  {id:'wooden_shield'}, {id:'shield'}, {id:'kite_shield'},
-  {id:'spell_focus'}, {id:'arcane_focus'},
-  {id:'iron_quiver'}, {id:'silver_quiver'},
+  // ── MAGO — build completa ─────────────────────────────────
+  {id:'oak_staff'}, {id:'mage_staff'}, {id:'ember_wand'}, {id:'frost_rod'}, // arma
+  {id:'spell_focus'}, {id:'arcane_focus'},                          // escudo/foco
+  {id:'cloth_hood'}, {id:'wizard_hat'},                             // elmo
+  {id:'cloth_robe'}, {id:'robe'},                                   // armadura
+  {id:'spell_gloves'}, {id:'arcane_gloves'},                        // luvas
+  {id:'cloth_pants'}, {id:'silk_pants'},                            // calça
+  {id:'cloth_boots'}, {id:'silk_boots'},                            // bota
+  {id:'mage_ring'}, {id:'mana_ring'},                               // anel
+  {id:'arcane_crystal'}, {id:'herb_charm'},                         // amuleto
 
-  // ── Cabeça ────────────────────────────────────────────────
-  {id:'iron_helm'}, {id:'steel_helm'}, {id:'cloth_hood'},
-  {id:'wizard_hat'}, {id:'leather_hood'}, {id:'ranger_hood'},
-
-  // ── Luvas ─────────────────────────────────────────────────
-  {id:'iron_gauntlets'}, {id:'steel_gauntlets'},
-  {id:'spell_gloves'}, {id:'arcane_gloves'},
-  {id:'leather_gloves'}, {id:'hunter_gloves'},
-
-  // ── Botas ─────────────────────────────────────────────────
-  {id:'iron_boots'}, {id:'steel_boots'},
-  {id:'cloth_boots'}, {id:'silk_boots'},
-  {id:'leather_boots'}, {id:'swift_boots'}, {id:'traveler_boots'},
-
-  // ── Calças ────────────────────────────────────────────────
-  {id:'iron_greaves'}, {id:'steel_greaves'},
-  {id:'cloth_pants'}, {id:'silk_pants'},
-  {id:'leather_pants'}, {id:'ranger_pants'},
-
-  // ── Anéis ─────────────────────────────────────────────────
-  {id:'copper_ring'}, {id:'iron_ring'}, {id:'vitality_ring'},
-  {id:'mana_ring'}, {id:'silver_ring'},
-  {id:'warrior_ring'}, {id:'mage_ring'}, {id:'archer_ring'},
-
-  // ── Amuletos ──────────────────────────────────────────────
-  {id:'bone_amulet'}, {id:'wooden_charm'}, {id:'herb_charm'},
-  {id:'silver_amulet'}, {id:'dragon_tooth'},
-  {id:'arcane_crystal'}, {id:'hawk_eye'},
+  // ── ARQUEIRO — build completa ─────────────────────────────
+  {id:'short_bow'}, {id:'venom_bow'}, {id:'silver_bow'}, {id:'steel_crossbow'}, // arma
+  {id:'iron_quiver'}, {id:'silver_quiver'},                         // offhand
+  {id:'leather_hood'}, {id:'ranger_hood'},                          // elmo
+  {id:'leather_armor'}, {id:'studded_leather'},                     // armadura
+  {id:'leather_gloves'}, {id:'hunter_gloves'},                      // luvas
+  {id:'leather_pants'}, {id:'ranger_pants'},                        // calça
+  {id:'leather_boots'}, {id:'swift_boots'}, {id:'traveler_boots'},  // bota
+  {id:'archer_ring'}, {id:'copper_ring'},                           // anel
+  {id:'hawk_eye'}, {id:'bone_amulet'},                              // amuleto
 
   // ── Pets ──────────────────────────────────────────────────
   {id:'pet_healer'}, {id:'pet_attack'}, {id:'pet_tank'},
 
-  // ── Artefatos (comuns/raros — sem itens de endgame mítico) ─
-  {id:'art_xp'}, {id:'art_gold'}, {id:'art_atk'}, {id:'art_hp'}, {id:'art_def'},
+  // ── Artefatos básicos ─────────────────────────────────────
+  {id:'art_xp'}, {id:'art_gold'}, {id:'art_auto'},
+  {id:'art_hp'}, {id:'art_def'}, {id:'art_atk'},
+  {id:'art_sword'}, {id:'art_bow'}, {id:'art_staff'},
+  {id:'art_poison'}, {id:'art_fire'}, {id:'art_ice'},
+  {id:'art_wind'}, {id:'art_arcane'},
+  {id:'art_speed'}, {id:'art_heal'}, {id:'art_rage'},
 ];
-let currentShopTab='consumable';let shopSelectedItem=null;
-function openShop(){document.getElementById('shop-panel').classList.add('open');updateShopSidebar();renderShopGrid(currentShopTab);}
-function closeShop(){document.getElementById('shop-panel').classList.remove('open');shopSelectedItem=null;document.getElementById('shop-confirm').classList.remove('visible');document.getElementById('shop-msg').textContent='';}
-function switchShopTab(type,btn){currentShopTab=type;shopSelectedItem=null;document.getElementById('shop-confirm').classList.remove('visible');document.querySelectorAll('.shop-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderShopGrid(type);}
-function renderShopGrid(filterType){
-  const grid=document.getElementById('shop-grid');grid.innerHTML='';
-  const items=SHOP_CATALOG.filter(entry=>{const db=ITEM_DB[entry.id];if(!db)return false;if(filterType==='all')return true;return db.type===filterType;});
-  for(const entry of items){
-    const db=ITEM_DB[entry.id];const price=getShopBuyPrice(entry.id);const canAfford=player.gold>=price;const rarityColor={common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity];const classLabel=db.forClass?db.forClass.join('/'):'Todos';
-    const div=document.createElement('div');div.className='shop-item'+(canAfford?'':' cant-afford');
-    let extraTag='';
-    if(db.type==='pet'){const ptLabel={healer:'💚 Cura',attack:'⚔ Ataque',tank:'🛡 Tank'}[db.petType]||'Pet';extraTag=`<div class="shop-pet-tag">${ptLabel}</div>`;}
-    else if(db.type==='artifact'){extraTag=`<div class="shop-pet-tag" style="border-color:#8040d0;color:#d090ff;">💎 Artefato</div>`;}
-    div.innerHTML='<span class="shop-item-icon">'+db.icon+'</span><div class="shop-item-rarity" style="color:'+rarityColor+'">'+db.rarity.toUpperCase()+'</div><div class="shop-item-name">'+db.name+'</div><div class="shop-item-desc">'+db.desc+'</div>'+extraTag+'<div class="shop-item-class">'+classLabel+'</div><div class="shop-item-price">🪙 '+price+'</div>';
-    div.addEventListener('click',()=>selectShopItem(entry.id,price,db));div.addEventListener('dblclick',()=>{selectShopItem(entry.id,price,db);confirmBuy();});
-    grid.appendChild(div);
-  }
-  if(items.length===0)grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);font-style:italic;padding:20px;">Sem itens.</div>';
-  document.getElementById('shop-gold-val').textContent=player.gold;
+// ─────────────────────────────────────────────────────────
+// MERCHANT NPC — Thalion, o Andarilho
+// ─────────────────────────────────────────────────────────
+
+// Catalog organizado por classe e slot
+const MERCHANT_CATALOG = {
+  consumable: [
+    { section:'🧪 Poções de Vida',  items:['potion','big_potion','elixir'] },
+    { section:'💧 Poções de Mana',  items:['mana_potion','big_mana_pot'] },
+    { section:'🐾 Pets',            items:['pet_healer','pet_attack','pet_tank'] },
+    { section:'🔧 Utilitários',     items:['art_xp','art_gold','art_auto'] },
+    { section:'🛡 Defesa',          items:['art_hp','art_def'] },
+    { section:'🔴 Dano Global',     items:['art_atk'] },
+    { section:'⚔ Físico',          items:['art_sword','art_bow','art_staff'] },
+    { section:'🌿 Elementais',      items:['art_poison','art_fire','art_ice','art_wind','art_arcane'] },
+    { section:'⚡ Especiais',        items:['art_speed','art_heal','art_rage'] },
+  ],
+  warrior: [
+    { section:'⚔ Arma',      items:['old_sword','steel_sword','war_hammer'] },
+    { section:'🛡 Escudo',    items:['wooden_shield','kite_shield'] },
+    { section:'👑 Elmo',      items:['iron_helm','steel_helm','knight_helm'] },
+    { section:'🧥 Armadura',  items:['chainmail','plate_armor'] },
+    { section:'🧤 Luvas',     items:['iron_gauntlets','steel_gauntlets'] },
+    { section:'👖 Calça',     items:['iron_greaves','steel_greaves'] },
+    { section:'👢 Bota',      items:['iron_boots','steel_boots'] },
+    { section:'💍 Anel',      items:['warrior_ring','silver_ring'] },
+    { section:'📿 Amuleto',   items:['dragon_tooth','silver_amulet'] },
+  ],
+  mage: [
+    { section:'⚔ Arma',      items:['oak_staff','mage_staff','ember_wand','frost_rod'] },
+    { section:'🔯 Foco',      items:['spell_focus','arcane_focus'] },
+    { section:'👑 Elmo',      items:['cloth_hood','wizard_hat'] },
+    { section:'🧥 Armadura',  items:['cloth_robe','robe'] },
+    { section:'🧤 Luvas',     items:['spell_gloves','arcane_gloves'] },
+    { section:'👖 Calça',     items:['cloth_pants','silk_pants'] },
+    { section:'👢 Bota',      items:['cloth_boots','silk_boots'] },
+    { section:'💍 Anel',      items:['mage_ring','mana_ring'] },
+    { section:'📿 Amuleto',   items:['arcane_crystal','herb_charm'] },
+  ],
+  archer: [
+    { section:'⚔ Arma',      items:['short_bow','venom_bow','silver_bow','steel_crossbow'] },
+    { section:'🗝 Aljava',    items:['iron_quiver','silver_quiver'] },
+    { section:'👑 Elmo',      items:['leather_hood','ranger_hood'] },
+    { section:'🧥 Armadura',  items:['leather_armor','studded_leather'] },
+    { section:'🧤 Luvas',     items:['leather_gloves','hunter_gloves'] },
+    { section:'👖 Calça',     items:['leather_pants','ranger_pants'] },
+    { section:'👢 Bota',      items:['leather_boots','swift_boots','traveler_boots'] },
+    { section:'💍 Anel',      items:['archer_ring','copper_ring'] },
+    { section:'📿 Amuleto',   items:['hawk_eye','bone_amulet'] },
+  ],
+};
+
+const MERCHANT_TABS = [
+  { key:'consumable', label:'🧪 Geral' },
+  { key:'warrior',    label:'⚔ Guerreiro' },
+  { key:'mage',       label:'🔮 Mago' },
+  { key:'archer',     label:'🏹 Arqueiro' },
+];
+
+const MERCHANT_QUOTES = [
+  '"Boas mercadorias para quem sabe o que quer…"',
+  '"Já cruzei mais dungeons do que você, acredite."',
+  '"Preços justos. Nunca me reclamaram… os que sobreviveram."',
+  '"Compre logo, os inimigos não esperam."',
+  '"Equipe-se bem e volte vivo."',
+];
+
+// NPC state
+const merchantNpcState = {
+  open: false, x: 0, y: 0, nearPlayer: false,
+  tab: 'consumable', selectedItem: null, _tabSet: false,
+};
+
+function placeMerchantNpc() {
+  // Posição na zona segura — lado esquerdo central
+  merchantNpcState.x = (SAFE_ZONE.tx + 6) * T + T / 2;
+  merchantNpcState.y = (SAFE_ZONE.ty + 7) * T + T / 2;
 }
-function selectShopItem(id,price,db){shopSelectedItem={id,price};document.getElementById('shop-confirm').classList.add('visible');document.getElementById('shop-confirm-icon').textContent=db.icon;document.getElementById('shop-confirm-name').textContent=db.name;document.getElementById('shop-confirm-desc').textContent=db.desc;document.getElementById('shop-confirm-price').textContent=price;document.getElementById('shop-msg').textContent='';const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';}
-function confirmBuy(){
-  if(!shopSelectedItem)return;const{id,price}=shopSelectedItem;const db=ITEM_DB[id];if(!db){showShopMsg('Item inválido','err');return;}
-  if(player.gold<price){showShopMsg('Ouro insuficiente!','err');return;}
-  player.gold-=price;
-  // Belt potions go to belt slots, not inventory
-  if(db.type==='belt_potion'){
-    const added=addPotionToBelt(id);
-    if(!added){player.gold+=price;showShopMsg('Cinto cheio ou poção já presente!','err');return;}
-    showShopMsg('✓ '+db.name+' → cinto ['+db.beltType.toUpperCase()+']!','ok');
-  } else if(db.type==='pet'){
-    if(player.inventory.filter(Boolean).length>=60){player.gold+=price;showShopMsg('Inventário cheio!','err');return;}
-    addItemToInventory(id);activatePet(id);showShopMsg('✓ '+db.name+' ativado!','ok');
-  } else if(db.type==='artifact'){
-    if(player.inventory.filter(Boolean).length>=60){player.gold+=price;showShopMsg('Inventário cheio!','err');return;}
-    addItemToInventory(id);showShopMsg('✓ '+db.name+' adquirido! Equipe em [J]','ok');
+
+function openMerchant() {
+  if (typeof closeAllPanels === 'function') closeAllPanels();
+  merchantNpcState.open = true;
+  merchantNpcState.selectedItem = null;
+  if (!merchantNpcState._tabSet && player) {
+    merchantNpcState.tab = player.classId || 'consumable';
+    merchantNpcState._tabSet = true;
+  }
+  document.getElementById('merchant-panel').classList.add('open');
+  renderMerchant();
+}
+
+function closeMerchant() {
+  merchantNpcState.open = false;
+  merchantNpcState.selectedItem = null;
+  document.getElementById('merchant-panel').classList.remove('open');
+}
+
+// Legacy compat — openShop/closeShop still referenced in key handlers
+function openShop()  { openMerchant(); }
+function closeShop() { closeMerchant(); }
+
+function renderMerchant() {
+  if (!player) return;
+  const tab      = merchantNpcState.tab || 'consumable';
+  const sections = MERCHANT_CATALOG[tab] || [];
+  const gold     = player.gold;
+
+  // Tabs
+  const tabsEl = document.getElementById('merch-tabs');
+  if (tabsEl) {
+    tabsEl.innerHTML = MERCHANT_TABS.map(t =>
+      `<button class="merch-tab ${t.key===tab?'active':''}"
+        onclick="merchantNpcState.tab='${t.key}';merchantNpcState.selectedItem=null;document.getElementById('merch-confirm').classList.remove('visible');renderMerchant()">
+        ${t.label}</button>`
+    ).join('');
+  }
+
+  // Gold
+  const gv = document.getElementById('merch-gold-val');
+  if (gv) gv.textContent = gold;
+
+  // Stats sidebar
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('msh-hp',  Math.ceil(player.hp)+'/'+player.maxHp);
+  set('msh-mp',  Math.ceil(player.mp)+'/'+player.maxMp);
+  set('msh-atk', player.atk);
+  set('msh-def', player.def);
+  set('msh-lvl', player.level);
+
+  // Quote rotation
+  const qEl = document.getElementById('merch-quote');
+  if (qEl && !qEl._set) { qEl.textContent = MERCHANT_QUOTES[Math.floor(Math.random()*MERCHANT_QUOTES.length)]; qEl._set = true; }
+
+  // Item grid by slot sections
+  const col = document.getElementById('merch-items-col');
+  if (!col) return;
+
+  const rarityColor = { common:'#9a9a80', rare:'#5dade2', epic:'#bb8fce', mythic:'#ffe066' };
+
+  col.innerHTML = sections.map(sec => {
+    const itemsHtml = sec.items.map(id => {
+      const db = ITEM_DB[id]; if (!db) return '';
+      const price     = getShopBuyPrice(id);
+      const canAfford = gold >= price;
+      const rc        = rarityColor[db.rarity] || '#9a9a80';
+      const classLabel = db.forClass ? db.forClass.map(c=>({warrior:'Guer',mage:'Mago',archer:'Arq'}[c]||c)).join('/') : 'Todos';
+      return `<div class="merch-item${canAfford?'':' cant-afford'}"
+        onclick="merchantSelectItem('${id}',${price})"
+        ondblclick="merchantSelectItem('${id}',${price});merchantConfirmBuy()">
+        <span class="merch-item-icon">${db.icon}</span>
+        <div class="merch-item-rarity" style="color:${rc}">${db.rarity.toUpperCase()}</div>
+        <div class="merch-item-name">${db.name}</div>
+        <div class="merch-item-desc">${db.desc}</div>
+        <div style="font-size:8px;color:#4a5a28;margin-bottom:3px">${classLabel}</div>
+        <div class="merch-item-price">${canAfford?'🪙 '+price:'❌ '+price}</div>
+      </div>`;
+    }).join('');
+    if (!itemsHtml.trim()) return '';
+    return `<div class="merch-section">
+      <div class="merch-section-title">${sec.section}</div>
+      <div class="merch-grid">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function merchantSelectItem(id, price) {
+  merchantNpcState.selectedItem = { id, price };
+  const db = ITEM_DB[id]; if (!db) return;
+  const conf = document.getElementById('merch-confirm');
+  if (conf) conf.classList.add('visible');
+  const set = (elId, v) => { const el=document.getElementById(elId); if(el) el.textContent=v; };
+  set('mc-icon',  db.icon);
+  set('mc-name',  db.name);
+  set('mc-desc',  db.desc);
+  set('mc-price', price);
+  document.getElementById('merch-buy-msg').textContent = '';
+  const btn = document.getElementById('mc-buy-btn');
+  if (btn) { btn.disabled = player.gold < price; btn.textContent = player.gold >= price ? 'Comprar' : 'Sem ouro'; }
+}
+
+function merchantConfirmBuy() {
+  const sel = merchantNpcState.selectedItem;
+  if (!sel) return;
+  const { id, price } = sel;
+  const db = ITEM_DB[id];
+  if (!db) return;
+  if (player.gold < price) { showMerchMsg('❌ Ouro insuficiente!','err'); return; }
+  player.gold -= price;
+
+  if (db.type === 'belt_potion') {
+    const added = addPotionToBelt(id);
+    if (!added) { player.gold += price; showMerchMsg('Cinto cheio!','err'); return; }
+    showMerchMsg('✓ '+db.name+' → cinto!','ok');
+  } else if (db.type === 'pet') {
+    if (player.inventory.filter(Boolean).length >= 60) { player.gold += price; showMerchMsg('Inventário cheio!','err'); return; }
+    addItemToInventory(id); activatePet(id); showMerchMsg('✓ '+db.name+' ativado!','ok');
+  } else if (db.type === 'artifact') {
+    if (player.inventory.filter(Boolean).length >= 60) { player.gold += price; showMerchMsg('Inventário cheio!','err'); return; }
+    addItemToInventory(id); showMerchMsg('✓ '+db.name+' obtido! [J] p/ equipar','ok');
   } else {
-    if(player.inventory.filter(Boolean).length>=60){player.gold+=price;showShopMsg('Inventário cheio! (60/60)','err');return;}
-    addItemToInventory(id);showShopMsg('✓ '+db.name+' comprado!','ok');
+    if (player.inventory.filter(Boolean).length >= 60) { player.gold += price; showMerchMsg('Inventário cheio!','err'); return; }
+    addItemToInventory(id); showMerchMsg('✓ '+db.name+' comprado!','ok');
   }
-  document.getElementById('shop-gold-val').textContent=player.gold;document.getElementById('hud-gold').textContent=player.gold;
-  const btn=document.getElementById('shop-buy-btn');btn.disabled=player.gold<price;btn.textContent=player.gold>=price?'Comprar':'Sem ouro';
-  renderShopGrid(currentShopTab);selectShopItem(id,price,db);addLog('🛒 Comprou '+db.name+' por '+price+'🪙','lchest');
+
+  addLog('🛒 Comprou '+db.name+' por '+price+'🪙','lchest');
+  if (typeof updateHUD === 'function') updateHUD();
+  renderMerchant();
+  merchantSelectItem(id, price);
 }
-function showShopMsg(msg,type){const el=document.getElementById('shop-msg');el.textContent=msg;el.className='shop-msg '+type;setTimeout(()=>{if(el.textContent===msg)el.textContent='';},2500);}
-function updateShopSidebar(){if(!player)return;document.getElementById('sh-hp').textContent=Math.ceil(player.hp)+'/'+player.maxHp;document.getElementById('sh-mp').textContent=Math.ceil(player.mp)+'/'+player.maxMp;document.getElementById('sh-atk').textContent=player.atk;document.getElementById('sh-def').textContent=player.def;document.getElementById('sh-lvl').textContent=player.level;document.getElementById('shop-gold-val').textContent=player.gold;}
+
+function showMerchMsg(msg, type) {
+  const el = document.getElementById('merch-buy-msg');
+  if (!el) return;
+  el.textContent = msg; el.className = 'merch-buy-msg '+type;
+  clearTimeout(el._t); el._t = setTimeout(() => { if(el.textContent===msg) el.textContent=''; }, 2500);
+}
+
+// ── Draw NPC in world ─────────────────────────────────────
+function drawMerchantNpc() {
+  if (!ctx || !player || !merchantNpcState.x) return;
+  const nx = merchantNpcState.x, ny = merchantNpcState.y;
+  if (nx < cam.x-100 || nx > cam.x+W+100 || ny < cam.y-100 || ny > cam.y+H+100) return;
+  const now = Date.now();
+
+  // Ambient glow — green/gold
+  const pulse = Math.sin(now / 800) * 0.35 + 0.65;
+  const aura = ctx.createRadialGradient(nx, ny, 5, nx, ny, 44);
+  aura.addColorStop(0, `rgba(80,160,40,${0.22 * pulse})`);
+  aura.addColorStop(1, 'rgba(80,160,40,0)');
+  ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(nx, ny, 44, 0, Math.PI*2); ctx.fill();
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(nx, ny+22, 16, 5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Cloak body
+  ctx.fillStyle = '#1a3008';
+  ctx.beginPath(); ctx.roundRect(nx-13, ny-10, 26, 28, [4,4,6,6]); ctx.fill();
+  // Cloak trim
+  ctx.strokeStyle = '#4a8018'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(nx-13, ny-10, 26, 28, [4,4,6,6]); ctx.stroke();
+  // Belt
+  ctx.fillStyle = '#3a2008'; ctx.fillRect(nx-11, ny+6, 22, 4);
+  ctx.fillStyle = '#c08020';
+  ctx.beginPath(); ctx.roundRect(nx-3, ny+5, 6, 6, [2]); ctx.fill();
+
+  // Satchel on side
+  ctx.fillStyle = '#4a2c0c';
+  ctx.beginPath(); ctx.roundRect(nx+10, ny, 10, 12, [3]); ctx.fill();
+  ctx.strokeStyle = '#7a4018'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(nx+10, ny, 10, 12, [3]); ctx.stroke();
+  // Satchel clasp
+  ctx.fillStyle = '#c08020';
+  ctx.beginPath(); ctx.arc(nx+15, ny+6, 2, 0, Math.PI*2); ctx.fill();
+
+  // Arms
+  ctx.strokeStyle = '#c89060'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(nx-13, ny-2); ctx.lineTo(nx-20, ny+6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(nx+13, ny-2); ctx.lineTo(nx+20, ny+6); ctx.stroke();
+  // Staff in right hand
+  ctx.strokeStyle = '#6a3c10'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(nx+20, ny+6); ctx.lineTo(nx+24, ny-28); ctx.stroke();
+  // Staff orb
+  const orbPulse = Math.sin(now / 400) * 0.3 + 0.7;
+  const orbGrad = ctx.createRadialGradient(nx+24, ny-30, 2, nx+24, ny-30, 8);
+  orbGrad.addColorStop(0, `rgba(140,220,60,${orbPulse})`);
+  orbGrad.addColorStop(1, 'rgba(60,140,20,0)');
+  ctx.fillStyle = orbGrad;
+  ctx.beginPath(); ctx.arc(nx+24, ny-30, 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = `rgba(180,255,80,${orbPulse})`;
+  ctx.beginPath(); ctx.arc(nx+24, ny-30, 4, 0, Math.PI*2); ctx.fill();
+
+  // Head
+  ctx.fillStyle = '#c8906a';
+  ctx.beginPath(); ctx.arc(nx, ny-24, 11, 0, Math.PI*2); ctx.fill();
+  // Hood
+  ctx.fillStyle = '#142208';
+  ctx.beginPath();
+  ctx.moveTo(nx-13, ny-20);
+  ctx.quadraticCurveTo(nx-6, ny-46, nx, ny-38);
+  ctx.quadraticCurveTo(nx+6, ny-46, nx+13, ny-20);
+  ctx.quadraticCurveTo(nx, ny-16, nx-13, ny-20);
+  ctx.fill();
+  ctx.strokeStyle = '#3a6010'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(nx-13, ny-20); ctx.quadraticCurveTo(nx-6, ny-46, nx, ny-38); ctx.quadraticCurveTo(nx+6, ny-46, nx+13, ny-20); ctx.stroke();
+
+  // Eyes
+  ctx.fillStyle = '#2a1a08';
+  ctx.beginPath(); ctx.arc(nx-3.5, ny-26, 1.8, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(nx+3.5, ny-26, 1.8, 0, Math.PI*2); ctx.fill();
+  // Beard
+  ctx.fillStyle = '#8a6030';
+  ctx.beginPath(); ctx.ellipse(nx, ny-16, 5, 4, 0, 0, Math.PI); ctx.fill();
+
+  // Floating coins animation
+  for (let i = 0; i < 3; i++) {
+    const angle = (now / 1200 + i * 2.1) % (Math.PI * 2);
+    const coinX = nx + Math.cos(angle) * 18;
+    const coinY = ny - 5 + Math.sin(angle * 2) * 4;
+    const coinA = Math.abs(Math.sin(now / 600 + i)) * 0.7 + 0.2;
+    ctx.fillStyle = `rgba(200,160,20,${coinA})`;
+    ctx.beginPath(); ctx.arc(coinX, coinY, 3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Name tag
+  const dist = Math.hypot(player.x - nx, player.y - ny);
+  const alpha = dist < 140 ? Math.min(1, (140 - dist) / 70) : 0;
+  if (alpha > 0) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(4,8,2,.95)';
+    ctx.beginPath(); ctx.roundRect(nx-52, ny-58, 104, 17, [4]); ctx.fill();
+    ctx.strokeStyle = 'rgba(80,160,30,.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(nx-52, ny-58, 104, 17, [4]); ctx.stroke();
+    ctx.fillStyle = '#a8d860'; ctx.font = 'bold 10px Cinzel, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🌿 Thalion', nx, ny-50);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ── Proximity + prompt ────────────────────────────────────
+// Patch into the existing updateNpcProximity chain
+const _mOrigUpdateNpcProx = typeof updateNpcProximity === 'function' ? updateNpcProximity : null;
+updateNpcProximity = function() {
+  if (_mOrigUpdateNpcProx) _mOrigUpdateNpcProx.apply(this, arguments);
+  if (!player || !merchantNpcState.x) return;
+  const dist = Math.hypot(player.x - merchantNpcState.x, player.y - merchantNpcState.y);
+  merchantNpcState.nearPlayer = dist < 65;
+};
+
+// Patch tryOpenChest to also open merchant
+const _mOrigTryOpenChest = typeof tryOpenChest === 'function' ? tryOpenChest : null;
+tryOpenChest = function() {
+  // Chest takes priority
+  const nearChest = chests.find(c => !c.open && Math.hypot(c.x-player.x, c.y-player.y) < 55);
+  if (nearChest) { if (_mOrigTryOpenChest) _mOrigTryOpenChest(); return; }
+
+  // Merchant NPC
+  if (merchantNpcState.nearPlayer) { openMerchant(); return; }
+
+  // Fall through to original (Archimedes etc.)
+  if (_mOrigTryOpenChest) _mOrigTryOpenChest();
+};
+
+// Patch updatePlayer prompt display to show merchant hint
+const _mOrigUpdatePlayer = typeof updatePlayer === 'function' ? updatePlayer : null;
+// (proximity prompt is handled inline in updatePlayer — patch via the draw loop instead)
+
+// Patch closeAllPanels to include merchant
+const _mOrigCloseAll = typeof closeAllPanels === 'function' ? closeAllPanels : null;
+closeAllPanels = function() {
+  if (_mOrigCloseAll) _mOrigCloseAll.apply(this, arguments);
+  if (merchantNpcState.open) closeMerchant();
+};
+
+// Patch renderWorld / render loop to draw NPC
+const _mOrigRender = typeof render === 'function' ? render : null;
+
+// Patch startGame to place NPC
+const _mOrigStartGame2 = typeof startGame === 'function' ? startGame : null;
+if (_mOrigStartGame2) {
+  startGame = function(...a) {
+    _mOrigStartGame2.apply(this, a);
+    placeMerchantNpc();
+  };
+}
+
+// Update proximity prompt inside updatePlayer (patch the prompt display)
+const _mOrigUpdatePlayer2 = typeof updatePlayer === 'function' ? updatePlayer : null;
+if (_mOrigUpdatePlayer2) {
+  updatePlayer = function(dt) {
+    _mOrigUpdatePlayer2.apply(this, arguments);
+    if (!player || !merchantNpcState.x) return;
+    const dist = Math.hypot(player.x - merchantNpcState.x, player.y - merchantNpcState.y);
+    merchantNpcState.nearPlayer = dist < 65;
+    const prompt = document.getElementById('chest-prompt');
+    if (prompt && prompt.style.display === 'none' && merchantNpcState.nearPlayer) {
+      prompt.style.display = 'block';
+      prompt.textContent = '[F] Falar com Thalion';
+      prompt.style.color = '#a8d860';
+    }
+  };
+}
+
+// Stubs for backwards compat
+function switchShopTab(){}
+function renderShopGrid(){}
+function selectShopItem(){}
+function confirmBuy(){ merchantConfirmBuy(); }
+function showShopMsg(msg,type){ showMerchMsg(msg,type); }
+function updateShopSidebar(){}
+
+console.log('[Merchant NPC] Thalion carregado ✓');
 
 // GAME OVER
 function triggerGameOver(){player.isAlive=false;gameState='dead';setTimeout(()=>{document.getElementById('screen-gameover').classList.add('active');document.getElementById('go-stats').innerHTML=`Nível ${player.level} · ${kills} eliminados · ${player.gold} 🪙<br><em>${player.subclass||CLASS_DEF[player.classId].name}</em><br>Baús abertos: ${chests.filter(c=>c.open).length}/${chests.length}`;},600);}
@@ -5523,17 +5974,13 @@ Object.assign(ITEM_DB, {
   berserker_heart:{name:'Coração Berserker',icon:'❤️', type:'armor', slot:'amulet', effect:{atk:14,hp:60},    desc:'+14ATK +60HP',    rarity:'epic',   forClass:['warrior']},
 });
 
-// Ensure existing items have slot field (backwards compat)
+// Garante que todos os itens têm o campo slot preenchido.
+// Nota: itens com slot:'chest' vão no slot de equipamento 'armor' via SLOT_ACCEPTS.
 (function patchExistingSlots() {
-  const slotMap = {
-    weapon: 'weapon', offhand: 'offhand',
-    head: 'head', chest: 'chest', gloves: 'gloves',
-    legs: 'legs', boots: 'boots'
-  };
   for (const [id, db] of Object.entries(ITEM_DB)) {
     if (!db.slot) {
       if (db.type === 'weapon') ITEM_DB[id].slot = 'weapon';
-      else if (db.type === 'armor') ITEM_DB[id].slot = 'chest'; // default armor to chest
+      else if (db.type === 'armor') ITEM_DB[id].slot = 'chest'; // padrão: peitoral
     }
   }
 })();
@@ -5541,27 +5988,26 @@ Object.assign(ITEM_DB, {
 // ─────────────────────────────────────────────────────────
 //  EQUIPMENT SYSTEM — all slots support
 // ─────────────────────────────────────────────────────────
-const ALL_SLOTS = ['weapon','offhand','head','chest','gloves','legs','boots','ring1','ring2','amulet'];
+// Slots de equipamento — 8 exatos: arma, escudo, elmo, armadura, luvas, calça, bota, anel, amuleto
+const ALL_SLOTS = ['weapon','offhand','head','armor','gloves','legs','boots','ring1','amulet'];
 const SLOT_LABEL = {
-  weapon:'⚔ Arma', offhand:'🛡 Mão Sec.', head:'👑 Cabeça',
-  chest:'🧥 Peitoral', gloves:'🧤 Luvas', legs:'👖 Calças',
-  boots:'👢 Botas', ring1:'💍 Anel 1', ring2:'💍 Anel 2', amulet:'📿 Amuleto'
+  weapon: '⚔ Arma',      offhand:'🛡 Escudo',   head:'👑 Elmo',
+  armor:  '🧥 Armadura',  gloves: '🧤 Luvas',    legs:'👖 Calça',
+  boots:  '👢 Bota',      ring1:  '💍 Anel',     amulet:'📿 Amuleto',
 };
 const SLOT_ICON_EMPTY = {
-  weapon:'⚔', offhand:'🛡', head:'👑', chest:'🧥',
-  gloves:'🧤', legs:'👖', boots:'👢', ring1:'💍', ring2:'💍', amulet:'📿'
+  weapon:'⚔', offhand:'🛡', head:'👑', armor:'🧥',
+  gloves:'🧤', legs:'👖',   boots:'👢', ring1:'💍', amulet:'📿',
 };
-// Which item slot-type can go in each equipment slot
 const SLOT_ACCEPTS = {
   weapon:  ['weapon'],
   offhand: ['offhand'],
   head:    ['head'],
-  chest:   ['chest'],
+  armor:   ['chest'],   // itens com slot:'chest' vão no slot 'armor'
   gloves:  ['gloves'],
   legs:    ['legs'],
   boots:   ['boots'],
   ring1:   ['ring'],
-  ring2:   ['ring'],
   amulet:  ['amulet'],
 };
 
@@ -5734,9 +6180,10 @@ function createPlayer(classId) {
     activePetType: null,
     petLevel: 0,
     belt: { hp: null, mp: null },
-    art: {xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0, dmgReduce:0,
-          poisonMult:1, fireMult:1, iceMult:1, swordMult:1, bowMult:1,
-          autoCollect:false, hpApplied:0}
+    art: {xpMult:1, goldMult:1, atkMult:1, maxHpFlat:0, maxHpPct:0,
+          dmgReduce:0, poisonMult:1, fireMult:1, iceMult:1,
+          windMult:1, arcaneMult:1, swordMult:1, bowMult:1, staffMult:1,
+          atkSpeedMult:1, healMult:1, autoCollect:false, hpApplied:0, hpPctApplied:0}
   };
 }
 
@@ -6072,7 +6519,10 @@ SHOP_CATALOG.length = 0;
   // Pets
   'pet_healer','pet_attack','pet_tank',
   // Artifacts
-  'art_xp','art_gold','art_atk','art_hp','art_def','art_poison','art_fire','art_ice','art_sword','art_bow','art_auto',
+  'art_xp','art_gold','art_atk','art_hp','art_def',
+  'art_poison','art_fire','art_ice','art_wind','art_arcane',
+  'art_sword','art_bow','art_staff',
+  'art_speed','art_heal','art_rage','art_auto',
 ].forEach(id => SHOP_CATALOG.push({id}));
 
 // ─────────────────────────────────────────────────────────
@@ -9227,7 +9677,8 @@ console.log('[PetTrainer] Sistema de Treinamento de Pets carregado ✓');
 }
 .ench-btn:hover { border-color: #40c870; color: #80ffa0; background: #081e10; }
 .ench-btn.active { border-color: #40c870; color: #c0ffd0; background: linear-gradient(135deg,#0c2e18,#061a0c); box-shadow: 0 0 8px rgba(64,200,112,.3); }
-.ench-btn.incompatible { opacity: .3; cursor: not-allowed; }
+.ench-btn.ench-match { border-color: #b08820; color: #ffe080; background: #1a1004; }
+.ench-btn.ench-match:hover { border-color: #ffe066; box-shadow: 0 0 8px rgba(255,200,40,.3); }
 </style>
 
 <!-- Smithy Panel -->
@@ -9387,7 +9838,7 @@ function _applyForgeToEquipBonuses() {
 }
 
 // Slots que o ferreiro pode melhorar (conforme novo sistema)
-const SMITHY_SLOTS = ['weapon','offhand','head','gloves','boots','legs','amulet','ring1'];
+const SMITHY_SLOTS = ['weapon','offhand','head','armor','gloves','boots','legs','amulet','ring1'];
 
 function renderSmithyPanel() {
   const body = document.getElementById('smithy-body');
@@ -9498,69 +9949,94 @@ function renderSmithyPanel() {
 // ── ALCHEMIST CONFIG ─────────────────────────────────────
 const ALCHEMIST_CONFIG = {
   maxLevel: 3,
-  upgradeCost: [0, 1000, 2500, 5000],
+  upgradeCost: [0, 800, 2000, 4000],
 
-  // Enchantments — each has: label, icon, description, stat key, values per level
-  // subclasses: array of compatible subclass ids, or 'all'
+  // Encantamentos — abertos a TODAS as classes
+  // matchClass: subclasses que recebem bônus EXTRA (+50% sobre o valor base)
   enchantments: {
     poison: {
-      label: 'Veneno',     icon: '☠',  color: '#8e44ad',
-      desc:  'Aumenta dano de veneno',
-      stat:  'poisonMult', values: [0, 1.20, 1.40, 1.60],
-      compatible: ['poison'],
-      apply: (p, lvl) => { p.art.poisonMult = 1 + (lvl * 0.20); },
+      label:'Veneno',  icon:'☠',  color:'#8e44ad', glowColor:'#a855f7',
+      desc: 'Dano de veneno. Arqueiro Venenoso recebe bônus extra.',
+      stat:'poisonMult', values:[0,1.30,1.60,2.00],
+      matchClass:['poison'],
+      apply:(p,lvl)=>{ p.art.poisonMult = p.subSkill==='poison' ? 1+(lvl*0.50) : 1+(lvl*0.30); },
     },
     fire: {
-      label: 'Fogo',       icon: '🔥', color: '#e74c3c',
-      desc:  'Aumenta dano de fogo',
-      stat:  'fireMult',   values: [0, 1.20, 1.40, 1.60],
-      compatible: ['fire_mage', 'fire_archer'],
-      apply: (p, lvl) => { p.art.fireMult = 1 + (lvl * 0.20); },
+      label:'Fogo',    icon:'🔥', color:'#e74c3c', glowColor:'#ff6040',
+      desc: 'Dano de fogo. Magos/Arqueiros de Fogo recebem bônus extra.',
+      stat:'fireMult', values:[0,1.30,1.60,2.00],
+      matchClass:['fire_mage','fire_archer'],
+      apply:(p,lvl)=>{ const m=['fire_mage','fire_archer'].includes(p.subSkill); p.art.fireMult = m ? 1+(lvl*0.50) : 1+(lvl*0.30); },
     },
     ice: {
-      label: 'Gelo',       icon: '❄️', color: '#5dade2',
-      desc:  'Aumenta dano de gelo',
-      stat:  'iceMult',    values: [0, 1.20, 1.40, 1.60],
-      compatible: ['ice'],
-      apply: (p, lvl) => { p.art.iceMult = 1 + (lvl * 0.20); },
+      label:'Gelo',    icon:'❄️', color:'#5dade2', glowColor:'#60c8ff',
+      desc: 'Dano de gelo. Mago de Gelo recebe bônus extra.',
+      stat:'iceMult', values:[0,1.30,1.60,2.00],
+      matchClass:['ice'],
+      apply:(p,lvl)=>{ p.art.iceMult = p.subSkill==='ice' ? 1+(lvl*0.50) : 1+(lvl*0.30); },
     },
-    sword: {
-      label: 'Espada',     icon: '⚔', color: '#e8a020',
-      desc:  'Aumenta dano de espada',
-      stat:  'swordMult',  values: [0, 1.20, 1.40, 1.60],
-      compatible: ['defensive', 'berserker', 'holy'],
-      apply: (p, lvl) => { p.art.swordMult = 1 + (lvl * 0.20); },
-    },
-    bow: {
-      label: 'Arco',       icon: '🏹', color: '#27ae60',
-      desc:  'Aumenta dano de arco',
-      stat:  'bowMult',    values: [0, 1.20, 1.40, 1.60],
-      compatible: ['wind', 'fire_archer', 'poison'],
-      apply: (p, lvl) => { p.art.bowMult = 1 + (lvl * 0.20); },
-    },
-    arcane: {
-      label: 'Magia',      icon: '🌀', color: '#c070ff',
-      desc:  'Aumenta todo o dano mágico',
-      stat:  'atkMult',    values: [0, 1.15, 1.30, 1.45],
-      compatible: ['arcane', 'ice', 'fire_mage'],
-      apply: (p, lvl) => { p.art.atkMult = 1 + (lvl * 0.15); },
-    },
-    heal: {
-      label: 'Cura',       icon: '💚', color: '#2ecc71',
-      desc:  'Aumenta cura passiva',
-      stat:  'holyRegen',  values: [0, 6, 10, 16],
-      compatible: ['holy'],
-      apply: (p, lvl) => {
-        p.holyRegen = lvl > 0;
-        p._enchHealRate = [0, 6, 10, 16][lvl]; // overrides base 5 HP
+    wind: {
+      label:'Vento',   icon:'💨', color:'#1abc9c', glowColor:'#40ffe0',
+      desc: 'Dano de vento + velocidade. Arqueiro do Vento recebe bônus extra.',
+      stat:'windMult', values:[0,1.25,1.55,1.90],
+      matchClass:['wind'],
+      apply:(p,lvl)=>{
+        p.art.windMult = p.subSkill==='wind' ? 1+(lvl*0.47) : 1+(lvl*0.25);
+        p.art.atkSpeedMult = p.subSkill==='wind' ? 1+(lvl*0.20) : 1+(lvl*0.10);
+        if (p._baseAtkSpeed) p.atkSpeed = Math.max(150, Math.round(p._baseAtkSpeed / p.art.atkSpeedMult));
       },
     },
+    arcane: {
+      label:'Arcano',  icon:'🌀', color:'#c070ff', glowColor:'#d090ff',
+      desc: 'Dano arcano global. Mago Arcano recebe bônus extra.',
+      stat:'arcaneMult', values:[0,1.25,1.55,1.90],
+      matchClass:['arcane'],
+      apply:(p,lvl)=>{ p.art.arcaneMult = p.subSkill==='arcane' ? 1+(lvl*0.47) : 1+(lvl*0.25); },
+    },
+    staff: {
+      label:'Cajado',  icon:'🔮', color:'#9b59b6', glowColor:'#c090ff',
+      desc: 'Dano de cajado. Todos os magos recebem bônus extra.',
+      stat:'staffMult', values:[0,1.25,1.55,1.90],
+      matchClass:['arcane','ice','fire_mage'],
+      apply:(p,lvl)=>{ const m=['arcane','ice','fire_mage'].includes(p.subSkill); p.art.staffMult = m ? 1+(lvl*0.47) : 1+(lvl*0.25); },
+    },
+    sword: {
+      label:'Espada',  icon:'⚔',  color:'#e8a020', glowColor:'#ffd060',
+      desc: 'Dano de espada. Subclasses guerreiro recebem bônus extra.',
+      stat:'swordMult', values:[0,1.30,1.60,2.00],
+      matchClass:['defensive','berserker','holy'],
+      apply:(p,lvl)=>{ const m=['defensive','berserker','holy'].includes(p.subSkill); p.art.swordMult = m ? 1+(lvl*0.50) : 1+(lvl*0.30); },
+    },
+    bow: {
+      label:'Arco',    icon:'🏹', color:'#27ae60', glowColor:'#40e880',
+      desc: 'Dano de arco. Subclasses arqueiro recebem bônus extra.',
+      stat:'bowMult', values:[0,1.30,1.60,2.00],
+      matchClass:['wind','fire_archer','poison'],
+      apply:(p,lvl)=>{ const m=['wind','fire_archer','poison'].includes(p.subSkill); p.art.bowMult = m ? 1+(lvl*0.50) : 1+(lvl*0.30); },
+    },
+    heal: {
+      label:'Cura',    icon:'💚', color:'#2ecc71', glowColor:'#50ff90',
+      desc: 'Cura passiva. Cavaleiro Sagrado recebe mais cura.',
+      stat:'holyRegen', values:[0,8,15,25],
+      matchClass:['holy'],
+      apply:(p,lvl)=>{ p.holyRegen=lvl>0; p._enchHealRate = p.subSkill==='holy' ? [0,14,25,40][lvl] : [0,8,15,25][lvl]; },
+    },
     shield: {
-      label: 'Escudo',     icon: '🛡', color: '#3498db',
-      desc:  'Reduz dano recebido',
-      stat:  'dmgReduce',  values: [0, 0.10, 0.20, 0.30],
-      compatible: ['defensive'],
-      apply: (p, lvl) => { p.art.dmgReduce = lvl * 0.10; },
+      label:'Escudo',  icon:'🛡',  color:'#3498db', glowColor:'#60b0ff',
+      desc: 'Reduz dano recebido. Cavaleiro Defensivo recebe redução extra.',
+      stat:'dmgReduce', values:[0,0.12,0.22,0.35],
+      matchClass:['defensive'],
+      apply:(p,lvl)=>{ p.art.dmgReduce = p.subSkill==='defensive' ? lvl*0.18 : lvl*0.12; },
+    },
+    speed: {
+      label:'Velocidade',icon:'⚡',color:'#f0c020', glowColor:'#ffe060',
+      desc: 'Velocidade de ataque. Arqueiro do Vento recebe bônus extra.',
+      stat:'atkSpeedMult', values:[0,1.15,1.30,1.50],
+      matchClass:['wind'],
+      apply:(p,lvl)=>{
+        p.art.atkSpeedMult = p.subSkill==='wind' ? 1+(lvl*0.30) : 1+(lvl*0.15);
+        if (p._baseAtkSpeed) p.atkSpeed = Math.max(150, Math.round(p._baseAtkSpeed / p.art.atkSpeedMult));
+      },
     },
   },
 };
@@ -9611,15 +10087,19 @@ function applyEnchantment(enchKey, level) {
 function _clearEnchantment(key) {
   const cfg = ALCHEMIST_CONFIG.enchantments[key];
   if (!cfg) return;
-  // Reset the affected stat
-  if (cfg.stat === 'poisonMult') player.art.poisonMult = 1;
-  else if (cfg.stat === 'fireMult')   player.art.fireMult   = 1;
-  else if (cfg.stat === 'iceMult')    player.art.iceMult    = 1;
-  else if (cfg.stat === 'swordMult')  player.art.swordMult  = 1;
-  else if (cfg.stat === 'bowMult')    player.art.bowMult    = 1;
-  else if (cfg.stat === 'atkMult')    player.art.atkMult    = 1;
-  else if (cfg.stat === 'dmgReduce')  player.art.dmgReduce  = 0;
-  else if (cfg.stat === 'holyRegen')  { player.holyRegen = false; player._enchHealRate = 0; }
+  const a = player.art;
+  if (cfg.stat === 'poisonMult')   a.poisonMult   = 1;
+  else if (cfg.stat === 'fireMult')    a.fireMult    = 1;
+  else if (cfg.stat === 'iceMult')     a.iceMult     = 1;
+  else if (cfg.stat === 'windMult')  { a.windMult    = 1; a.atkSpeedMult = 1; if(player._baseAtkSpeed) player.atkSpeed = player._baseAtkSpeed; }
+  else if (cfg.stat === 'arcaneMult')  a.arcaneMult  = 1;
+  else if (cfg.stat === 'staffMult')   a.staffMult   = 1;
+  else if (cfg.stat === 'swordMult')   a.swordMult   = 1;
+  else if (cfg.stat === 'bowMult')     a.bowMult     = 1;
+  else if (cfg.stat === 'atkMult')     a.atkMult     = 1;
+  else if (cfg.stat === 'atkSpeedMult'){ a.atkSpeedMult=1; if(player._baseAtkSpeed) player.atkSpeed=player._baseAtkSpeed; }
+  else if (cfg.stat === 'dmgReduce')   a.dmgReduce   = 0;
+  else if (cfg.stat === 'holyRegen') { player.holyRegen = false; player._enchHealRate = 0; }
 }
 
 function _enchWeaponGlow(color) {
@@ -9670,44 +10150,75 @@ function renderAlchemistPanel() {
   const rarityColor = { common:'#aaa', rare:'#5dade2', epic:'#bb8fce' }[weaponDb.rarity] || '#aaa';
   const enchGlow = curCfg ? `0 0 14px ${curCfg.color}40` : 'none';
 
-  // Enchantment grid
+  // Enchantment grid — all open to all classes
   const enchKeys = Object.keys(ALCHEMIST_CONFIG.enchantments);
   const gridHtml = `<div class="ench-grid">` + enchKeys.map(key => {
     const cfg = ALCHEMIST_CONFIG.enchantments[key];
     const isActive   = key === selKey;
     const hasCurrent = curEnch.key === key;
-    const incomp     = cfg.compatible !== 'all' && subclass && !cfg.compatible.includes(subclass);
-    return `<button class="ench-btn ${isActive?'active':''} ${incomp?'incompatible':''}"
-      onclick="${incomp ? '' : `alchemistState.selectedEnch='${key}';renderAlchemistPanel()`}"
-      title="${cfg.desc}${hasCurrent ? ' [Equipado Nv.'+curEnch.level+']':''}"
-    >${cfg.icon}<br><span style="font-size:10px">${cfg.label}${hasCurrent?` ✦`:''}</span></button>`;
+    const isMatch    = cfg.matchClass && subclass && cfg.matchClass.includes(subclass);
+    return `<button class="ench-btn ${isActive?'active':''} ${isMatch?'ench-match':''}"
+      onclick="alchemistState.selectedEnch='${key}';renderAlchemistPanel()"
+      title="${cfg.desc}${hasCurrent ? ' [Nv.'+curEnch.level+']':''}${isMatch?' ★ Bônus de Classe':''}"
+      style="${isActive ? `border-color:${cfg.color};box-shadow:0 0 8px ${cfg.color}60;` : ''}"
+    >${cfg.icon}<br><span style="font-size:10px">${cfg.label}${hasCurrent?` ✦`:''}${isMatch?' ★':''}</span></button>`;
   }).join('') + `</div>`;
 
   // Upgrade section
+  const selIsMatch = selCfg.matchClass && subclass && selCfg.matchClass.includes(subclass);
   const selValues = selCfg.values;
   const curVal = selValues[curSelLvl];
   const nextVal = selValues[nextLvl];
-  let previewText = '';
-  if (selCfg.stat === 'dmgReduce') {
-    previewText = `Redução atual: <span class="craft-preview-val">${Math.round((curVal||0)*100)}%</span> → Nível ${nextLvl}: <span class="craft-preview-new">${Math.round(nextVal*100)}%</span>`;
-  } else if (selCfg.stat === 'holyRegen') {
-    previewText = `Cura atual: <span class="craft-preview-val">${curVal||0} HP/s</span> → Nível ${nextLvl}: <span class="craft-preview-new">${nextVal} HP/s</span>`;
-  } else {
-    const pct = v => v ? `${Math.round((v-1)*100)}%` : '0%';
-    previewText = `Bônus atual: <span class="craft-preview-val">+${pct(curVal)}</span> → Nível ${nextLvl}: <span class="craft-preview-new">+${pct(nextVal)}</span>`;
+  const pct = v => v ? `${Math.round((v-1)*100)}%` : '0%';
+
+  // Calculate what apply() would actually produce for display
+  function calcApplied(lvl) {
+    const stat = selCfg.stat;
+    if (stat === 'dmgReduce')   return selIsMatch ? lvl*0.18 : lvl*0.12;
+    if (stat === 'holyRegen')   return selIsMatch ? [0,14,25,40][lvl] : [0,8,15,25][lvl];
+    if (stat === 'atkSpeedMult')return selIsMatch ? 1+(lvl*0.30) : 1+(lvl*0.15);
+    if (stat === 'windMult')    return selIsMatch ? 1+(lvl*0.47) : 1+(lvl*0.25);
+    if (stat === 'arcaneMult')  return selIsMatch ? 1+(lvl*0.47) : 1+(lvl*0.25);
+    if (stat === 'staffMult')   return selIsMatch ? 1+(lvl*0.47) : 1+(lvl*0.25);
+    if (stat === 'swordMult')   return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
+    if (stat === 'bowMult')     return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
+    if (stat === 'poisonMult')  return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
+    if (stat === 'fireMult')    return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
+    if (stat === 'iceMult')     return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
+    return nextVal;
   }
-  if (isSwitch) previewText += `<br><span style="color:#e74c3c;font-size:10px">⚠ Substituirá ${curCfg?.icon} ${curCfg?.label}</span>`;
+
+  const curApplied  = calcApplied(curSelLvl);
+  const nextApplied = calcApplied(nextLvl);
+
+  let previewText = '';
+  const stat = selCfg.stat;
+  if (stat === 'dmgReduce') {
+    previewText = `Redução atual: <span class="craft-preview-val">${Math.round((curApplied||0)*100)}%</span> → Nv.${nextLvl}: <span class="craft-preview-new">${Math.round(nextApplied*100)}%</span>`;
+  } else if (stat === 'holyRegen') {
+    previewText = `Cura atual: <span class="craft-preview-val">${curApplied||0} HP/s</span> → Nv.${nextLvl}: <span class="craft-preview-new">${nextApplied} HP/s</span>`;
+  } else if (stat === 'atkSpeedMult') {
+    previewText = `Vel. atual: <span class="craft-preview-val">+${pct(curApplied||1)}</span> → Nv.${nextLvl}: <span class="craft-preview-new">+${pct(nextApplied)}</span>`;
+  } else if (stat === 'windMult') {
+    const spdNext = selIsMatch ? 1+(nextLvl*0.20) : 1+(nextLvl*0.10);
+    previewText = `Dano vento: <span class="craft-preview-val">+${pct(curApplied||1)}</span> → <span class="craft-preview-new">+${pct(nextApplied)}</span><br>Vel. ataque: <span class="craft-preview-new">+${pct(spdNext)}</span>`;
+  } else {
+    previewText = `Bônus atual: <span class="craft-preview-val">+${pct(curApplied||1)}</span> → Nv.${nextLvl}: <span class="craft-preview-new">+${pct(nextApplied)}</span>`;
+  }
+
+  if (selIsMatch) previewText += `<br><span style="color:#ffe066;font-size:10px">★ Bônus de Classe ativo — dano extra para sua subclasse!</span>`;
+  if (isSwitch)   previewText += `<br><span style="color:#e74c3c;font-size:10px">⚠ Substituirá ${curCfg?.icon} ${curCfg?.label}</span>`;
 
   const upgradeHtml = isMaxed
     ? `<div class="craft-maxed">✨ Encantamento no Nível Máximo<div class="craft-maxed-sub">Esta runa atingiu sua plena potência.</div></div>`
     : `<div class="craft-upgrade-box">
-        <div class="craft-upgrade-title">${selCfg.icon} ${selCfg.label} · Nível ${nextLvl}</div>
+        <div class="craft-upgrade-title" style="color:${selCfg.color}">${selCfg.icon} ${selCfg.label} · Nível ${nextLvl}</div>
         <div class="craft-preview">
-          <span class="craft-preview-icon">${selCfg.icon}</span>
+          <span class="craft-preview-icon" style="text-shadow:0 0 8px ${selCfg.glowColor||selCfg.color}">${selCfg.icon}</span>
           <span class="craft-preview-arrow">→</span>
           <div class="craft-preview-text">${previewText}</div>
         </div>
-        <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="applyEnchantment('${selKey}',${nextLvl})">
+        <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="applyEnchantment('${selKey}',${nextLvl})" style="${canAfford?`box-shadow:0 0 14px ${selCfg.color}60`:''}">
           ✨ Encantar Arma
           <span class="craft-btn-cost">${canAfford ? '🪙 '+cost+' ouro' : '❌ Precisa de '+cost+' 🪙'}</span>
         </button>
@@ -9936,6 +10447,7 @@ if (_csOrigRender) {
       ctx.translate(-(cam?.x||0), -(cam?.y||0));
       drawSmithyNpc();
       drawAlchemistNpc();
+      drawMerchantNpc();
       ctx.restore();
     }
   };
@@ -10095,48 +10607,69 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 }
 #void-merchant-panel.open { display:flex; }
 .vm-win {
-  width:500px; max-width:96vw;
+  width:660px; max-width:97vw; max-height:92vh;
   background:linear-gradient(160deg,#0a0808,#060406);
   border:1px solid #b08800;
   border-radius:14px; overflow:hidden;
   font-family:'Cinzel',serif;
   box-shadow:0 0 60px rgba(255,200,40,.25), 0 0 0 1px #3a2800;
+  display:flex; flex-direction:column;
 }
 .vm-header {
   background:linear-gradient(90deg,#1c1404,#100c02,#1c1404);
   border-bottom:1px solid #3a2800;
-  padding:13px 18px 11px; display:flex; align-items:center; gap:12px;
+  padding:11px 16px 10px; display:flex; align-items:center; gap:12px;
+  flex-shrink:0;
 }
 .vm-portrait {
-  width:52px; height:52px; border-radius:50%;
+  width:46px; height:46px; border-radius:50%;
   background:radial-gradient(circle at 40% 35%,#1e1604,#0a0802);
   border:2px solid #b08800; box-shadow:0 0 16px rgba(255,200,40,.4);
-  display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;
 }
-.vm-name { font-size:15px; font-weight:700; color:#ffe066; text-shadow:0 0 12px rgba(255,200,40,.5); letter-spacing:.08em; }
-.vm-title { font-size:10px; color:#7a6020; font-family:'Crimson Text',serif; margin-top:2px; }
-.vm-quote { font-size:11px; color:#9a8030; font-family:'Crimson Text',serif; font-style:italic; margin-top:4px; }
-.vm-close { cursor:pointer; color:#5a4010; font-size:18px; padding:4px 6px; border-radius:4px; transition:color .15s; }
+.vm-name { font-size:14px; font-weight:700; color:#ffe066; text-shadow:0 0 12px rgba(255,200,40,.5); letter-spacing:.08em; }
+.vm-title { font-size:10px; color:#7a6020; font-family:'Crimson Text',serif; margin-top:1px; }
+.vm-quote { font-size:10px; color:#9a8030; font-family:'Crimson Text',serif; font-style:italic; }
+.vm-close { cursor:pointer; color:#5a4010; font-size:18px; padding:4px 6px; border-radius:4px; transition:color .15s; margin-left:auto; }
 .vm-close:hover { color:#ffe066; }
-.vm-body { padding:16px 18px 18px; }
-.vm-currency-row {
-  display:flex; align-items:center; gap:8px; margin-bottom:14px;
-  background:#0e0c04; border:1px solid #3a2800; border-radius:7px; padding:7px 12px;
-  font-family:'VT323',monospace; font-size:17px; color:#ffe066;
+/* Class tabs */
+.vm-tabs {
+  display:flex; gap:0; border-bottom:1px solid #3a2800;
+  background:#0a0802; flex-shrink:0; overflow-x:auto;
 }
-.vm-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.vm-tab {
+  padding:8px 14px; font-family:'VT323',monospace; font-size:15px;
+  color:#7a6020; cursor:pointer; border:none; background:none;
+  border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap;
+}
+.vm-tab:hover { color:#c0a030; }
+.vm-tab.active { color:#ffe066; border-bottom-color:#ffe066; background:rgba(255,200,40,.06); }
+/* Body */
+.vm-body { padding:14px 16px 16px; overflow-y:auto; flex:1; min-height:0; }
+.vm-currency-row {
+  display:flex; align-items:center; gap:8px; margin-bottom:12px;
+  background:#0e0c04; border:1px solid #3a2800; border-radius:7px; padding:6px 12px;
+  font-family:'VT323',monospace; font-size:16px; color:#ffe066;
+}
+/* Slot sections */
+.vm-slot-section { margin-bottom:14px; }
+.vm-slot-title {
+  font-size:10px; letter-spacing:.12em; color:#7a5010; text-transform:uppercase;
+  font-family:'VT323',monospace; border-bottom:1px solid #2a1e04;
+  padding-bottom:4px; margin-bottom:8px;
+}
+.vm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
 .vm-item {
   background:#0a0804; border:1px solid #3a2800; border-radius:8px;
-  padding:11px 12px; cursor:pointer; transition:all .15s;
-  position:relative;
+  padding:10px 10px 8px; cursor:pointer; transition:all .15s; position:relative;
 }
 .vm-item:hover { border-color:#b08800; background:#100e04; box-shadow:0 0 10px rgba(255,200,40,.15); }
 .vm-item.cant-afford { opacity:.45; cursor:not-allowed; }
-.vm-item-icon { font-size:26px; margin-bottom:5px; }
-.vm-item-name { font-size:12px; font-weight:700; color:#ffe066; letter-spacing:.05em; margin-bottom:2px; }
-.vm-item-desc { font-size:10px; color:#9a8030; font-family:'Crimson Text',serif; line-height:1.5; }
-.vm-item-cost { font-size:13px; font-family:'VT323',monospace; color:#c09028; margin-top:5px; }
-.vm-item-rarity { font-size:9px; font-family:'VT323',monospace; color:#ffe066; letter-spacing:.06em; margin-top:2px; }
+.vm-item.owned { border-color:#206030; background:#040e06; cursor:default; }
+.vm-item-icon { font-size:22px; margin-bottom:4px; }
+.vm-item-name { font-size:11px; font-weight:700; color:#ffe066; letter-spacing:.04em; margin-bottom:1px; line-height:1.3; }
+.vm-item-desc { font-size:9px; color:#9a8030; font-family:'Crimson Text',serif; line-height:1.4; }
+.vm-item-cost { font-size:12px; font-family:'VT323',monospace; color:#c09028; margin-top:4px; }
 .vm-set-banner {
   background:linear-gradient(135deg,#1a1404,#100c02); border:1px solid #b08800;
   border-radius:8px; padding:10px 14px; margin-top:10px;
@@ -10170,6 +10703,7 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
       </div>
       <span class="vm-close" onclick="closeVoidMerchant()">✕</span>
     </div>
+    <div class="vm-tabs" id="vm-tabs"></div>
     <div class="vm-body" id="vm-body"></div>
   </div>
 </div>
@@ -10203,8 +10737,7 @@ function updateShardHUD() {
 }
 
 // ── Mythic Item Definitions ───────────────────────────────
-// The set pieces needed for the final boss unlock
-const MYTHIC_SET_IDS = ['void_blade', 'void_bow', 'void_staff', 'void_plate', 'void_mantle', 'void_amulet'];
+// The set pieces needed for the final boss unlock are defined after the ITEM_DB block below.
 
 Object.assign(ITEM_DB, {
   // ── MYTHIC WEAPONS (1 per class) ─────────────────────────
@@ -10245,12 +10778,57 @@ Object.assign(ITEM_DB, {
     rarity:'mythic', forClass:null,
     setId:'void_set',
   },
+  // ── VOID SET — slots complementares (elmo, escudo, anel, luvas, calça, bota) ──
+  void_helm: {
+    name:'Elmo do Vazio',     icon:'🌑', type:'armor', slot:'head',
+    effect:{def:22, hp:60},  desc:'+22 DEF +60 HP',
+    rarity:'mythic', forClass:null, setId:'void_set',
+  },
+  void_shield: {
+    name:'Escudo do Vazio',   icon:'🌑', type:'armor', slot:'offhand',
+    effect:{def:26, hp:40},  desc:'+26 DEF +40 HP',
+    rarity:'mythic', forClass:['warrior'], setId:'void_set',
+  },
+  void_focus: {
+    name:'Foco do Vazio',     icon:'🌀', type:'armor', slot:'offhand',
+    effect:{def:10, mp:80, atk:12}, desc:'+10 DEF +80 MP +12 ATK',
+    rarity:'mythic', forClass:['mage'], setId:'void_set',
+  },
+  void_quiver: {
+    name:'Aljava do Vazio',   icon:'🌑', type:'armor', slot:'offhand',
+    effect:{atk:14, critBonus:0.10}, desc:'+14 ATK +10% CRIT',
+    rarity:'mythic', forClass:['archer'], setId:'void_set',
+  },
+  void_ring: {
+    name:'Anel do Vazio',     icon:'💠', type:'armor', slot:'ring',
+    effect:{atk:16, def:8, hp:40}, desc:'+16 ATK +8 DEF +40 HP',
+    rarity:'mythic', forClass:null, setId:'void_set',
+  },
+  void_gloves: {
+    name:'Luvas do Vazio',    icon:'🌑', type:'armor', slot:'gloves',
+    effect:{atk:10, def:8, critBonus:0.06}, desc:'+10 ATK +8 DEF +6% CRIT',
+    rarity:'mythic', forClass:null, setId:'void_set',
+  },
+  void_legs: {
+    name:'Calça do Vazio',    icon:'🌑', type:'armor', slot:'legs',
+    effect:{def:18, hp:50, spd:10}, desc:'+18 DEF +50 HP +10 SPD',
+    rarity:'mythic', forClass:null, setId:'void_set',
+  },
+  void_boots: {
+    name:'Botas do Vazio',    icon:'🌑', type:'armor', slot:'boots',
+    effect:{def:14, hp:30, spd:20}, desc:'+14 DEF +30 HP +20 SPD',
+    rarity:'mythic', forClass:null, setId:'void_set',
+  },
 });
 
 // ── SET BONUS DEFINITION ──────────────────────────────────
+const MYTHIC_SET_IDS = [
+  'void_blade','void_bow','void_staff',
+  'void_plate','void_mantle','void_amulet',
+];
+
 const VOID_SET_BONUS = {
   name: 'Poder do Vazio',
-  // Minimum pieces for bonus
   pieces2: { desc:'+20% ATK total',       apply: p => { p.art.atkMult = Math.max(p.art.atkMult, 1.20); } },
   pieces3: { desc:'+40 DEF, +200 HP',     apply: p => { p.def += 40; p.maxHp += 200; p.hp = Math.min(p.hp+200, p.maxHp); } },
   pieces4: { desc:'+30% dano de skills',  apply: p => { p.skillDmgMult = Math.max(p.skillDmgMult, 1.30); } },
@@ -10290,15 +10868,23 @@ function applySetBonuses() {
 }
 
 // ── Void Merchant State ───────────────────────────────────
-const voidMerchantState = { open: false, x: 0, y: 0, nearPlayer: false };
+const voidMerchantState = { open: false, x: 0, y: 0, nearPlayer: false, tab: 'warrior' };
 
-// ── Shop prices (in Dragon Shards) ────────────────────────
+// ── Shop prices (in Rubies) ───────────────────────────────
 const VOID_SHOP = [
-  { id:'void_blade',  cost:8,  preview:'+50 ATK +12% CRIT · Guerreiro' },
-  { id:'void_bow',    cost:8,  preview:'+44 ATK +18% CRIT · Arqueiro'  },
-  { id:'void_staff',  cost:8,  preview:'+42 ATK +120 MP · Mago'        },
-  { id:'void_plate',  cost:6,  preview:'+30 DEF +120 HP · Guerreiro'   },
-  { id:'void_mantle', cost:6,  preview:'+20 DEF +30 SPD +80 MP · Arq/Mago'},
+  { id:'void_blade',  cost:8,  preview:'+50 ATK +12% CRIT · Guerreiro'     },
+  { id:'void_bow',    cost:8,  preview:'+44 ATK +18% CRIT · Arqueiro'       },
+  { id:'void_staff',  cost:8,  preview:'+42 ATK +120 MP · Mago'             },
+  { id:'void_plate',  cost:6,  preview:'+30 DEF +120 HP · Guerreiro'        },
+  { id:'void_mantle', cost:6,  preview:'+20 DEF +30 SPD +80 MP · Arq/Mago' },
+  { id:'void_helm',   cost:4,  preview:'+22 DEF +60 HP · Todos'             },
+  { id:'void_shield', cost:4,  preview:'+26 DEF +40 HP · Guerreiro'         },
+  { id:'void_focus',  cost:4,  preview:'+10 DEF +80 MP +12 ATK · Mago'      },
+  { id:'void_quiver', cost:4,  preview:'+14 ATK +10% CRIT · Arqueiro'       },
+  { id:'void_ring',   cost:3,  preview:'+16 ATK +8 DEF +40 HP · Todos'      },
+  { id:'void_gloves', cost:3,  preview:'+10 ATK +8 DEF +6% CRIT · Todos'   },
+  { id:'void_legs',   cost:3,  preview:'+18 DEF +50 HP +10 SPD · Todos'    },
+  { id:'void_boots',  cost:3,  preview:'+14 DEF +30 HP +20 SPD · Todos'    },
   { id:'void_amulet', cost:5,  preview:'+18 ATK +12 DEF +80 HP +60 MP · Todos'},
 ];
 
@@ -10311,6 +10897,11 @@ function placeVoidMerchant() {
 function openVoidMerchant() {
   if (typeof closeAllPanels === 'function') closeAllPanels();
   voidMerchantState.open = true;
+  // Default to player's class tab if not set
+  if (player && !voidMerchantState._tabSet) {
+    voidMerchantState.tab = player.classId || 'warrior';
+    voidMerchantState._tabSet = true;
+  }
   document.getElementById('void-merchant-panel').classList.add('open');
   renderVoidMerchant();
 }
@@ -10334,39 +10925,119 @@ function buyVoidItem(itemId) {
   renderVoidMerchant();
 }
 
+// Items organized by class tab and slot group
+const VM_CATALOG = {
+  warrior: [
+    { section: '⚔ Arma',     items: ['void_blade'] },
+    { section: '🛡 Escudo',   items: ['void_shield'] },
+    { section: '👑 Elmo',     items: ['void_helm'] },
+    { section: '🧥 Armadura', items: ['void_plate'] },
+    { section: '🧤 Luvas',    items: ['void_gloves'] },
+    { section: '👖 Calça',    items: ['void_legs'] },
+    { section: '👢 Bota',     items: ['void_boots'] },
+    { section: '💍 Anel',     items: ['void_ring'] },
+    { section: '📿 Amuleto',  items: ['void_amulet'] },
+  ],
+  mage: [
+    { section: '⚔ Arma',     items: ['void_staff'] },
+    { section: '🔯 Foco',     items: ['void_focus'] },
+    { section: '👑 Elmo',     items: ['void_helm'] },
+    { section: '🧥 Armadura', items: ['void_mantle'] },
+    { section: '🧤 Luvas',    items: ['void_gloves'] },
+    { section: '👖 Calça',    items: ['void_legs'] },
+    { section: '👢 Bota',     items: ['void_boots'] },
+    { section: '💍 Anel',     items: ['void_ring'] },
+    { section: '📿 Amuleto',  items: ['void_amulet'] },
+  ],
+  archer: [
+    { section: '⚔ Arma',     items: ['void_bow'] },
+    { section: '🗝 Aljava',   items: ['void_quiver'] },
+    { section: '👑 Elmo',     items: ['void_helm'] },
+    { section: '🧥 Armadura', items: ['void_mantle'] },
+    { section: '🧤 Luvas',    items: ['void_gloves'] },
+    { section: '👖 Calça',    items: ['void_legs'] },
+    { section: '👢 Bota',     items: ['void_boots'] },
+    { section: '💍 Anel',     items: ['void_ring'] },
+    { section: '📿 Amuleto',  items: ['void_amulet'] },
+  ],
+  universal: [
+    { section: '🌑 Todos os Slots', items: [
+      'void_helm','void_gloves','void_legs','void_boots','void_ring','void_amulet',
+    ]},
+    { section: '⚔ Armas',    items: ['void_blade','void_bow','void_staff'] },
+    { section: '🛡 Defesa',   items: ['void_plate','void_mantle','void_shield','void_focus','void_quiver'] },
+  ],
+};
+
+const VM_TABS = [
+  { key:'warrior',   label:'⚔ Guerreiro' },
+  { key:'mage',      label:'🔮 Mago'      },
+  { key:'archer',    label:'🏹 Arqueiro'  },
+  { key:'universal', label:'🌑 Todos'     },
+];
+
 function renderVoidMerchant() {
   const body = document.getElementById('vm-body');
+  const tabsEl = document.getElementById('vm-tabs');
   if (!body || !player) return;
-  const rubies = player.rubies || 0;
-  const setPieces = countEquippedSetPieces();
 
+  const rubies    = player.rubies || 0;
+  const setPieces = countEquippedSetPieces();
+  const curTab    = voidMerchantState.tab || 'warrior';
+
+  // ── Tabs ──────────────────────────────────────────────────
+  if (tabsEl) {
+    tabsEl.innerHTML = VM_TABS.map(t =>
+      `<button class="vm-tab ${t.key===curTab?'active':''}"
+        onclick="voidMerchantState.tab='${t.key}';renderVoidMerchant()">${t.label}</button>`
+    ).join('');
+  }
+
+  // ── Currency row ──────────────────────────────────────────
   const currencyRow = `<div class="vm-currency-row">💎 <span style="font-weight:700">${rubies}</span> Rubies disponíveis</div>`;
 
-  const itemsHtml = VOID_SHOP.map(shop => {
-    const db = ITEM_DB[shop.id];
-    if (!db) return '';
-    const owned = player.inventory.some(it => it?.id === shop.id);
-    const equipped = (() => { for (const e of Object.values(player.equippedSlots||{})) { if ((e?.itemId||e) === shop.id) return true; } return false; })();
-    const canAfford = rubies >= shop.cost && !owned && !equipped;
-    const status = equipped ? '✓ Equipado' : owned ? '📦 No inventário' : '';
-    return `<div class="vm-item ${canAfford?'':'cant-afford'}" onclick="${canAfford?`buyVoidItem('${shop.id}')`:''}" title="${db.desc}">
-      <div class="vm-item-icon">${db.icon}</div>
-      <div class="vm-item-name">${db.name}</div>
-      <div class="vm-item-rarity">MÍTICO</div>
-      <div class="vm-item-desc">${shop.preview}</div>
-      <div class="vm-item-cost">${owned||equipped ? `<span style="color:#40c870">${status}</span>` : `💎 ${shop.cost} Rubies`}</div>
+  // ── Item sections for active tab ──────────────────────────
+  const sections = VM_CATALOG[curTab] || [];
+  const sectionsHtml = sections.map(sec => {
+    const itemsHtml = sec.items.map(id => {
+      const shop = VOID_SHOP.find(s => s.id === id);
+      const db   = ITEM_DB[id];
+      if (!db) return '';
+      const cost    = shop?.cost ?? 5;
+      const owned   = player.inventory.some(it => it?.id === id);
+      const equipped = Object.values(player.equippedSlots||{}).some(e => (e?.itemId||e) === id);
+      const canBuy  = rubies >= cost && !owned && !equipped;
+      const statusDone = owned || equipped;
+      const statusLabel = equipped ? '✓ Equipado' : owned ? '📦 Obtido' : `💎 ${cost} Ruby`;
+      const cls = statusDone ? 'vm-item owned' : canBuy ? 'vm-item' : 'vm-item cant-afford';
+      const click = canBuy ? `onclick="buyVoidItem('${id}')"` : '';
+      return `<div class="${cls}" ${click} title="${db.desc}">
+        <div class="vm-item-icon">${db.icon}</div>
+        <div class="vm-item-name">${db.name}</div>
+        <div class="vm-item-desc">${db.desc}</div>
+        <div class="vm-item-cost" style="${statusDone?'color:#40c870':''}">
+          ${statusDone ? statusLabel : statusLabel}
+        </div>
+      </div>`;
+    }).join('');
+
+    if (!itemsHtml.trim()) return '';
+    return `<div class="vm-slot-section">
+      <div class="vm-slot-title">${sec.section}</div>
+      <div class="vm-grid">${itemsHtml}</div>
     </div>`;
   }).join('');
 
+  // ── Set bonus status ──────────────────────────────────────
   const setStatus = setPieces > 0
     ? `<div class="vm-set-banner">🌑 Set do Vazio: <strong style="color:#ffe066">${setPieces}/${MYTHIC_SET_IDS.length}</strong> peças equipadas
       ${setPieces >= 2 ? '<br>✦ ' + VOID_SET_BONUS.pieces2.desc : ''}
-      ${setPieces >= 3 ? ' &nbsp; ✦ ' + VOID_SET_BONUS.pieces3.desc : ''}
-      ${setPieces >= 4 ? ' &nbsp; ✦ ' + VOID_SET_BONUS.pieces4.desc : ''}
+      ${setPieces >= 3 ? ' ✦ ' + VOID_SET_BONUS.pieces3.desc : ''}
+      ${setPieces >= 4 ? ' ✦ ' + VOID_SET_BONUS.pieces4.desc : ''}
       ${setPieces >= MYTHIC_SET_IDS.length ? '<br><strong style="color:#ffe066">👑 ' + VOID_SET_BONUS.fullSet.desc + '</strong>' : ''}
     </div>` : '';
 
-  body.innerHTML = currencyRow + `<div class="vm-grid">${itemsHtml}</div>` + setStatus + `<div id="vm-msg" class="vm-msg"></div>`;
+  body.innerHTML = currencyRow + sectionsHtml + setStatus + `<div id="vm-msg" class="vm-msg"></div>`;
 }
 
 function showVmMsg(text, type) {
@@ -11030,6 +11701,11 @@ function _relocateNpcsToSafeZone() {
   if (typeof voidMerchantState !== 'undefined') {
     voidMerchantState.x = (tx + SAFE_ZONE.tw - 3) * T2 + T2/2;
     voidMerchantState.y = (ty + SAFE_ZONE.th - 3) * T2 + T2/2;
+  }
+  // Thalion (Merchant NPC) — center-left, between smithy and pet trainer
+  if (typeof merchantNpcState !== 'undefined') {
+    merchantNpcState.x = (tx + 6) * T2 + T2/2;
+    merchantNpcState.y = (ty + 7) * T2 + T2/2;
   }
 }
 
