@@ -2691,12 +2691,35 @@ function updateEnemies(dt){
     const tankPet = (pet && pet.isAlive && pet.petType==='tank') ? pet : null;
     const distToPlayer=Math.hypot(e.x-p.x,e.y-p.y);
     const distToTank=tankPet?Math.hypot(e.x-tankPet.x,e.y-tankPet.y):Infinity;
+    // ── Zona Segura: inimigos não entram, não agridem, não atacam ─
+    // Se o inimigo já está dentro, expulsa imediatamente para a borda
+    if (typeof isInSafeZone === 'function' && isInSafeZone(e.x, e.y)) {
+      // Empurra para fora: move em direção oposta ao centro da zona segura
+      const szCx = (SAFE_ZONE.tx + SAFE_ZONE.tw * 0.5) * T;
+      const szCy = (SAFE_ZONE.ty + SAFE_ZONE.th * 0.5) * T;
+      const exDx = e.x - szCx, exDy = e.y - szCy;
+      const exLen = Math.hypot(exDx, exDy) || 1;
+      e.x += (exDx / exLen) * e.spd * dt / 1000 * 3;
+      e.y += (exDy / exLen) * e.spd * dt / 1000 * 3;
+      e.atkTimer = e.atkSpeed; // reseta timer de ataque
+      continue;
+    }
+    // Se o player está na zona segura, inimigo não agride nem ataca
+    const playerInSafeZone = typeof isInSafeZone === 'function' && isInSafeZone(p.x, p.y);
     // Target: tank se dentro do aggroRange e mais perto que o player, senão player
     const preferTank = tankPet && distToTank < e.aggroRange && distToTank < distToPlayer + 40;
     const target = preferTank ? tankPet : p;
     const dist = preferTank ? distToTank : distToPlayer;
     if(dist<e.aggroRange&&p.isAlive){
-      const dx=target.x-e.x,dy=target.y-e.y,len=Math.hypot(dx,dy)||1;const spd=e.spd*dt/1000;moveEntity(e,(dx/len)*spd,(dy/len)*spd);
+      // Calcula próxima posição antes de mover
+      const dx=target.x-e.x,dy=target.y-e.y,len=Math.hypot(dx,dy)||1;const spd=e.spd*dt/1000;
+      const nextX = e.x + (dx/len)*spd, nextY = e.y + (dy/len)*spd;
+      // Bloqueia movimento se destino está dentro da zona segura
+      if (!playerInSafeZone || preferTank) {
+        if (typeof isInSafeZone !== 'function' || !isInSafeZone(nextX, nextY)) {
+          moveEntity(e,(dx/len)*spd,(dy/len)*spd);
+        }
+      }
       e.atkTimer=Math.max(0,e.atkTimer-dt);
       if(e.atkTimer<=0&&dist<e.atkRange+10){
         e.atkTimer=e.atkSpeed;
@@ -2708,6 +2731,8 @@ function updateEnemies(dt){
           spawnDmgNumber(tankPet.x,tankPet.y-tankPet.size,dmg,'#aaa');
           if(tankPet.hp<=0){tankPet.hp=0;tankPet.isAlive=false;addLog('💔 Golem caiu! Reaparecerá em 15s...','ldmg');const st=tankPet.petType;setTimeout(()=>{if(player&&player.isAlive){pet=createPet(player,st);addLog('🗿 Golem voltou!','lheal');}},15000);}
         } else {
+          // Não aplica dano se player está na zona segura
+          if (playerInSafeZone) { /* imune */ } else {
           dmg=Math.max(1,dmg-Math.floor(p.def*.5));
           if(p.subSkill==='defensive' || p._subSkillLogic==='reflect'){applyDamageToEnemy(e,Math.floor(dmg*.2),false);dmg=Math.floor(dmg*.8);}
           // Apply damage reduction (from art artifact or enchantment)
@@ -2724,6 +2749,7 @@ function updateEnemies(dt){
               if(p.hp<=0){p.hp=0;triggerGameOver();}
             }
           }
+          } // fim do bloco imune
         }
       }
     }else{e.roamTimer-=dt;if(e.roamTimer<=0){e.roamTimer=1200+Math.random()*2000;const ang=Math.random()*Math.PI*2;e.roamDX=Math.cos(ang);e.roamDY=Math.sin(ang);}if(Math.random()<.5)moveEntity(e,e.roamDX*e.spd*.4*dt/1000,e.roamDY*e.spd*.4*dt/1000);}
