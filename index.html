@@ -396,7 +396,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .log-line.lboss  { color:#e74c3c; font-weight:bold; }
 .log-line.lchest { color:#e8a020; }
 #dash-indicator {
-  position:absolute; top:50px; left:50%; transform:translateX(-50%);
+  position:absolute; top:38px; left:50%; transform:translateX(-50%);
   font-family:'VT323',monospace; font-size:13px;
   background:rgba(8,10,13,.88); border:1px solid var(--border);
   border-radius:6px; padding:3px 10px; color:var(--text-dim); display:flex; align-items:center; gap:6px;
@@ -2407,13 +2407,13 @@ function recalcPlayerForClass(p, newClassId) {
 // ─────────────────────────────────────────────────────────
 // INIMIGOS
 // ─────────────────────────────────────────────────────────
-function spawnEnemy(forceBossId=null){
+function spawnEnemy(forceBossId=null, silent=false){
   const available=forceBossId?[ENEMY_DEF.find(e=>e.id===forceBossId)]:ENEMY_DEF.filter(e=>!e.isBoss&&!e.isCentralBoss&&e.minLevel<=player.level+1);
   const def=available[Math.floor(Math.random()*available.length)];
   const scale=1+(player.level-1)*0.08;
   const pos=findFreePos(T*8,player.x,player.y);
   const enemy = {...def,uid:def.id+'_'+Date.now()+Math.random(),defId:def.id,x:pos.x,y:pos.y,maxHp:Math.floor(def.hp*scale),hp:Math.floor(def.hp*scale),atk:Math.floor(def.atk*scale),vx:0,vy:0,atkTimer:0,aggroRange:180,isAlive:true,hitFlash:0,deathTimer:0,roamTimer:0,roamDX:0,roamDY:0,spawnX:pos.x,spawnY:pos.y,guardingChest:null,poisonTimer:0,poisonStacks:0,frozenTimer:0};
-  if (def.isBoss) onBossSpawned();
+  if (def.isBoss && !silent) onBossSpawned();
   return enemy;
 }
 
@@ -2584,6 +2584,8 @@ function updateEnemies(dt){
               spawnDmgNumber(p.x,p.y-20,'REFLECT!','#3498db');
             } else {
               p.hp-=dmg; p.hitFlash=200; playHurtSound();
+              // Play special sound for boss attacks
+              if(e.isCentralBoss || e.isBoss) playBossAttackSound();
               spawnDmgNumber(p.x,p.y-20,dmg,'#e74c3c');
               if(p.hp<=0){p.hp=0;triggerGameOver();}
             }
@@ -2655,6 +2657,7 @@ function collectLootDirect(itemId) {
   // Used by autoCollect artifact — pick up instantly without world drop
   if (itemId === 'gold_coin') { const g=1+Math.floor(Math.random()*5); player.gold+=g; return; }
   const item = ITEM_DB[itemId]; if (!item) return;
+  if (item.type === 'ruby' || item.type === 'shard') { addShards(1+Math.floor(Math.random()*3)); playRareItemSound(); return; }
   if (item.type === 'consumable' || item.type === 'artifact') { addItemToInventory(itemId); addLog(`${item.icon} Auto-coletou: ${item.name}`,'ldrop'); }
   else { addItemToInventory(itemId); if(item.rarity==='rare'||item.rarity==='epic')playRareItemSound(); addLog(`${item.icon} Auto-coletou: ${item.name} [${item.rarity}]`,'ldrop'); }
 }
@@ -2822,7 +2825,7 @@ function checkLevelUp(){
     const hpG=player.classId==='warrior'?22:player.classId==='archer'?13:9;const atkG=player.classId==='mage'?5:3;const defG=player.classId==='warrior'?3:1;const mpG=player.classId==='mage'?12:5;
     player.maxHp+=hpG;player.hp=player.maxHp;player.baseAtk+=atkG;player.atk=player.baseAtk+(player.equippedWeapon?(ITEM_DB[player.equippedWeapon].effect.atk||0):0);player.baseDef+=defG;player.def=player.baseDef+(player.equippedArmor?(ITEM_DB[player.equippedArmor].effect.def||0):0);player.maxMp+=mpG;player.mp=player.maxMp;
     for(let i=0;i<3;i++)enemies.push(spawnEnemy());
-    if(player.level%5===0)enemies.push(spawnEnemy('boss'));
+    if(player.level%5===0)enemies.push(spawnEnemy('boss', true));
     addLog(`⬆ LEVEL ${player.level}! +HP +ATK +MP`,'llvl');
     playLevelUpSound();
     showLevelUpBanner(player.level);
@@ -4787,7 +4790,39 @@ const SFX = (() => {
            vol:0.04, attack:0.008, decay:0.08, release:0.28, start:0.34 });
   }
 
-  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin, playDash, playUltimate, playMissionComplete, playAchievement };
+  return { playAttack, playRareItem, playLevelUp, playChestOpen, playPickup, playHurt, playSkill, playCoin, playDash, playUltimate, playMissionComplete, playAchievement,
+
+  // ── 13. BOSS CENTRAL ATTACK ─────────────────────────────
+  // Som grave e pesado — pancada de entidade colossal
+  playBossAttack() {
+    tone({ type:'sine', freq:55, freqEnd:30,
+           vol:0.28, attack:0.004, decay:0.18, release:0.22 });
+    noise({ vol:0.16, freq:180, q:0.4, duration:0.14 });
+    tone({ type:'sawtooth', freq:110, freqEnd:60,
+           vol:0.14, attack:0.006, decay:0.12, release:0.16, start:0.02 });
+    // Eco grave
+    tone({ type:'sine', freq:80, freqEnd:40,
+           vol:0.10, attack:0.010, decay:0.16, release:0.20, start:0.06 });
+  },
+
+  // ── 14. DRAGON FIRE ATTACK ──────────────────────────────
+  // Rugido + sopro de chamas — grave initial + noise ascendente
+  playDragonAttack() {
+    // Rugido
+    tone({ type:'sawtooth', freq:70, freqEnd:35,
+           vol:0.22, attack:0.008, decay:0.20, release:0.25 });
+    // Sopro de fogo — noise com freq subindo
+    noise({ vol:0.20, freq:400, q:0.5, duration:0.22 });
+    noise({ vol:0.14, freq:1200, q:0.4, duration:0.16, start:0.06 });
+    // Crack de ignição
+    tone({ type:'square', freq:160, freqEnd:600,
+           vol:0.10, attack:0.003, decay:0.08, release:0.10, start:0.04 });
+    // Harmônico de chama
+    tone({ type:'sine', freq:220, freqEnd:440,
+           vol:0.08, attack:0.010, decay:0.12, release:0.15, start:0.08 });
+  },
+
+  };
 })();
 
 function playAttackSound()        { try { SFX.playAttack();              } catch(e){} }
@@ -4802,6 +4837,8 @@ function playDashSound()              { try { SFX.playDash();               } ca
 function playUltimateSound()          { try { SFX.playUltimate();           } catch(e){} }
 function playMissionCompleteSound()   { try { SFX.playMissionComplete();    } catch(e){} }
 function playAchievementSound()       { try { SFX.playAchievement();        } catch(e){} }
+function playBossAttackSound()        { try { SFX.playBossAttack();         } catch(e){} }
+function playDragonAttackSound()      { try { SFX.playDragonAttack();       } catch(e){} }
 
 
 
@@ -5223,16 +5260,57 @@ function chooseSubclass(opt){
 // LOJA
 // ─────────────────────────────────────────────────────────
 const SHOP_CATALOG = [
-  {id:'potion'},{id:'big_potion'},{id:'elixir'},
-  {id:'old_sword'},{id:'short_bow'},{id:'oak_staff'},
-  {id:'steel_sword'},{id:'venom_bow'},{id:'mage_staff'},
-  {id:'troll_club'},{id:'dragon_sword'},{id:'elven_bow'},{id:'arcane_tome'},
-  {id:'leather_armor'},{id:'robe'},{id:'shield'},{id:'heavy_armor'},{id:'shadow_cloak'},
-  // Pets
-  {id:'pet_healer'},{id:'pet_attack'},{id:'pet_tank'},
-  // Artifacts
-  {id:'art_xp'},{id:'art_gold'},{id:'art_atk'},{id:'art_hp'},{id:'art_def'},
-  {id:'art_poison'},{id:'art_fire'},{id:'art_ice'},{id:'art_sword'},{id:'art_bow'},{id:'art_auto'},
+  // ── Consumíveis ──────────────────────────────────────────
+  {id:'potion'}, {id:'big_potion'}, {id:'elixir'},
+  {id:'mana_potion'}, {id:'big_mana_pot'},
+
+  // ── Armas básicas / intermediárias (sem épicos de endgame) ─
+  {id:'old_sword'}, {id:'iron_axe'}, {id:'wooden_club'},
+  {id:'steel_sword'}, {id:'war_hammer'}, {id:'battle_axe'},
+  {id:'short_bow'}, {id:'hunting_bow'}, {id:'wood_crossbow'},
+  {id:'venom_bow'}, {id:'silver_bow'}, {id:'steel_crossbow'},
+  {id:'oak_staff'}, {id:'crystal_wand'}, {id:'bone_staff'},
+  {id:'mage_staff'}, {id:'ember_wand'}, {id:'frost_rod'},
+
+  // ── Escudos / offhand ─────────────────────────────────────
+  {id:'wooden_shield'}, {id:'shield'}, {id:'kite_shield'},
+  {id:'spell_focus'}, {id:'arcane_focus'},
+  {id:'iron_quiver'}, {id:'silver_quiver'},
+
+  // ── Cabeça ────────────────────────────────────────────────
+  {id:'iron_helm'}, {id:'steel_helm'}, {id:'cloth_hood'},
+  {id:'wizard_hat'}, {id:'leather_hood'}, {id:'ranger_hood'},
+
+  // ── Luvas ─────────────────────────────────────────────────
+  {id:'iron_gauntlets'}, {id:'steel_gauntlets'},
+  {id:'spell_gloves'}, {id:'arcane_gloves'},
+  {id:'leather_gloves'}, {id:'hunter_gloves'},
+
+  // ── Botas ─────────────────────────────────────────────────
+  {id:'iron_boots'}, {id:'steel_boots'},
+  {id:'cloth_boots'}, {id:'silk_boots'},
+  {id:'leather_boots'}, {id:'swift_boots'}, {id:'traveler_boots'},
+
+  // ── Calças ────────────────────────────────────────────────
+  {id:'iron_greaves'}, {id:'steel_greaves'},
+  {id:'cloth_pants'}, {id:'silk_pants'},
+  {id:'leather_pants'}, {id:'ranger_pants'},
+
+  // ── Anéis ─────────────────────────────────────────────────
+  {id:'copper_ring'}, {id:'iron_ring'}, {id:'vitality_ring'},
+  {id:'mana_ring'}, {id:'silver_ring'},
+  {id:'warrior_ring'}, {id:'mage_ring'}, {id:'archer_ring'},
+
+  // ── Amuletos ──────────────────────────────────────────────
+  {id:'bone_amulet'}, {id:'wooden_charm'}, {id:'herb_charm'},
+  {id:'silver_amulet'}, {id:'dragon_tooth'},
+  {id:'arcane_crystal'}, {id:'hawk_eye'},
+
+  // ── Pets ──────────────────────────────────────────────────
+  {id:'pet_healer'}, {id:'pet_attack'}, {id:'pet_tank'},
+
+  // ── Artefatos (comuns/raros — sem itens de endgame mítico) ─
+  {id:'art_xp'}, {id:'art_gold'}, {id:'art_atk'}, {id:'art_hp'}, {id:'art_def'},
 ];
 let currentShopTab='consumable';let shopSelectedItem=null;
 function openShop(){document.getElementById('shop-panel').classList.add('open');updateShopSidebar();renderShopGrid(currentShopTab);}
@@ -5704,6 +5782,12 @@ function collectLoot(loot) {
     addLog(`🪙 +${g} ouro`, ''); return;
   }
   const item = ITEM_DB[loot.id]; if (!item) return;
+  if (item.type === 'ruby' || item.type === 'shard') {
+    const amt = 1 + Math.floor(Math.random() * 3);
+    addShards(amt);
+    playRareItemSound();
+    return;
+  }
   if (item.type === 'belt_potion') {
     const added = addPotionToBelt(loot.id);
     if (added) {
@@ -6114,7 +6198,7 @@ const ENEMY_DROP_POOLS = {
   guardian: [{id:'elixir',chance:1},{id:'full_elixir',chance:.7},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'amulet_titan',chance:.7},{id:'ring_power',chance:.7},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],
 };
 
-function spawnEnemy(forceBossId=null) {
+function spawnEnemy(forceBossId=null, silent=false) {
   const available = forceBossId
     ? [ENEMY_DEF.find(e=>e.id===forceBossId)]
     : ENEMY_DEF.filter(e=>!e.isBoss&&!e.isCentralBoss&&e.minLevel<=player.level+1);
@@ -6135,7 +6219,7 @@ function spawnEnemy(forceBossId=null) {
     xp: Math.floor(def.xp * getWorldScale()),
     goldRange: [Math.floor(def.goldRange[0]*getWorldScale()), Math.floor(def.goldRange[1]*getWorldScale())]
   };
-  if (def.isBoss) onBossSpawned();
+  if (def.isBoss && !silent) onBossSpawned();
   return enemy;
 }
 
@@ -9184,16 +9268,11 @@ console.log('[PetTrainer] Sistema de Treinamento de Pets carregado ✓');
 // Future-ready: player.craftCurrency available for special drop currency
 // ═══════════════════════════════════════════════════════════
 
-// ── Future currency hook ─────────────────────────────────
-// To add a special boss-drop currency in the future:
-//   1. Add drops to boss/guardian enemy tables: {id:'dragon_shard', chance:.3}
-//   2. Add ITEM_DB entry: dragon_shard: {name:'Fragmento do Dragão', type:'currency', ...}
-//   3. Read from: player.craftCurrency (initialised in createPlayer below)
-//   4. Spend via: spendCraftCurrency(amount)
+// ── Ruby currency hook ───────────────────────────────────
 function spendCraftCurrency(amount) {
   if (!player) return false;
-  if ((player.craftCurrency || 0) < amount) return false;
-  player.craftCurrency -= amount;
+  if ((player.rubies || 0) < amount) return false;
+  player.rubies -= amount;
   return true;
 }
 
@@ -9226,11 +9305,17 @@ function getForgeBonus(uid, itemId) {
   if (lvl === 0) return { atk: 0, def: 0, hp: 0 };
   const db = ITEM_DB[itemId];
   if (!db) return { atk: 0, def: 0, hp: 0 };
-  if (db.type === 'weapon') {
-    return { atk: lvl * SMITHY_CONFIG.weaponAtkPerLevel, def: 0, hp: 0 };
-  } else {
-    return { atk: 0, def: lvl * SMITHY_CONFIG.armorDefPerLevel, hp: lvl * SMITHY_CONFIG.armorHpPerLevel };
+  // weapon or ring/amulet with atk → buff ATK
+  if (db.type === 'weapon' || db.slot === 'ring' || db.slot === 'amulet') {
+    const hasAtk = (db.effect?.atk || 0) > 0;
+    return {
+      atk: hasAtk ? lvl * SMITHY_CONFIG.weaponAtkPerLevel : 0,
+      def: 0,
+      hp:  hasAtk ? 0 : lvl * SMITHY_CONFIG.armorHpPerLevel,
+    };
   }
+  // armor slots → DEF + HP
+  return { atk: 0, def: lvl * SMITHY_CONFIG.armorDefPerLevel, hp: lvl * SMITHY_CONFIG.armorHpPerLevel };
 }
 
 // State
@@ -9301,26 +9386,30 @@ function _applyForgeToEquipBonuses() {
   player._forgeBonus = { atk: forgeAtk, def: forgeDef, hp: forgeHp };
 }
 
+// Slots que o ferreiro pode melhorar (conforme novo sistema)
+const SMITHY_SLOTS = ['weapon','offhand','head','gloves','boots','legs','amulet','ring1'];
+
 function renderSmithyPanel() {
   const body = document.getElementById('smithy-body');
   if (!body || !player) return;
 
-  // Find equipped weapon and armor slots
+  // Apenas os slots definidos em SMITHY_SLOTS
   const equippedItems = [];
   if (player.equippedSlots) {
-    for (const [slotId, entry] of Object.entries(player.equippedSlots)) {
+    for (const slotId of SMITHY_SLOTS) {
+      const entry = player.equippedSlots[slotId];
       if (!entry) continue;
       const itemId = entry.itemId || entry;
       const uid    = entry.uid;
       const db     = ITEM_DB[itemId];
-      if (!db || (db.type !== 'weapon' && db.type !== 'armor')) continue;
+      if (!db) continue;
       equippedItems.push({ slotId, itemId, uid, db });
     }
   }
 
   if (!equippedItems.length) {
     body.innerHTML = `<div style="text-align:center;padding:28px 16px;color:#5a2808;font-family:'Crimson Text',serif;font-style:italic;font-size:13px;">
-      Equipe uma arma ou armadura primeiro para que eu possa forjar!
+      Equipe arma, escudo, cabeça, luvas, botas, calça, amuleto ou anel para forjar!
     </div>`;
     return;
   }
@@ -9360,7 +9449,8 @@ function renderSmithyPanel() {
   const baseDef = item.db.effect?.def || 0;
   const baseHp  = item.db.effect?.hp  || 0;
   let statLines = '';
-  if (item.db.type === 'weapon') {
+  const isWeaponLike = item.db.type === 'weapon' || baseAtk > baseDef;
+  if (isWeaponLike && baseAtk > 0) {
     const next = bonus.atk + SMITHY_CONFIG.weaponAtkPerLevel;
     statLines = `ATK base: <span style="color:#f0c060">${baseAtk}</span>  Forja: <span class="craft-preview-val">+${bonus.atk}</span>  Total: <span class="craft-preview-new">${baseAtk+bonus.atk}</span>`;
     if (lvl < max) statLines += `<br>Próximo: +${SMITHY_CONFIG.weaponAtkPerLevel} ATK → <span class="craft-preview-new">${baseAtk+next}</span>`;
@@ -9368,7 +9458,7 @@ function renderSmithyPanel() {
     const nextDef = bonus.def + SMITHY_CONFIG.armorDefPerLevel;
     const nextHp  = bonus.hp  + SMITHY_CONFIG.armorHpPerLevel;
     statLines = `DEF base: <span style="color:#5dade2">${baseDef}</span>  Forja: <span class="craft-preview-val">+${bonus.def}</span>  Total: <span class="craft-preview-new">${baseDef+bonus.def}</span>`;
-    statLines += `<br>HP Bônus: <span style="color:#e74c3c">+${baseHp}</span>  Forja: <span class="craft-preview-val">+${bonus.hp}</span>`;
+    if (baseHp > 0 || bonus.hp > 0) statLines += `<br>HP Bônus: <span style="color:#e74c3c">+${baseHp}</span>  Forja: <span class="craft-preview-val">+${bonus.hp}</span>`;
     if (lvl < max) statLines += `<br>Próximo: +${SMITHY_CONFIG.armorDefPerLevel} DEF, +${SMITHY_CONFIG.armorHpPerLevel} HP`;
   }
 
@@ -9926,15 +10016,15 @@ if (_csOrigMinimap) {
   };
 }
 
-// 8. Patch createPlayer to add craftCurrency and enchantment fields
+// 8. Patch createPlayer to add rubies and enchantment fields
 const _csOrigCreatePlayer = typeof createPlayer === 'function' ? createPlayer : null;
 if (_csOrigCreatePlayer) {
   createPlayer = function(classId) {
     const p = _csOrigCreatePlayer.apply(this, arguments);
-    p.craftCurrency = 0;  // Future special currency (dragon shards, etc.)
-    p.enchantment   = { key: null, level: 0 };
-    p.forgeData     = {};
-    p._forgeBonus   = { atk: 0, def: 0, hp: 0 };
+    p.rubies      = 0;
+    p.enchantment = { key: null, level: 0 };
+    p.forgeData   = {};
+    p._forgeBonus = { atk: 0, def: 0, hp: 0 };
     return p;
   };
 }
@@ -9989,11 +10079,11 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 /* Dragon Shard HUD badge */
 #shard-hud {
   position:absolute; top:10px; right:210px;
-  background:rgba(8,10,13,.88); border:1px solid #b08800;
+  background:rgba(8,10,13,.88); border:1px solid #c02040;
   border-radius:6px; padding:4px 10px;
-  font-family:'VT323',monospace; font-size:16px; color:#ffe066;
+  font-family:'VT323',monospace; font-size:16px; color:#ff6080;
   display:none; align-items:center; gap:5px;
-  box-shadow:0 0 10px rgba(255,200,40,.2);
+  box-shadow:0 0 10px rgba(200,40,80,.2);
 }
 #shard-hud.visible { display:flex; }
 
@@ -10068,7 +10158,7 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 @keyframes setToastAnim { from{opacity:0;transform:translate(-50%,-60%) scale(.8)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
 </style>
 
-<div id="shard-hud"><span>🔮</span><span id="shard-count">0</span> Fragmentos</div>
+<div id="shard-hud"><span>💎</span><span id="shard-count">0</span> Ruby</div>
 <div id="void-merchant-panel">
   <div class="vm-win">
     <div class="vm-header">
@@ -10090,24 +10180,24 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 // ENDGAME SYSTEM
 // ═══════════════════════════════════════════════════════════
 
-// ── Dragon Shard (special currency) ─────────────────────
-const SHARD_ICON = '🔮';
-const SHARD_NAME = 'Fragmento do Vazio';
+// ── Ruby (moeda especial) ────────────────────────────────
+const SHARD_ICON = '💎';
+const SHARD_NAME = 'Ruby';
 
 function addShards(amount) {
   if (!player) return;
-  player.craftCurrency = (player.craftCurrency || 0) + amount;
+  player.rubies = (player.rubies || 0) + amount;
   updateShardHUD();
-  addLog(`${SHARD_ICON} +${amount} ${SHARD_NAME}!`, 'llvl');
+  addLog(`💎 +${amount} Ruby!`, 'llvl');
 }
 
 function updateShardHUD() {
   const hud = document.getElementById('shard-hud');
   const cnt = document.getElementById('shard-count');
   if (!hud || !cnt || !player) return;
-  const shards = player.craftCurrency || 0;
-  cnt.textContent = shards;
-  if (shards > 0 || endgameState.dragonEverSpawned) {
+  const rubies = player.rubies || 0;
+  cnt.textContent = rubies;
+  if (rubies > 0 || endgameState.dragonEverSpawned) {
     hud.classList.add('visible');
   }
 }
@@ -10213,8 +10303,9 @@ const VOID_SHOP = [
 ];
 
 function placeVoidMerchant() {
-  voidMerchantState.x = (MAP_W / 2 + 8) * T + T / 2;
-  voidMerchantState.y = (MAP_H / 2 + 6) * T + T / 2;
+  // Place inside safe zone — bottom-right corner area
+  voidMerchantState.x = (SAFE_ZONE.tx + SAFE_ZONE.tw - 3) * T + T / 2;
+  voidMerchantState.y = (SAFE_ZONE.ty + SAFE_ZONE.th - 3) * T + T / 2;
 }
 
 function openVoidMerchant() {
@@ -10231,10 +10322,10 @@ function closeVoidMerchant() {
 function buyVoidItem(itemId) {
   const shop = VOID_SHOP.find(s => s.id === itemId);
   if (!shop) return;
-  const shards = player.craftCurrency || 0;
-  if (shards < shop.cost) { showVmMsg('❌ Fragmentos insuficientes!', 'err'); return; }
+  const rubies = player.rubies || 0;
+  if (rubies < shop.cost) { showVmMsg('❌ Rubies insuficientes!', 'err'); return; }
   if (player.inventory.filter(Boolean).length >= 60) { showVmMsg('❌ Inventário cheio!', 'err'); return; }
-  player.craftCurrency -= shop.cost;
+  player.rubies -= shop.cost;
   addItemToInventory(itemId);
   if (typeof playRareItemSound === 'function') playRareItemSound();
   addLog(`👑 ${ITEM_DB[itemId].icon} ${ITEM_DB[itemId].name} adquirido!`, 'llvl');
@@ -10246,24 +10337,24 @@ function buyVoidItem(itemId) {
 function renderVoidMerchant() {
   const body = document.getElementById('vm-body');
   if (!body || !player) return;
-  const shards = player.craftCurrency || 0;
+  const rubies = player.rubies || 0;
   const setPieces = countEquippedSetPieces();
 
-  const currencyRow = `<div class="vm-currency-row">${SHARD_ICON} <span style="font-weight:700">${shards}</span> Fragmentos do Vazio disponíveis</div>`;
+  const currencyRow = `<div class="vm-currency-row">💎 <span style="font-weight:700">${rubies}</span> Rubies disponíveis</div>`;
 
   const itemsHtml = VOID_SHOP.map(shop => {
     const db = ITEM_DB[shop.id];
     if (!db) return '';
     const owned = player.inventory.some(it => it?.id === shop.id);
     const equipped = (() => { for (const e of Object.values(player.equippedSlots||{})) { if ((e?.itemId||e) === shop.id) return true; } return false; })();
-    const canAfford = shards >= shop.cost && !owned && !equipped;
-    const status = equipped ? '✓ Equipado' : owned ? '📦 No inventário' : canAfford ? '' : '';
+    const canAfford = rubies >= shop.cost && !owned && !equipped;
+    const status = equipped ? '✓ Equipado' : owned ? '📦 No inventário' : '';
     return `<div class="vm-item ${canAfford?'':'cant-afford'}" onclick="${canAfford?`buyVoidItem('${shop.id}')`:''}" title="${db.desc}">
       <div class="vm-item-icon">${db.icon}</div>
       <div class="vm-item-name">${db.name}</div>
       <div class="vm-item-rarity">MÍTICO</div>
       <div class="vm-item-desc">${shop.preview}</div>
-      <div class="vm-item-cost">${owned||equipped ? `<span style="color:#40c870">${status}</span>` : `${SHARD_ICON} ${shop.cost} Fragmentos`}</div>
+      <div class="vm-item-cost">${owned||equipped ? `<span style="color:#40c870">${status}</span>` : `💎 ${shop.cost} Rubies`}</div>
     </div>`;
   }).join('');
 
@@ -10382,9 +10473,29 @@ function drawVoidMerchant() {
 }
 
 // ── Dragon Event ──────────────────────────────────────────
-let dragonEventTimer = 0;
-const DRAGON_EVENT_INTERVAL = 120000; // every 2 min check
-const DRAGON_EVENT_CHANCE = 0.35;     // 35% chance per check
+// SISTEMA DE EVENTO DO DRAGÃO — versão corrigida
+// Regras:
+//   • apenas 1 dragão por vez
+//   • nasce somente no Covil do Dragão
+//   • cooldown obrigatório após morte
+//   • nível mínimo 8 do jogador
+//   • verificação a cada 60–90 s com chance baixa
+//   • sem lógica pesada quando o dragão está inativo
+
+const DRAGON_EVENT = {
+  CHECK_MIN:    60000,  // intervalo mínimo entre verificações (ms)
+  CHECK_MAX:    90000,  // intervalo máximo
+  SPAWN_CHANCE: 0.30,   // 30 % de chance por verificação
+  COOLDOWN:     120000, // cooldown após morte antes do próximo spawn (ms)
+  MIN_LEVEL:    8,      // nível mínimo do jogador
+};
+
+// Estado central do evento — único ponto de verdade
+const dragonEvent = {
+  active:        false,   // dragão está vivo?
+  cooldownUntil: 0,       // timestamp — quando o cooldown termina
+  nextCheck:     0,       // timestamp da próxima verificação
+};
 
 const endgameState = {
   dragonEverSpawned: false,
@@ -10394,72 +10505,62 @@ const endgameState = {
   lastSetPieces: 0,
 };
 
+// Agenda a próxima verificação num intervalo aleatório
+function _scheduleDragonCheck() {
+  const delay = DRAGON_EVENT.CHECK_MIN +
+    Math.random() * (DRAGON_EVENT.CHECK_MAX - DRAGON_EVENT.CHECK_MIN);
+  dragonEvent.nextCheck = Date.now() + delay;
+}
+_scheduleDragonCheck(); // agenda o primeiro check ao carregar
+
 function updateDragonEvent(dt) {
   if (!player || gameState !== 'playing') return;
-  dragonEventTimer += dt;
-  if (dragonEventTimer < DRAGON_EVENT_INTERVAL) return;
-  dragonEventTimer = 0;
-  if (Math.random() < DRAGON_EVENT_CHANCE) spawnDragonEvent();
+
+  // ── Detectar morte do dragão ───────────────────────────
+  if (dragonEvent.active) {
+    const alive = legendaryDragon && legendaryDragon.isAlive;
+    if (!alive) {
+      // Dragão acabou de morrer — finaliza evento e inicia cooldown
+      dragonEvent.active       = false;
+      dragonEvent.cooldownUntil = Date.now() + DRAGON_EVENT.COOLDOWN;
+      legendaryDragon           = null;
+      document.getElementById('dragon-bar')?.classList.remove('visible');
+      addLog('🐉 O Dragão foi derrotado! O Covil voltou ao silêncio...', 'lboss');
+      _scheduleDragonCheck();
+    }
+    return; // não fazer mais nada enquanto o dragão está vivo
+  }
+
+  // ── Verificação periódica de spawn ────────────────────
+  const now = Date.now();
+  if (now < dragonEvent.nextCheck) return;      // ainda não é hora
+  _scheduleDragonCheck();                        // agenda o próximo check
+
+  if (now < dragonEvent.cooldownUntil) return;  // ainda em cooldown
+  if ((player.level || 1) < DRAGON_EVENT.MIN_LEVEL) return; // nível insuficiente
+  if (Math.random() >= DRAGON_EVENT.SPAWN_CHANCE) return;   // chance falhou
+
+  spawnDragonEvent();
 }
 
 function spawnDragonEvent() {
-  // Spawn a flying dragon that crosses the map — killing it drops shards
-  const def = ENEMY_DEF.find(e => e.id === 'boss'); // use dragon base
-  if (!def) return;
-  const scale = 1.5 + (worldLevel-1)*0.2;
-  const dragon = {
-    ...def,
-    uid: 'dragon_event_' + Date.now(),
-    defId: 'boss',
-    id: 'boss',
-    name: '🐉 DRAGÃO LENDÁRIO 🐉',
-    color: '#c0a000',
-    hp:  Math.floor(800 * scale),
-    maxHp: Math.floor(800 * scale),
-    atk: Math.floor(50 * scale),
-    def: 20,
-    spd: 130,
-    xp: 600,
-    atkRange: 60,
-    atkSpeed: 2000,
-    goldRange: [80, 160],
-    size: 36,
-    isBoss: true,
-    isDragonEvent: true,
-    drops: [
-      {id:'shard_drop', chance:1},  // guaranteed shards
-      {id:'big_potion', chance:1},
-    ],
-    x: Math.random() < 0.5 ? 0 : WORLD_W,
-    y: 100 + Math.random() * (WORLD_H - 200),
-    vx:0, vy:0, atkTimer:0,
-    isAlive: true, hitFlash:0, deathTimer:0,
-    roamTimer:0, roamDX:0, roamDY:0,
-    spawnX:0, spawnY:0,
-    guardingChest:null, poisonTimer:0, poisonStacks:0, frozenTimer:0,
-    aggroRange: 240,
-  };
-  dragon.spawnX = dragon.x; dragon.spawnY = dragon.y;
-  enemies.push(dragon);
-  endgameState.dragonEverSpawned = true;
-  updateShardHUD();
-  addLog('🐉 Um DRAGÃO LENDÁRIO surgiu! Derrote-o para obter Fragmentos do Vazio!', 'lboss');
-  if (typeof playRareItemSound === 'function') playRareItemSound();
-  // Show world banner
-  if (typeof showWorldLevelBanner === 'function') {
-    const b = document.getElementById('wl-banner');
-    if (b) {
-      b.textContent = '🐉 DRAGÃO LENDÁRIO AVISTADO!';
-      b.style.cssText += ';color:#ffe066;text-shadow:0 0 20px rgba(255,200,40,.8)';
-      b.classList.add('visible');
-      setTimeout(() => b.classList.remove('visible'), 3500);
-    }
+  // Guarda dupla: nunca duplicar o dragão
+  if (dragonEvent.active) return;
+  if (legendaryDragon && legendaryDragon.isAlive) return;
+
+  dragonEvent.active = true;
+  // A criação real é feita pelo override em spawnDragonEvent abaixo (SafeZone+Dragon).
+  // Se o override ainda não existir (carregamento parcial), cancela.
+  if (typeof _spawnLegendaryDragonImpl === 'function') {
+    _spawnLegendaryDragonImpl();
+  } else {
+    dragonEvent.active = false;
   }
 }
 
 // Fake item ID to trigger shard drops
 Object.assign(ITEM_DB, {
-  shard_drop: { name: SHARD_NAME, icon: SHARD_ICON, type:'shard', effect:{}, desc:'Moeda especial', rarity:'mythic', forClass:null },
+  shard_drop: { name: 'Ruby', icon: '💎', type:'ruby', effect:{}, desc:'Moeda especial de bosses', rarity:'mythic', forClass:null },
 });
 
 // ── Final Boss — The Eternal Abyss ────────────────────────
@@ -10603,7 +10704,7 @@ function triggerVictory() {
     Nível <strong style="color:#ffe066">${player.level}</strong> ·
     ${kills} eliminados ·
     ${player.gold} 🪙<br>
-    ${SHARD_ICON} ${player.craftCurrency||0} Fragmentos do Vazio restantes<br>
+    ${SHARD_ICON} ${player.rubies||0} Rubies restantes<br>
     Set do Vazio: ${countEquippedSetPieces()}/${MYTHIC_SET_IDS.length} peças<br>
     <em style="color:#9a8030">${player.subclass || CLASS_DEF[player.classId]?.name || ''}</em>`;
   // Add CSS for star animation
@@ -10625,10 +10726,10 @@ if (_egOrigKillEnemy) {
       const shardAmt = 1 + Math.floor(worldLevel * 0.5);
       addShards(shardAmt);
     }
-    // Dragon event — extra shards
+    // Dragon event — extra rubies
     if (e.isDragonEvent) {
       addShards(3 + Math.floor(worldLevel));
-      addLog(`🐉 Dragão derrotado! +${3+Math.floor(worldLevel)} ${SHARD_NAME}!`, 'llvl');
+      addLog(`🐉 Dragão derrotado! +${3+Math.floor(worldLevel)} Ruby!`, 'llvl');
     }
     // Final boss victory
     if (e.isFinalBoss) {
@@ -10644,6 +10745,8 @@ if (_egOrigUpdate) {
   update = function(dt) {
     _egOrigUpdate.apply(this, arguments);
     updateDragonEvent(dt);
+    if (typeof _updateDragonLogic === 'function') _updateDragonLogic(dt);
+    if (typeof _dragonAlertState !== 'undefined') _dragonAlertState.timer += dt;
     checkSetBonusChanges();
     // Reapply set bonuses every 5s (in case equipments changed)
     if (!update._setTimer) update._setTimer = 0;
@@ -10662,6 +10765,10 @@ if (_egOrigRender) {
       ctx.translate(-(cam?.x||0), -(cam?.y||0));
       drawVoidMerchant();
       ctx.restore();
+      // Dragon alert drawn in screen-space (no translate needed)
+      if (typeof _drawDragonAlert === 'function' && typeof _dragonAlertState !== 'undefined' && _dragonAlertState.active) {
+        _drawDragonAlert(0); // timer is driven by update, pass 0 here
+      }
     }
   };
 }
@@ -10748,12 +10855,12 @@ if (_egOrigMinimap) {
   };
 }
 
-// ── Patch createPlayer to include shard HUD init ─────────
+// ── Patch createPlayer to include ruby HUD init ─────────
 const _egOrigCreatePlayer = typeof createPlayer === 'function' ? createPlayer : null;
 if (_egOrigCreatePlayer) {
   createPlayer = function(classId) {
     const p = _egOrigCreatePlayer.apply(this, arguments);
-    if (typeof p.craftCurrency === 'undefined') p.craftCurrency = 0;
+    if (typeof p.rubies === 'undefined') p.rubies = 0;
     return p;
   };
 }
@@ -10781,12 +10888,798 @@ if (_egOrigStartGame) {
 // ── Update hint row ───────────────────────────────────────
 (function patchHintRow() {
   const hint = document.querySelector('.hud-info-row[style*="font-size:10px"]');
-  if (hint && !hint.textContent.includes('Fragmentos')) {
+  if (hint && !hint.textContent.includes('Vazio')) {
     hint.textContent += ' [F] Mercador do Vazio ⚜';
   }
 })();
 
 console.log('[Endgame] Sistema de endgame carregado ✓');
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SAFE ZONE · DRAGON DEN · ENHANCED DRAGON SYSTEM
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* Dragon health bar */
+#dragon-bar {
+  position:absolute; top:70px; left:50%; transform:translateX(-50%);
+  width:340px; background:rgba(8,4,2,.92); border:1px solid #c03000;
+  border-radius:8px; padding:6px 10px; display:none;
+  box-shadow:0 0 20px rgba(200,60,0,.3);
+}
+#dragon-bar.visible { display:block; }
+.dragon-bar-name {
+  font-family:'Cinzel',serif; font-size:12px; color:#f08030;
+  text-align:center; margin-bottom:4px; letter-spacing:.08em;
+}
+.dragon-bar-track { height:8px; background:#1a0800; border-radius:4px; overflow:hidden; border:1px solid #3a1400; }
+#dragon-bar-fill { height:100%; background:linear-gradient(90deg,#8b1a00,#e74c3c,#ff8c00); border-radius:4px; transition:width .2s; }
+.dragon-bar-hp { font-family:'VT323',monospace; font-size:12px; color:#a04020; text-align:center; margin-top:2px; }
+</style>
+
+<div id="dragon-bar">
+  <div class="dragon-bar-name">🐉 DRAGÃO LENDÁRIO</div>
+  <div class="dragon-bar-track"><div id="dragon-bar-fill" style="width:100%"></div></div>
+  <div class="dragon-bar-hp" id="dragon-bar-hp">— / —</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SAFE ZONE + DRAGON DEN + ENHANCED DRAGON
+// ═══════════════════════════════════════════════════════════
+
+// ── Zone definitions (tile coordinates) ──────────────────
+const SAFE_ZONE  = { tx:1,  ty:1,  tw:13, th:13 }; // top-left camp
+const DRAGON_DEN = { tx:42, ty:2,  tw:11, th:10 }; // northeast cavern
+
+// World-pixel helpers
+function isInSafeZone(wx, wy) {
+  const tx = wx / T, ty = wy / T;
+  return tx >= SAFE_ZONE.tx && tx < SAFE_ZONE.tx + SAFE_ZONE.tw &&
+         ty >= SAFE_ZONE.ty && ty < SAFE_ZONE.ty + SAFE_ZONE.th;
+}
+
+// Dragon den center (world pixels)
+// ── Dragon state (one at a time) ─────────────────────────
+let legendaryDragon = null;
+
+function getDragonDenCenter() {
+  return {
+    x: (DRAGON_DEN.tx + Math.floor(DRAGON_DEN.tw / 2)) * T + T / 2,
+    y: (DRAGON_DEN.ty + Math.floor(DRAGON_DEN.th / 2)) * T + T / 2,
+  };
+}
+
+// ── 1. Patch generateMap to carve safe zone + dragon den ──
+const _szOrigGenerateMap = typeof generateMap === 'function' ? generateMap : null;
+if (_szOrigGenerateMap) {
+  generateMap = function(...args) {
+    _szOrigGenerateMap.apply(this, args);
+    _carveSafeZone();
+    _carveDragonDen();
+  };
+}
+
+function _carveSafeZone() {
+  const { tx, ty, tw, th } = SAFE_ZONE;
+  // Stone floor for the whole camp
+  for (let y = ty; y < ty + th; y++) {
+    for (let x = tx; x < tx + tw; x++) {
+      if (x > 0 && x < MAP_W-1 && y > 0 && y < MAP_H-1) {
+        mapTiles[y][x] = TILE.STONE;
+      }
+    }
+  }
+  // Decorative inner path ring
+  for (let y = ty+1; y < ty+th-1; y++) {
+    for (let x = tx+1; x < tx+tw-1; x++) {
+      if (y === ty+1 || y === ty+th-2 || x === tx+1 || x === tx+tw-2)
+        mapTiles[y][x] = TILE.PATH;
+      else
+        mapTiles[y][x] = TILE.STONE;
+    }
+  }
+  // Camp center plaza
+  for (let y = ty+3; y < ty+th-3; y++)
+    for (let x = tx+3; x < tx+tw-3; x++)
+      mapTiles[y][x] = TILE.PATH;
+
+  // Campfire decor at center
+  const cfx = (tx + Math.floor(tw/2)) * T + T/2;
+  const cfy = (ty + Math.floor(th/2)) * T + T/2;
+  mapDecor.push({ x:cfx, y:cfy, type:'campfire' });
+
+  // Path connecting safe zone to main road (south exit at y=ty+th)
+  const exitX = tx + Math.floor(tw/2);
+  for (let y = ty+th; y < ty+th+4; y++) {
+    if (y > 0 && y < MAP_H-1 && exitX > 0 && exitX < MAP_W-1) {
+      mapTiles[y][exitX] = TILE.PATH;
+      if (exitX+1 < MAP_W-1) mapTiles[y][exitX+1] = TILE.PATH;
+    }
+  }
+
+  // Move NPCs into safe zone
+  _relocateNpcsToSafeZone();
+}
+
+function _relocateNpcsToSafeZone() {
+  const T2 = T;
+  const { tx, ty } = SAFE_ZONE;
+
+  // Archimedes — center-right of camp
+  if (typeof npcObj !== 'undefined') {
+    npcObj.x = (tx + 9) * T2 + T2/2;
+    npcObj.y = (ty + 6) * T2 + T2/2;
+  }
+  // Smithy — left side
+  if (typeof smithyState !== 'undefined') {
+    smithyState.x = (tx + 3) * T2 + T2/2;
+    smithyState.y = (ty + 4) * T2 + T2/2;
+  }
+  // Alchemist — right side
+  if (typeof alchemistState !== 'undefined') {
+    alchemistState.x = (tx + 9) * T2 + T2/2;
+    alchemistState.y = (ty + 3) * T2 + T2/2;
+  }
+  // Pet trainer — lower left
+  if (typeof petTrainerState !== 'undefined') {
+    petTrainerState.x = (tx + 3) * T2 + T2/2;
+    petTrainerState.y = (ty + 9) * T2 + T2/2;
+  }
+  // Void Merchant — lower right corner
+  if (typeof voidMerchantState !== 'undefined') {
+    voidMerchantState.x = (tx + SAFE_ZONE.tw - 3) * T2 + T2/2;
+    voidMerchantState.y = (ty + SAFE_ZONE.th - 3) * T2 + T2/2;
+  }
+}
+
+function _carveDragonDen() {
+  const { tx, ty, tw, th } = DRAGON_DEN;
+
+  // ── Lava cave floor — scorched stone with lava cracks ──
+  for (let y = ty; y < ty+th; y++) {
+    for (let x = tx; x < tx+tw; x++) {
+      if (x > 0 && x < MAP_W-1 && y > 0 && y < MAP_H-1) {
+        const distEdge = Math.min(x-tx, tx+tw-1-x, y-ty, ty+th-1-y);
+        if (distEdge === 0) {
+          mapTiles[y][x] = TILE.WALL;   // dark rock wall border
+        } else if (distEdge === 1) {
+          mapTiles[y][x] = TILE.STONE;  // inner stone ring
+        } else {
+          // Scorched sand interior — arena floor
+          mapTiles[y][x] = TILE.SAND;
+        }
+      }
+    }
+  }
+
+  // Remove trees/decor inside den and add lava/bone decorations
+  // (filter out trees generated earlier in the den area)
+  for (let i = mapDecor.length - 1; i >= 0; i--) {
+    const d = mapDecor[i];
+    const dtx = Math.floor(d.x / T), dty = Math.floor(d.y / T);
+    if (dtx >= tx && dtx < tx+tw && dty >= ty && dty < ty+th) {
+      mapDecor.splice(i, 1);
+    }
+  }
+
+  // Lava cracks (decorative, rendered in _drawDenDecor)
+  const denCx = (tx + Math.floor(tw/2)) * T + T/2;
+  const denCy = (ty + Math.floor(th/2)) * T + T/2;
+  // Lava pool in center
+  mapDecor.push({ x:denCx, y:denCy, type:'lavaPool' });
+  // Bone piles around the arena
+  for (let b = 0; b < 6; b++) {
+    const ang = (b / 6) * Math.PI * 2;
+    const r = (tw < th ? tw : th) * T * 0.35;
+    mapDecor.push({
+      x: denCx + Math.cos(ang) * r,
+      y: denCy + Math.sin(ang) * r * 0.7,
+      type: 'bonePile'
+    });
+  }
+  // Skull trophies on walls
+  mapDecor.push({ x:(tx+2)*T+T/2, y:(ty+1)*T+T/2, type:'skullWall' });
+  mapDecor.push({ x:(tx+tw-3)*T+T/2, y:(ty+1)*T+T/2, type:'skullWall' });
+
+  // ── Narrow entrance path (2 tiles wide from south) ────
+  const entrX = tx + Math.floor(tw/2);
+  for (let y2 = ty+th; y2 < ty+th+5; y2++) {
+    if (y2 > 0 && y2 < MAP_H-1) {
+      mapTiles[y2][entrX]   = TILE.PATH;
+      if (entrX+1 < MAP_W-1) mapTiles[y2][entrX+1] = TILE.PATH;
+    }
+  }
+  // Warning sign at entrance
+  mapDecor.push({ x:(entrX)*T+T, y:(ty+th+1)*T+T/2, type:'denSign' });
+}
+
+// Draw den decorations (lava, bones, skulls) — called from renderDecor patch
+function _drawDenDecor(d, now) {
+  if (d.type === 'lavaPool') {
+    const pulse = Math.sin(now/600)*0.25+0.75;
+    const r = 28;
+    const g = ctx.createRadialGradient(d.x, d.y, 4, d.x, d.y, r);
+    g.addColorStop(0, `rgba(255,200,30,${pulse})`);
+    g.addColorStop(0.4, `rgba(220,80,10,${pulse*0.8})`);
+    g.addColorStop(1, 'rgba(80,15,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(d.x, d.y, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
+    // Lava surface ripples
+    for (let r2 = 0; r2 < 3; r2++) {
+      const rs = now/800 + r2*1.1;
+      const rx = d.x + Math.cos(rs)*10, ry = d.y + Math.sin(rs)*6;
+      ctx.strokeStyle = `rgba(255,${160+Math.floor(pulse*60)},20,${0.3+pulse*0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(rx, ry, 8, 5, rs*0.3, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+  if (d.type === 'bonePile') {
+    // Pile of bones
+    ctx.strokeStyle = 'rgba(200,190,160,.7)'; ctx.lineWidth = 2; ctx.lineCap='round';
+    for (let b=0; b<4; b++) {
+      const ba = (b/4)*Math.PI + 0.3;
+      ctx.beginPath();
+      ctx.moveTo(d.x+Math.cos(ba)*6, d.y+Math.sin(ba)*4);
+      ctx.lineTo(d.x-Math.cos(ba)*6, d.y-Math.sin(ba)*4);
+      ctx.stroke();
+    }
+    ctx.fillStyle='rgba(190,180,150,.6)';
+    ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI*2); ctx.fill();
+  }
+  if (d.type === 'skullWall') {
+    ctx.fillStyle='rgba(180,170,140,.8)';
+    ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(20,16,12,.9)';
+    ctx.beginPath(); ctx.arc(d.x-2, d.y, 1.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(d.x+2, d.y, 1.5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(20,16,12,.7)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(d.x, d.y+3, 3, 0, Math.PI); ctx.stroke();
+  }
+  if (d.type === 'denSign') {
+    const pulse = Math.sin(now/500)*0.25+0.75;
+    ctx.fillStyle='#2a1006';
+    ctx.beginPath(); ctx.roundRect(d.x-30, d.y-12, 60, 20, [3]); ctx.fill();
+    ctx.strokeStyle=`rgba(220,60,0,${pulse*0.8})`; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(d.x-30, d.y-12, 60, 20, [3]); ctx.stroke();
+    ctx.fillStyle=`rgba(255,${80+Math.floor(pulse*80)},20,${pulse})`;
+    ctx.font='bold 8px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('☠ COVIL DO DRAGÃO ☠', d.x, d.y-2);
+  }
+}
+
+// Den decor is drawn by the renderDecor patch — _drawCampDecor is extended after definition below
+
+// ── Implementação real do spawn do dragão lendário ────────
+// Chamada pelo novo sistema dragonEvent quando todas as condições são válidas.
+// Usa _spawnLegendaryDragonImpl para que o sistema central possa invocar com segurança.
+function _spawnLegendaryDragonImpl() {
+  // Guarda tripla — nunca duplicar
+  if (legendaryDragon && legendaryDragon.isAlive) { dragonEvent.active = false; return; }
+
+  // Limpar inimigos normais que estejam dentro do Covil
+  const { tx, ty, tw, th } = DRAGON_DEN;
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    if (!e.isAlive || e.isDragonEvent) continue;
+    const etx = Math.floor(e.x / T), ety = Math.floor(e.y / T);
+    if (etx >= tx && etx < tx + tw && ety >= ty && ety < ty + th) {
+      enemies.splice(i, 1);
+    }
+  }
+
+  const denPos = getDragonDenCenter();
+  const scale  = 1.6 + (typeof worldLevel !== 'undefined' ? (worldLevel - 1) * 0.3 : 0);
+  const hp     = Math.floor(2000 * scale);
+
+  legendaryDragon = {
+    uid: 'legendary_dragon_' + Date.now(),
+    id: 'dragon_legendary',
+    defId: 'dragon_legendary',
+    name: '🐉 DRAGÃO LENDÁRIO',
+    color: '#c04000',
+    x: denPos.x, y: denPos.y,
+    spawnX: denPos.x, spawnY: denPos.y,
+    hp, maxHp: hp,
+    atk: Math.floor(60 * scale),
+    def: 28,
+    spd: 85,
+    xp: 1000,
+    atkRange: 75,
+    atkSpeed: 2000,
+    goldRange: [150, 300],
+    size: 52,
+    isBoss: true,
+    isDragonEvent: true,
+    isLegendaryDragon: true,
+    drops: [
+      { id: 'shard_drop', chance: 1 },
+      { id: 'big_potion',  chance: 1 },
+      { id: 'big_mana_pot', chance: 1 },
+    ],
+    minLevel: 1,
+    vx: 0, vy: 0, atkTimer: 0,
+    isAlive: true, hitFlash: 0, deathTimer: 500,
+    roamTimer: 0, roamDX: 0, roamDY: 0,
+    guardingChest: null, poisonTimer: 0, poisonStacks: 0, frozenTimer: 0,
+    aggroRange: 280,
+    drawFn: _drawLegendaryDragon,
+    // Atributos específicos do dragão
+    wingTimer: 0, idleTimer: 0,
+    breathCooldown: 2800,
+    breathAnimTime: 0,
+    phaseFear: false,
+    // Confinar ao Covil
+    denMinX: (tx + 1) * T + T / 2,
+    denMaxX: (tx + tw - 2) * T + T / 2,
+    denMinY: (ty + 1) * T + T / 2,
+    denMaxY: (ty + th - 2) * T + T / 2,
+  };
+  enemies.push(legendaryDragon);
+
+  // Barra de vida
+  document.getElementById('dragon-bar')?.classList.add('visible');
+  _updateDragonBar();
+
+  if (typeof endgameState !== 'undefined') endgameState.dragonEverSpawned = true;
+  if (typeof updateShardHUD === 'function') updateShardHUD();
+
+  // Mensagem e alerta
+  addLog('🐉 O Dragão despertou no covil!', 'lboss');
+  _showDragonAlert();
+  if (typeof playRareItemSound === 'function') { playRareItemSound(); setTimeout(playRareItemSound, 500); }
+}
+
+// Compatibilidade: se algo ainda chamar spawnDragonEvent diretamente, redirecionar
+if (typeof spawnDragonEvent === 'function') {
+  spawnDragonEvent = function() {
+    if (dragonEvent.active) return;
+    dragonEvent.active = true;
+    _spawnLegendaryDragonImpl();
+  };
+}
+
+// ── Full-screen dragon alert ──────────────────────────────
+// ── Dragon alert state (pure canvas, no DOM) ─────────────
+const _dragonAlertState = { active: false, timer: 0, duration: 4500 };
+
+function _showDragonAlert() {
+  _dragonAlertState.active = true;
+  _dragonAlertState.timer = 0;
+}
+
+function _drawDragonAlert() {
+  if (!_dragonAlertState.active) return;
+  const t = _dragonAlertState.timer;
+  const dur = _dragonAlertState.duration;
+  if (t >= dur) { _dragonAlertState.active = false; return; }
+
+  // Fade in 0-400ms, hold, fade out last 600ms
+  let alpha;
+  if (t < 400) alpha = t / 400;
+  else if (t > dur - 600) alpha = (dur - t) / 600;
+  else alpha = 1;
+  alpha = Math.max(0, Math.min(1, alpha));
+
+  const cw = W, ch = H;
+  ctx.save();
+  ctx.resetTransform();
+  ctx.fillStyle = `rgba(60,8,0,${alpha * 0.5})`;
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // Icon
+  ctx.font = '64px serif';
+  ctx.fillText('🐉', cw / 2, ch / 2 - 52);
+  // Title
+  ctx.font = 'bold 34px Cinzel, serif';
+  ctx.fillStyle = '#ff4400';
+  ctx.shadowColor = 'rgba(255,60,0,.8)';
+  ctx.shadowBlur = 18;
+  ctx.fillText('🔥 DRAGÃO LENDÁRIO 🔥', cw / 2, ch / 2 + 8);
+  // Subtitle
+  ctx.font = '15px serif';
+  ctx.fillStyle = '#ffa040';
+  ctx.shadowBlur = 0;
+  ctx.fillText('O Dragão emergiu do Covil! Vá ao nordeste do mapa.', cw / 2, ch / 2 + 44);
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+// ── Dragon draw — efficient, recognizable ────────────────
+function _drawLegendaryDragon(ctx, e) {
+  if (!e.isAlive && e.deathTimer <= 0) return;
+  const now = Date.now();
+  const t = e.size;
+  e.wingTimer = (e.wingTimer||0) + 16;
+  e.idleTimer = (e.idleTimer||0) + 16;
+  if (e.breathAnimTime > 0) e.breathAnimTime -= 16;
+
+  const bob     = Math.sin(e.idleTimer/700) * 4;
+  const wingY   = Math.sin(e.wingTimer/180) * t * 0.7;
+  const cx = e.x, cy = e.y + bob;
+  const hit = e.hitFlash > 0;
+  const enraged = e.phaseFear;
+  const alpha = (e.deathTimer > 0 && !e.isAlive) ? Math.min(1, e.deathTimer/500) : 1;
+  const faceDir = (player && player.x > cx) ? 1 : -1;
+
+  ctx.globalAlpha = alpha;
+
+  // ── Aura glow ──────────────────────────────────────────
+  ctx.fillStyle = enraged ? 'rgba(255,30,0,.15)' : 'rgba(180,40,0,.12)';
+  ctx.beginPath(); ctx.arc(cx, cy, t*2.2, 0, Math.PI*2); ctx.fill();
+
+  // ── Wings ──────────────────────────────────────────────
+  const wc = hit ? 'rgba(255,255,255,.7)' : (enraged ? 'rgba(120,10,0,.8)' : 'rgba(90,12,0,.75)');
+  ctx.fillStyle = wc;
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(cx + s*t*0.5, cy - t*0.1);
+    ctx.quadraticCurveTo(cx + s*t*2.2, cy - wingY - t*0.8, cx + s*t*2.4, cy + t*0.2);
+    ctx.quadraticCurveTo(cx + s*t*1.2, cy + t*0.1, cx + s*t*0.5, cy - t*0.1);
+    ctx.fill();
+    // Single bone line on wing
+    ctx.strokeStyle = hit ? 'rgba(255,200,200,.3)' : 'rgba(50,5,0,.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + s*t*0.4, cy);
+    ctx.lineTo(cx + s*t*2.0, cy - wingY - t*0.5);
+    ctx.stroke();
+  }
+
+  // ── Tail ───────────────────────────────────────────────
+  const tailWag = Math.sin(now/450) * 10;
+  ctx.strokeStyle = hit ? '#fff' : '#7a1200';
+  ctx.lineWidth = t * 0.28; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - faceDir*t*0.6, cy + t*0.4);
+  ctx.quadraticCurveTo(cx - faceDir*t*1.8, cy + t*0.8 + tailWag, cx - faceDir*t*2.4, cy - t*0.1 + tailWag*0.4);
+  ctx.stroke();
+  // Tail spike
+  ctx.fillStyle = hit ? '#fff' : '#5a0a00';
+  const tx2 = cx - faceDir*t*2.4, ty2 = cy - t*0.1 + tailWag*0.4;
+  ctx.beginPath();
+  ctx.moveTo(tx2, ty2 - t*0.22);
+  ctx.lineTo(tx2 - faceDir*t*0.4, ty2 + t*0.04);
+  ctx.lineTo(tx2, ty2 + t*0.22);
+  ctx.closePath(); ctx.fill();
+
+  // ── Body ───────────────────────────────────────────────
+  ctx.fillStyle = hit ? '#fff' : (enraged ? '#aa1500' : '#8b1400');
+  ctx.beginPath(); ctx.ellipse(cx, cy, t*0.85, t, 0, 0, Math.PI*2); ctx.fill();
+  // Belly
+  ctx.fillStyle = hit ? '#ddd' : '#c03020';
+  ctx.beginPath(); ctx.ellipse(cx, cy + t*0.15, t*0.42, t*0.65, 0, 0, Math.PI*2); ctx.fill();
+  // 3 dorsal spines
+  ctx.fillStyle = hit ? '#fff' : '#6a0e00';
+  for (let sp = 0; sp < 3; sp++) {
+    const sy = cy - t*0.55 + sp*t*0.35;
+    ctx.beginPath();
+    ctx.moveTo(cx - t*0.07, sy); ctx.lineTo(cx, sy - t*0.2); ctx.lineTo(cx + t*0.07, sy);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // ── Head ───────────────────────────────────────────────
+  const hx = cx + faceDir*t*0.8, hy = cy - t*0.55;
+  ctx.fillStyle = hit ? '#fff' : '#7a1300';
+  ctx.beginPath(); ctx.ellipse(hx, hy, t*0.5, t*0.38, faceDir*0.12, 0, Math.PI*2); ctx.fill();
+  // Snout
+  const sx2 = hx + faceDir*t*0.36, sy2 = hy + t*0.06;
+  ctx.fillStyle = hit ? '#fff' : '#6a1000';
+  ctx.beginPath(); ctx.ellipse(sx2, sy2, t*0.28, t*0.18, 0, 0, Math.PI*2); ctx.fill();
+  // Teeth
+  ctx.fillStyle = hit ? '#eee' : '#e0d8b8';
+  for (let tk = -1; tk <= 1; tk++) {
+    ctx.beginPath();
+    ctx.moveTo(sx2 + faceDir*tk*t*0.08 - t*0.04, sy2 - t*0.1);
+    ctx.lineTo(sx2 + faceDir*tk*t*0.08, sy2 - t*0.2);
+    ctx.lineTo(sx2 + faceDir*tk*t*0.08 + t*0.04, sy2 - t*0.1);
+    ctx.closePath(); ctx.fill();
+  }
+  // Fire glow on snout when breathing
+  if (e.breathAnimTime > 0) {
+    const ba = e.breathAnimTime / 600;
+    ctx.fillStyle = `rgba(255,180,40,${ba*0.7})`;
+    ctx.beginPath(); ctx.arc(sx2 + faceDir*t*0.18, sy2, t*0.4, 0, Math.PI*2); ctx.fill();
+  }
+  // Eye — glowing
+  const eyeX = hx - faceDir*t*0.08, eyeY = hy - t*0.12;
+  const eg = Math.sin(now/350)*0.2 + 0.8;
+  ctx.fillStyle = enraged ? `rgba(255,20,0,${eg})` : `rgba(255,160,0,${eg})`;
+  ctx.beginPath(); ctx.arc(eyeX, eyeY, t*0.12, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(eyeX, eyeY, t*0.04, t*0.09, 0, 0, Math.PI*2); ctx.fill();
+  // Horns (2 lines)
+  ctx.strokeStyle = hit ? '#fff' : '#4a0900'; ctx.lineWidth = t*0.1; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(hx - faceDir*t*0.15, hy - t*0.3); ctx.lineTo(hx - faceDir*t*0.2, hy - t*0.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hx + faceDir*t*0.06, hy - t*0.28); ctx.lineTo(hx + faceDir*t*0.02, hy - t*0.65); ctx.stroke();
+
+  // ── Name tag ────────────────────────────────────────────
+  const dist = player ? Math.hypot(player.x-e.x, player.y-e.y) : 9999;
+  if (dist < 380) {
+    const na = Math.min(1, (380-dist)/120);
+    ctx.globalAlpha = alpha * na;
+    ctx.fillStyle = 'rgba(8,2,0,.92)';
+    ctx.beginPath(); ctx.roundRect(cx-55, cy-t*1.3-18, 110, 16, [4]); ctx.fill();
+    ctx.fillStyle = enraged ? '#ff3010' : '#ff6020';
+    ctx.font = 'bold 10px Cinzel, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(enraged ? '🔥 DRAGÃO ENFURECIDO 🔥' : '🐉 DRAGÃO LENDÁRIO', cx, cy-t*1.3-10);
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+
+// ── Atualiza a barra de vida do dragão no HUD ────────────
+function _updateDragonBar() {
+  const fill = document.getElementById('dragon-bar-fill');
+  const text = document.getElementById('dragon-bar-hp');
+  const bar  = document.getElementById('dragon-bar');
+  if (!fill || !text || !bar) return;
+
+  if (!legendaryDragon || !legendaryDragon.isAlive) {
+    bar.classList.remove('visible');
+    return;
+  }
+
+  const pct = Math.max(0, legendaryDragon.hp / legendaryDragon.maxHp * 100);
+  fill.style.width = pct.toFixed(1) + '%';
+  text.textContent = legendaryDragon.hp + ' / ' + legendaryDragon.maxHp;
+  bar.classList.add('visible');
+}
+
+// ── Dragon fire breath attack ─────────────────────────────
+function _dragonFireBreath(dragon) {
+  if (!player) return;
+  dragon.breathAnimTime = 600;
+  const dx = player.x - dragon.x, dy = player.y - dragon.y;
+  const spread = 0.22;
+  // 5 fireballs in a cone
+  for (let i = -2; i <= 2; i++) {
+    const ang = Math.atan2(dy, dx) + i * spread;
+    const spd = 270 + Math.abs(i) * 30;
+    projectiles.push({
+      x: dragon.x + Math.cos(ang) * (dragon.size + 10),
+      y: dragon.y + Math.sin(ang) * (dragon.size + 10),
+      vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+      dmg: Math.floor(dragon.atk * (i === 0 ? 1.3 : 0.75)),
+      color: i === 0 ? '#ff3300' : '#ff8822',
+      isCrit: i === 0,
+      radius: 9 + Math.abs(i) * 2, life: 1500, aoeRadius: 42,
+      piercing: false, targetEnemy: null, poisonProc: 0, freezeProc: 0,
+    });
+  }
+  // Particles at muzzle
+  for (let p2 = 0; p2 < 18; p2++) {
+    const a2 = Math.atan2(dy, dx) + (Math.random()-.5)*.9;
+    const sp = 80 + Math.random()*130;
+    particles.push({ type:'hit', x:dragon.x+Math.cos(a2)*dragon.size,
+      y:dragon.y+Math.sin(a2)*dragon.size, vx:Math.cos(a2)*sp, vy:Math.sin(a2)*sp,
+      life:550, maxLife:550, r:4+Math.random()*6,
+      color:['#ff5500','#ff2200','#ffaa00'][Math.floor(Math.random()*3)], gravity:25 });
+  }
+  addLog('🔥 Dragão cuspiu fogo!', 'ldmg');
+  if (typeof playDragonAttackSound === 'function') playDragonAttackSound();
+}
+
+// ── Update logic: confine dragon to den, fire breath, phase 2 ─
+// Esta função só roda quando o dragão está ativo — sem custo quando inativo.
+function _updateDragonLogic(dt) {
+  if (!legendaryDragon || !player) return;
+
+  // Dragão morreu — o sistema dragonEvent.updateDragonEvent cuidará da limpeza
+  if (!legendaryDragon.isAlive) {
+    _updateDragonBar();
+    return;
+  }
+
+  _updateDragonBar();
+
+  // Confinar ao Covil
+  const d = legendaryDragon;
+  d.x = Math.max(d.denMinX, Math.min(d.denMaxX, d.x));
+  d.y = Math.max(d.denMinY, Math.min(d.denMaxY, d.y));
+
+  // Fôlego de fogo
+  d.breathCooldown -= dt;
+  if (d.breathCooldown <= 0) {
+    const dist3 = Math.hypot(player.x - d.x, player.y - d.y);
+    if (dist3 < d.aggroRange * 1.2) {
+      d.breathCooldown = d.phaseFear
+        ? (1800 + Math.random() * 1000)
+        : (2800 + Math.random() * 1200);
+      _dragonFireBreath(d);
+    } else {
+      d.breathCooldown = 1500;
+    }
+  }
+
+  // Fase 2 — enraivecimento a 40 % de HP
+  if (!d.phaseFear && d.hp / d.maxHp < 0.4) {
+    d.phaseFear       = true;
+    d.breathCooldown  = 800;
+    d.spd             = Math.floor(d.spd * 1.5);
+    d.atk             = Math.floor(d.atk * 1.3);
+    addLog('🔥 DRAGÃO ENTROU EM FÚRIA!', 'lboss');
+    for (let fi = 0; fi < 8; fi++) {
+      const a = (fi / 8) * Math.PI * 2;
+      projectiles.push({
+        x: d.x, y: d.y,
+        vx: Math.cos(a) * 220, vy: Math.sin(a) * 220,
+        dmg: Math.floor(d.atk * 0.8), color: '#ff6600', isCrit: false,
+        radius: 10, life: 1600, aoeRadius: 35, piercing: false,
+        targetEnemy: null, poisonProc: 0, freezeProc: 0,
+      });
+    }
+  }
+}
+
+// ── 2. Patch spawnEnemy: relocate enemies que nascem na safe zone ou no Covil ──
+const _szOrigSpawnEnemy = typeof spawnEnemy === 'function' ? spawnEnemy : null;
+if (_szOrigSpawnEnemy) {
+  spawnEnemy = function(forceBossId) {
+    const e = _szOrigSpawnEnemy.apply(this, arguments);
+    // Inimigos normais não entram na safe zone nem no Covil do Dragão
+    const inBadZone = () => isInSafeZone(e.x, e.y) || _isInDragonDen(e.x, e.y);
+    if (inBadZone()) {
+      let attempts = 0;
+      while (inBadZone() && attempts < 50) {
+        const pos = findFreePos(T * 8, player.x, player.y);
+        e.x = pos.x; e.y = pos.y;
+        e.spawnX = e.x; e.spawnY = e.y;
+        attempts++;
+      }
+    }
+    return e;
+  };
+}
+
+function _isInDragonDen(wx, wy) {
+  const dtx = wx / T, dty = wy / T;
+  return dtx >= DRAGON_DEN.tx && dtx < DRAGON_DEN.tx + DRAGON_DEN.tw &&
+         dty >= DRAGON_DEN.ty && dty < DRAGON_DEN.ty + DRAGON_DEN.th;
+}
+
+// ── 3. Patch findFreePos to prefer outside safe zone ─────
+const _szOrigFindFreePos = typeof findFreePos === 'function' ? findFreePos : null;
+if (_szOrigFindFreePos) {
+  findFreePos = function(minDist, fromX, fromY) {
+    // Try to find a pos outside the safe zone (max 80 tries, then fall back)
+    for (let tries = 0; tries < 80; tries++) {
+      const x = (1 + Math.floor(Math.random() * (MAP_W - 2))) * T + T/2;
+      const y = (1 + Math.floor(Math.random() * (MAP_H - 2))) * T + T/2;
+      if (isInSafeZone(x, y)) continue;
+      const t = mapTiles[Math.floor(y/T)]?.[Math.floor(x/T)];
+      if (t === TILE.STONE || t === TILE.PATH || t === TILE.GRASS || t === TILE.DIRT) {
+        if (!minDist || Math.hypot(x-(fromX||0), y-(fromY||0)) >= minDist) return { x, y };
+      }
+    }
+    return _szOrigFindFreePos.apply(this, arguments);
+  };
+}
+
+// ── 4. Draw campfire and den sign in renderDecor ──────────
+const _szOrigRenderDecor = typeof renderDecor === 'function' ? renderDecor : null;
+if (_szOrigRenderDecor) {
+  renderDecor = function() {
+    _szOrigRenderDecor.apply(this, arguments);
+    _drawCampDecor();
+  };
+}
+
+function _drawCampDecor() {
+  if (!ctx || !player) return;
+  const now = Date.now();
+
+  for (const d of mapDecor) {
+    if (d.type === 'campfire') {
+      // World coordinates — renderDecor already has ctx.translate(-cam.x,-cam.y) applied
+      const wx = d.x, wy = d.y;
+      if (wx < cam.x-80 || wx > cam.x+W+80 || wy < cam.y-80 || wy > cam.y+H+80) continue;
+      _drawCampfire(wx, wy, now);
+    }
+    if (d.type === 'denSign') {
+      const wx = d.x, wy = d.y;
+      if (wx < cam.x-120 || wx > cam.x+W+120 || wy < cam.y-80 || wy > cam.y+H+80) continue;
+      _drawDenSign(wx, wy, now);
+    }
+    // Den decorations
+    if (d.type === 'lavaPool' || d.type === 'bonePile' || d.type === 'skullWall') {
+      if (d.x < cam.x-120 || d.x > cam.x+W+120 || d.y < cam.y-80 || d.y > cam.y+H+80) continue;
+      if (typeof _drawDenDecor === 'function') _drawDenDecor(d, now);
+    }
+  }
+
+  // Den border highlight — world coordinates
+  if (typeof DRAGON_DEN !== 'undefined') {
+    const { tx, ty, tw, th } = DRAGON_DEN;
+    const dzX = tx*T, dzY = ty*T, dzW = tw*T, dzH = th*T;
+    if (dzX < cam.x+W+60 && dzX+dzW > cam.x-60) {
+      ctx.strokeStyle = 'rgba(200,40,0,.18)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 5]);
+      ctx.strokeRect(dzX, dzY, dzW, dzH);
+      ctx.setLineDash([]);
+    }
+  }
+  const szX = SAFE_ZONE.tx * T;
+  const szY = SAFE_ZONE.ty * T;
+  const szW = SAFE_ZONE.tw * T, szH = SAFE_ZONE.th * T;
+  if (szX < cam.x + W + 100 && szX + szW > cam.x - 100) {
+    ctx.strokeStyle = 'rgba(40,200,80,.15)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(szX, szY, szW, szH);
+    ctx.setLineDash([]);
+  }
+}
+
+function _drawCampfire(wx, wy, now) {
+  // Log base
+  ctx.fillStyle = '#3a1c08';
+  ctx.fillRect(wx-10, wy+2, 20, 6);
+  ctx.fillRect(wx-8, wy, 16, 5);
+  // Flames (layered, animated)
+  const flicker = Math.sin(now/120)*0.3+0.7;
+  const flicker2 = Math.sin(now/80+1)*0.3+0.7;
+  for (let f = 0; f < 3; f++) {
+    const fh = (12 + f*4) * flicker;
+    const fw = 7 - f*1.5;
+    const fy = wy - fh/2;
+    const grad = ctx.createRadialGradient(wx, wy, 1, wx, wy - fh*0.4, fh);
+    grad.addColorStop(0, ['rgba(255,230,50,.9)','rgba(255,140,20,.8)','rgba(200,50,0,.6)'][f]);
+    grad.addColorStop(1, 'rgba(200,50,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(wx + (f-1)*3, wy - fh*0.3, fw*flicker2, fh*0.7, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Sparks
+  for (let s = 0; s < 4; s++) {
+    const sa = (now/300 + s*1.2);
+    const sr = 8 + Math.sin(now/200+s)*4;
+    if (Math.sin(now/150 + s*2) > 0.3) {
+      ctx.fillStyle = `rgba(255,200,50,${0.4+Math.sin(now/100+s)*0.3})`;
+      ctx.beginPath();
+      ctx.arc(wx + Math.cos(sa)*sr*0.4, wy - sr*0.6 - s*3, 1.5, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  // Glow
+  const glow = ctx.createRadialGradient(wx, wy, 5, wx, wy, 35);
+  glow.addColorStop(0, 'rgba(255,150,30,.12)');
+  glow.addColorStop(1, 'rgba(255,100,0,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(wx, wy, 35, 0, Math.PI*2); ctx.fill();
+
+  // "Zona Segura" label above fire
+  ctx.fillStyle = 'rgba(40,200,80,.8)';
+  ctx.font = 'bold 9px Cinzel, serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('⛺ Zona Segura', wx, wy - 18);
+}
+
+function _drawDenSign(wx, wy, now) {
+  // Post
+  ctx.fillStyle = '#4a2808';
+  ctx.fillRect(wx-2, wy-24, 4, 24);
+  // Sign board
+  ctx.fillStyle = '#2a1404';
+  ctx.strokeStyle = '#6a3008';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(wx-24, wy-38, 48, 16, [3]); ctx.fill(); ctx.stroke();
+  // Text
+  const pulse = Math.sin(now/600)*0.3+0.7;
+  ctx.fillStyle = `rgba(255,100,20,${pulse})`;
+  ctx.font = 'bold 8px serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('⚠ COVIL DO DRAGÃO', wx, wy-30);
+}
+
+console.log('[SafeZone+Dragon] Sistema de evento do dragão corrigido ✓');
 </script>
 </body>
 </html>
