@@ -1473,7 +1473,7 @@ const ITEM_DB = {
   heavy_armor:  {name:'Armadura Pesada',  icon:'⚜️',  type:'armor',      effect:{def:14},  desc:'+14 DEF',  rarity:'epic',   forClass:['warrior']},
   shadow_cloak: {name:'Manto das Sombras',icon:'🌑',  type:'armor',      effect:{def:8,spd:20},desc:'+8 DEF +20 SPD',rarity:'epic',forClass:['archer','mage']},
   // ── PETS ────────────────────────────────────────────────
-  pet_healer:{name:'Fada Curadora',   icon:'💚',type:'pet',petType:'healer',effect:{},desc:'Cura +2 HP/s passivo',          rarity:'rare',forClass:null},
+  pet_healer:{name:'Fada Curadora',   icon:'💚',type:'pet',petType:'healer',effect:{},desc:'Cura +8 HP a cada 1.5s · escala com upgrades',rarity:'rare',forClass:null},
   pet_attack:{name:'Lobo de Batalha', icon:'🐺',type:'pet',petType:'attack',effect:{},desc:'Ataca inimigos próximos auto',   rarity:'rare',forClass:null},
   pet_tank:  {name:'Golem de Pedra',  icon:'🗿',type:'pet',petType:'tank',  effect:{},desc:'Tanque: absorve dano e atrai',   rarity:'rare',forClass:null},
   // ── ARTIFACTS ───────────────────────────────────────────
@@ -1722,7 +1722,7 @@ let pet = null; // active pet object or null
 function createPet(ownerPlayer, petType) {
   const type = petType || player?.activePetType || 'attack';
   const CFG = {
-    healer: {hp:100,maxHp:100, atkRange:0,    atkSpeed:99999, color:'#50e890', name:'Fada Curadora',   icon:'💚', healRate:2.0, size:9},
+    healer: {hp:140,maxHp:140, atkRange:0,    atkSpeed:99999, color:'#50e890', name:'Fada Curadora',   icon:'💚', healRate:8,   size:9},
     attack: {hp:120,maxHp:120, atkRange:110,  atkSpeed:1200,  color:'#f0c060', name:'Lobo de Batalha', icon:'🐺', healRate:0,   size:10},
     tank:   {hp:600,maxHp:600, atkRange:120,  atkSpeed:1800,  color:'#9090a8', name:'Golem de Pedra',  icon:'🗿', healRate:0,   size:14, isTank:true},
   };
@@ -1765,11 +1765,22 @@ function updatePet(dt) {
 
   // ── Pet-type specific behaviour ──────────────────────────
   if (pet.petType === 'healer') {
-    // Heal player over time
     pet.healTimer = (pet.healTimer || 0) + dt;
-    if (pet.healTimer >= 1000) {
-      pet.healTimer -= 1000;
-      p.hp = Math.min(p.maxHp, p.hp + pet.healRate);
+    const interval = 1500; // cura a cada 1.5s (era 1s, mas valor era baixo)
+    if (pet.healTimer >= interval) {
+      pet.healTimer -= interval;
+      const base    = pet.healRate || 6;
+      const mult    = player.art?.healMult || 1;
+      const amount  = Math.floor(base * mult);
+      const missing = player.maxHp - player.hp;
+      if (missing > 0) {
+        const actual = Math.min(amount, missing);
+        player.hp += actual;
+        // Mostrar número flutuante quando cura quantidade significativa
+        if (actual >= 5 && typeof spawnDmgNumber === 'function') {
+          spawnDmgNumber(player.x + 14, player.y - 28, '💚+'+actual, '#2ecc71');
+        }
+      }
     }
   }
 
@@ -2557,9 +2568,34 @@ function updatePlayer(dt){
   p.atkTimer=Math.max(0,p.atkTimer-dt);p.dashTimer=Math.max(0,p.dashTimer-dt);
   if(p.hitFlash>0)p.hitFlash-=dt;
   p.mp=Math.min(p.maxMp,p.mp+dt*0.005);
-  if(p.holyRegen){p.holyRegenTimer=(p.holyRegenTimer||0)+dt;if(p.holyRegenTimer>2000){p.holyRegenTimer=0;p.hp=Math.min(p.maxHp,p.hp+5);addLog('✨ Cura Sagrada +5 HP','lheal');}}
-  // Warrior passive: slow but steady HP regen (1 HP every 3s) — makes melee survivable early
-  if(p.classId==='warrior'){p._warriorRegenTimer=(p._warriorRegenTimer||0)+dt;if(p._warriorRegenTimer>3000){p._warriorRegenTimer=0;p.hp=Math.min(p.maxHp,p.hp+1);}}
+  // ── Regeneração passiva do Guerreiro ─────────────────────
+  // Base: 3 HP a cada 2s. Cavaleiro Sagrado ganha extra via holyRegen.
+  if(p.classId==='warrior'){
+    p._warriorRegenTimer=(p._warriorRegenTimer||0)+dt;
+    const regenInterval = 2000; // 2s
+    if(p._warriorRegenTimer>=regenInterval){
+      p._warriorRegenTimer-=regenInterval;
+      const base = 3 + Math.floor((p.level||1) * 0.5); // escala com nível
+      const mult  = p.art?.healMult || 1;
+      const amount = Math.floor(base * mult);
+      p.hp = Math.min(p.maxHp, p.hp + amount);
+      if(amount >= 8) spawnDmgNumber(p.x, p.y-28, '+'+amount, '#2ecc71');
+    }
+  }
+  // ── Cavaleiro Sagrado — cura ativa adicional ───────────────
+  if(p.holyRegen){
+    p.holyRegenTimer=(p.holyRegenTimer||0)+dt;
+    const interval = p.subSkill==='holy' ? 1500 : 2000; // holy cura mais rápido
+    if(p.holyRegenTimer>=interval){
+      p.holyRegenTimer-=interval;
+      const base   = p._enchHealRate || (p.subSkill==='holy' ? 12 : 6);
+      const mult   = p.art?.healMult || 1;
+      const amount = Math.floor(base * mult);
+      p.hp = Math.min(p.maxHp, p.hp + amount);
+      spawnDmgNumber(p.x, p.y-32, '✨+'+amount, '#f0c060');
+      if(p.subSkill==='holy') addLog(`✨ Cura Sagrada +${amount} HP`,'lheal');
+    }
+  }
   if(p.fireAura){p.fireAuraTimer=(p.fireAuraTimer||0)+dt;if(p.fireAuraTimer>1000){p.fireAuraTimer=0;for(const e of enemies){if(!e.isAlive)continue;if(Math.hypot(e.x-p.x,e.y-p.y)<60)applyDamageToEnemy(e,Math.floor(p.atk*0.3),false);}}}
   if(p.subSkill==='berserker' || p._subSkillLogic==='rage'){const hpPct=p.hp/p.maxHp;p.rageBonus=Math.floor((1-hpPct)*20);p.atk=p.baseAtk+p.rageBonus+(p.equippedWeapon?(ITEM_DB[p.equippedWeapon].effect.atk||0):0);}
   if(p.isDashing){p.dashDuration-=dt;if(p.dashDuration<=0)p.isDashing=false;else{moveEntity(p,p.dashDirX*600*dt/1000,p.dashDirY*600*dt/1000);return;}}
@@ -4985,18 +5021,21 @@ const ULTIMATE_DEF = {
     desc:'Onda sagrada que cura o jogador e causa dano sagrado a inimigos próximos',
     color:'#f0c060',
     use(p) {
-      const dmg = p.atk * 5; // 5× ATK, area falloff — ~300–500 on boss
+      const dmg = p.atk * 5;
       let healed = 0;
       for (const e of enemies) {
         if (!e.isAlive) continue;
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d < 200) {
           applyDamageToEnemy(e, Math.floor(dmg * (1 - d/220)), true);
-          healed += 25;
+          healed += 40; // 40 HP por inimigo atingido (era 25)
         }
       }
-      p.hp = Math.min(p.maxHp, p.hp + Math.min(healed, 100));
-      addLog(`✨ IRA DIVINA! +${Math.min(healed,100)} HP curado!`, 'lskill');
+      const mult     = p.art?.healMult || 1;
+      const maxHeal  = Math.floor(p.maxHp * 0.40); // cura até 40% do HP máximo
+      const finalHeal = Math.min(Math.floor(healed * mult), maxHeal);
+      p.hp = Math.min(p.maxHp, p.hp + finalHeal);
+      addLog(`✨ IRA DIVINA! +${finalHeal} HP curado!`, 'lskill');
       spawnUltParticles(p.x, p.y, '#f0c060', 80);
       showUltBanner('✨ IRA DIVINA!', '#f0c060');
     }
@@ -9051,12 +9090,12 @@ const PET_TRAINER_CONFIG = {
       color: '#27ae60',
       barColor: '#27ae60',
       statKey: 'healRate',
-      perLevel: 1.5,
-      baseDisplay: (pet) => `${(pet.healRate||2).toFixed(1)} HP/s`,
-      bonusDisplay: (bonus) => `+${bonus.toFixed(1)} HP/s`,
+      perLevel: 4,  // era 1.5 — agora +4 HP/s por nível
+      baseDisplay: (pet) => `${(pet.healRate||8).toFixed(0)} HP/1.5s`,
+      bonusDisplay: (bonus) => `+${bonus.toFixed(0)} HP/1.5s`,
       statRows: (pet) => [
-        { label: 'CURA', value: (pet.healRate||2).toFixed(1), max: 20, color: '#27ae60' },
-        { label: 'HP', value: Math.round(pet.hp||100), max: 300, color: '#3498db' },
+        { label: 'CURA', value: Math.round(pet.healRate||8), max: 80, color: '#27ae60' },
+        { label: 'HP',   value: Math.round(pet.hp||140),    max: 300, color: '#3498db' },
       ],
     },
     tank: {
@@ -9233,7 +9272,7 @@ function applyPetTrainBonus(petObj, lvl) {
     petObj._trainBonus = lvl * cfg.perLevel;
     petObj._trainDmg = petObj._baseDmg + petObj._trainBonus;
   } else if (petObj.petType === 'healer') {
-    petObj.healRate = 2.0 + lvl * cfg.perLevel;
+    petObj.healRate = 8 + lvl * cfg.perLevel; // base 8 + 4 por nível
   } else if (petObj.petType === 'tank') {
     const hpBonus = lvl * cfg.perLevel;
     const defBonus = lvl * (cfg.defPerLevel || 2);
