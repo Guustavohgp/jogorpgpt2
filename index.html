@@ -1448,7 +1448,7 @@ const ENEMY_DEF = [
   {id:'boss',name:'▲ DRAGÃO ▲',color:'#c0392b',hp:500,atk:40,def:18,spd:70,xp:400,atkRange:50,atkSpeed:1800,goldRange:[60,120],size:30,drawFn:drawBoss,drops:[{id:'dragon_sword',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
   {id:'lich',name:'▲ LICH ▲',color:'#9b59b6',hp:380,atk:35,def:14,spd:85,xp:350,atkRange:55,atkSpeed:1600,goldRange:[50,100],size:26,drawFn:drawLich,drops:[{id:'mage_staff',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
   {id:'ogre_boss',name:'▲ OGRO CHEFE ▲',color:'#e67e22',hp:600,atk:45,def:22,spd:55,xp:450,atkRange:45,atkSpeed:2200,goldRange:[70,130],size:34,drawFn:drawOgreBoss,drops:[{id:'heavy_armor',chance:.8},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1}],minLevel:1,isBoss:true},
-  {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:4000,atk:100,def:55,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'dragon_sword',chance:.9},{id:'arcane_tome',chance:.9},{id:'shadow_cloak',chance:.9},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],minLevel:10,isBoss:true,isCentralBoss:true},
+  {id:'guardian',name:'☠ GUARDIÃO ETERNO ☠',color:'#1a0a2e',hp:4000,atk:100,def:55,spd:60,xp:1500,atkRange:60,atkSpeed:1400,goldRange:[200,400],size:42,drawFn:drawGuardianBoss,drops:[{id:'elixir',chance:1},{id:'big_potion',chance:1},{id:'big_mana_pot',chance:1},{id:'art_atk',chance:.7},{id:'art_hp',chance:.6},{id:'art_auto',chance:.4}],minLevel:10,isBoss:true,isCentralBoss:true},
 ];
 
 const ITEM_DB = {
@@ -1466,12 +1466,12 @@ const ITEM_DB = {
   mage_staff:   {name:'Cajado Arcano',    icon:'🔮',  type:'weapon',     effect:{atk:14,mp:30},desc:'+14 ATK +30MP',rarity:'rare',forClass:['mage']},
   shield:       {name:'Escudo de Ferro',  icon:'🛡️',  type:'armor',      effect:{def:6},   desc:'+6 DEF',   rarity:'rare',   forClass:['warrior']},
   leather_armor:{name:'Armadura de Couro',icon:'🦺',  type:'armor',      effect:{def:4,spd:10},desc:'+4 DEF +SPD',rarity:'common',forClass:['archer']},
-  robe:         {name:'Manto Arcano',     icon:'👘',  type:'armor',      effect:{def:3,mp:20},desc:'+3 DEF +20MP',rarity:'common',forClass:['mage']},
+  robe:         {name:'Manto Arcano',     icon:'🥼',  type:'armor',      effect:{def:3,mp:20},desc:'+3 DEF +20MP',rarity:'common',forClass:['mage']},
   dragon_sword: {name:'Lâmina do Dragão', icon:'🔥',  type:'weapon',     effect:{atk:25},  desc:'+25 ATK',  rarity:'epic',   forClass:['warrior']},
   elven_bow:    {name:'Arco Élfico',      icon:'🌿',  type:'weapon',     effect:{atk:20,critBonus:.05},desc:'+20 ATK +CRIT',rarity:'epic',forClass:['archer']},
   arcane_tome:  {name:'Tomo das Eras',    icon:'📖',  type:'weapon',     effect:{atk:22,mp:50},desc:'+22 ATK +50MP',rarity:'epic',forClass:['mage']},
   heavy_armor:  {name:'Armadura Pesada',  icon:'⚜️',  type:'armor',      effect:{def:14},  desc:'+14 DEF',  rarity:'epic',   forClass:['warrior']},
-  shadow_cloak: {name:'Manto das Sombras',icon:'🌑',  type:'armor',      effect:{def:8,spd:20},desc:'+8 DEF +20 SPD',rarity:'epic',forClass:['archer','mage']},
+  shadow_cloak: {name:'Manto das Sombras',icon:'🧣',  type:'armor',      effect:{def:8,spd:20},desc:'+8 DEF +20 SPD',rarity:'epic',forClass:['archer','mage']},
   // ── PETS ────────────────────────────────────────────────
   pet_healer:{name:'Fada Curadora',   icon:'💚',type:'pet',petType:'healer',effect:{},desc:'Cura +8 HP a cada 1.5s · escala com upgrades',rarity:'rare',forClass:null},
   pet_attack:{name:'Lobo de Batalha', icon:'🐺',type:'pet',petType:'attack',effect:{},desc:'Ataca inimigos próximos auto',   rarity:'rare',forClass:null},
@@ -2792,6 +2792,15 @@ function collectLootDirect(itemId) {
   if (itemId === 'gold_coin') { const g=1+Math.floor(Math.random()*5); player.gold+=g; return; }
   const item = ITEM_DB[itemId]; if (!item) return;
   if (item.type === 'ruby' || item.type === 'shard') { addShards(1+Math.floor(Math.random()*3)); playRareItemSound(); return; }
+  if (item.type === 'void_fragment') {
+    addItemToInventory(itemId); playRareItemSound();
+    const cfg2 = typeof VOID_FRAGMENTS !== 'undefined' ? VOID_FRAGMENTS[itemId] : null;
+    const have2 = countFragment(itemId);
+    const cost2 = (typeof VOID_FRAG_COST !== 'undefined' && cfg2) ? (VOID_FRAG_COST[cfg2.grantItem]||5) : 5;
+    addLog(`♦️ Auto-coletou: ${item.name} (${have2}/${cost2})`,'ldrop');
+    if(typeof updateShardHUD==='function') updateShardHUD();
+    return;
+  }
   if (item.type === 'consumable' || item.type === 'artifact') { addItemToInventory(itemId); addLog(`${item.icon} Auto-coletou: ${item.name}`,'ldrop'); }
   else { addItemToInventory(itemId); if(item.rarity==='rare'||item.rarity==='epic')playRareItemSound(); addLog(`${item.icon} Auto-coletou: ${item.name} [${item.rarity}]`,'ldrop'); }
 }
@@ -2800,6 +2809,19 @@ function updateLoot(dt){for(let i=lootItems.length-1;i>=0;i--){lootItems[i].life
 function collectLoot(loot){
   if(loot.id==='gold_coin'){const g=1+Math.floor(Math.random()*5);const total=Math.floor(g*(player.art?.goldMult||1));player.gold+=total;addLog(`🪙 +${g} ouro`,'');if(typeof qOnGoldGain==='function')qOnGoldGain(total);return;}
   const item=ITEM_DB[loot.id];if(!item)return;
+  // ── Fragmento do Vazio ──────────────────────────────────
+  if(item.type==='void_fragment'){
+    addItemToInventory(loot.id);
+    playRareItemSound();
+    const cfg=VOID_FRAGMENTS[loot.id];
+    const cost=VOID_FRAG_COST[cfg?.grantItem]||5;
+    const have=countFragment(loot.id);
+    const targetName=ITEM_DB[cfg?.grantItem]?.name||cfg?.grantItem||'?';
+    addLog(`♦️ ${item.name} coletado! (${have}/${cost} para forjar ${targetName})`,'llvl');
+    if(have>=cost) addLog(`✨ Rubies suficientes! Visite Valdris para forjar!`,'llvl');
+    if(typeof updateShardHUD==='function') updateShardHUD();
+    return;
+  }
   if(item.type==='consumable'){addItemToInventory(loot.id);playPickupSound();addLog(`${item.icon} Coletou ${item.name}`,'ldrop');}
   else if(item.type==='artifact'){addItemToInventory(loot.id);playRareItemSound();addLog(`💎 Artefato encontrado: ${item.icon} ${item.name}! (Abra inventário [I] para ver)`,'llvl');}
   else{addItemToInventory(loot.id);if(item.rarity==='rare'||item.rarity==='epic')playRareItemSound();else playPickupSound();const curr=item.type==='weapon'?player.equippedWeapon:player.equippedArmor;const currBonus=curr?(ITEM_DB[curr].effect.atk||ITEM_DB[curr].effect.def||0):0;const newBonus=item.effect.atk||item.effect.def||0;const canEquip=!item.forClass||item.forClass.includes(player.classId);if(newBonus>currBonus&&canEquip){equipItem(loot.id);addLog(`${item.icon} Equipou ${item.name}! (${item.desc})`,'ldrop');}else addLog(`${item.icon} Guardou ${item.name} [${item.rarity}]`,'ldrop');}
@@ -2812,8 +2834,8 @@ function addItemToInventory(itemId){
     addPotionToBelt(itemId);
     return;
   }
-  // Stack consumables: find existing stack slot (max 99)
-  if (item && item.type === 'consumable') {
+  // Stack consumables AND void_fragments: find existing stack slot (max 99)
+  if (item && (item.type === 'consumable' || item.type === 'void_fragment')) {
     const stackSlot = player.inventory.findIndex(s => s && s.id === itemId && (s.qty||1) < 99);
     if (stackSlot !== -1) {
       player.inventory[stackSlot].qty = (player.inventory[stackSlot].qty||1) + 1;
@@ -2876,6 +2898,11 @@ function useInventoryItem(idx){
 function sellInventoryItem(idx){
   const invItem=player.inventory[idx];if(!invItem)return;
   const db=ITEM_DB[invItem.id];if(!db)return;
+  // Fragmentos do Vazio não podem ser vendidos
+  if(db.type==='void_fragment'){
+    if(typeof addLog==='function') addLog('♦️ Rubies do Vazio não podem ser vendidos!','ldmg');
+    return;
+  }
   const price=getSellPrice(invItem.id);
   removeEquip(invItem.id);
   player.inventory.splice(idx,1);
@@ -3362,14 +3389,20 @@ function renderPlayer(){
   const p=player;ctx.save();
   // Hit-flash glow
   if(p.hitFlash>0){ctx.shadowColor='rgba(255,255,255,.9)';ctx.shadowBlur=14*(p.hitFlash/200);}
-  // Enchantment persistent glow
+  // Enchantment persistent glow — scales with enchantment level (1 = leve, 2 = médio, 3 = forte)
   else if(p.enchantment?.key) {
     const eCfg = ALCHEMIST_CONFIG?.enchantments?.[p.enchantment.key];
     if(eCfg) {
       const glowColor = eCfg.glowColor || eCfg.color;
-      const pulse = 0.55 + Math.sin(Date.now()/500)*0.25;
+      const enchLvl   = p.enchantment.level || 1;
+      // Base blur per level: 10 (leve), 18 (médio), 30 (forte)
+      const baseBlur  = [0, 10, 18, 30][enchLvl] || 10;
+      // Pulse amplitude grows with level: subtle at 1, vivid at 3
+      const pulseAmp  = [0, 0.12, 0.22, 0.32][enchLvl] || 0.12;
+      const pulseBase = [0, 0.72, 0.65, 0.60][enchLvl] || 0.72;
+      const pulse     = pulseBase + Math.sin(Date.now()/500) * pulseAmp;
       ctx.shadowColor = glowColor;
-      ctx.shadowBlur  = 18 * pulse;
+      ctx.shadowBlur  = baseBlur * pulse;
     }
   }
   // Ground shadow — oval, slightly offset forward
@@ -4423,6 +4456,22 @@ function renderInventory() {
         const iconS = document.createElement('span');
         iconS.style.cssText='pointer-events:none;font-size:22px;';
         iconS.textContent = db.icon; cell.appendChild(iconS);
+        // ── Fragmento do Vazio: badge com qty e mini barra ──
+        if (db.type === 'void_fragment') {
+          const qty  = invItem.qty || 1;
+          const cost = (typeof VOID_FRAG_COST !== 'undefined' && db.grantItem) ? (VOID_FRAG_COST[db.grantItem]||5) : 5;
+          const pct  = Math.min(100, Math.round(qty/cost*100));
+          const qtyBadge = document.createElement('span');
+          qtyBadge.style.cssText='position:absolute;bottom:3px;right:3px;font-family:VT323,monospace;font-size:12px;color:#c090ff;pointer-events:none;font-weight:bold;';
+          qtyBadge.textContent = qty+'/'+cost;
+          cell.appendChild(qtyBadge);
+          const progWrap = document.createElement('div');
+          progWrap.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:3px;background:#1a0a2e;border-radius:0 0 4px 4px;overflow:hidden;pointer-events:none';
+          const progFill = document.createElement('div');
+          const barClr = pct>=100?'#50e080':pct>=60?'#a0c0ff':'#7040c0';
+          progFill.style.cssText=`width:${pct}%;height:100%;background:${barClr};transition:width .3s`;
+          progWrap.appendChild(progFill); cell.appendChild(progWrap);
+        } else {
         const badge = document.createElement('span');
         badge.className='inv-badge'; badge.style.pointerEvents='none';
         badge.textContent = db.type==='consumable'?'❤':db.type==='weapon'?'⚔':db.type==='artifact'?'💎':db.type==='pet'?'🐾':'🛡';
@@ -4434,6 +4483,7 @@ function renderInventory() {
           const star = document.createElement('span');
           star.style.cssText='position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--amber);pointer-events:none;';
           star.textContent='★'; cell.appendChild(star);
+        }
         }
         let hoverTimer = null;
         cell.addEventListener('mouseenter', ev => {
@@ -6041,11 +6091,11 @@ Object.assign(ITEM_DB, {
   titan_maul:   {name:'Maça dos Titãs',    icon:'⚒️',  type:'weapon', slot:'weapon', effect:{atk:30},         desc:'+30 ATK',         rarity:'epic',   forClass:['warrior']},
 
   // ── WEAPONS — MAGE ───────────────────────────────────────────────
-  crystal_wand: {name:'Varinha de Cristal',icon:'✨',  type:'weapon', slot:'weapon', effect:{atk:5,mp:20},    desc:'+5 ATK +20MP',    rarity:'common', forClass:['mage']},
+  crystal_wand: {name:'Varinha de Cristal',icon:'🪄',  type:'weapon', slot:'weapon', effect:{atk:5,mp:20},    desc:'+5 ATK +20MP',    rarity:'common', forClass:['mage']},
   bone_staff:   {name:'Cajado de Ossos',   icon:'🦴',  type:'weapon', slot:'weapon', effect:{atk:7,mp:10},    desc:'+7 ATK +10MP',    rarity:'common', forClass:['mage']},
   ember_wand:   {name:'Varinha de Brasa',  icon:'🔥',  type:'weapon', slot:'weapon', effect:{atk:16,mp:20},   desc:'+16 ATK +20MP',   rarity:'rare',   forClass:['mage']},
   frost_rod:    {name:'Cajado do Gelo',    icon:'❄️',  type:'weapon', slot:'weapon', effect:{atk:12,mp:40},   desc:'+12 ATK +40MP',   rarity:'rare',   forClass:['mage']},
-  void_staff:   {name:'Cajado do Vazio',   icon:'🌑',  type:'weapon', slot:'weapon', effect:{atk:26,mp:40},   desc:'+26 ATK +40MP',   rarity:'epic',   forClass:['mage']},
+  void_staff:   {name:'Cajado do Vazio',   icon:'🪄',  type:'weapon', slot:'weapon', effect:{atk:26,mp:40},   desc:'+26 ATK +40MP',   rarity:'epic',   forClass:['mage']},
   chaos_orb:    {name:'Orbe do Caos',      icon:'🔴',  type:'weapon', slot:'weapon', effect:{atk:24,mp:60},   desc:'+24 ATK +60MP',   rarity:'epic',   forClass:['mage']},
 
   // ── WEAPONS — ARCHER ─────────────────────────────────────────────
@@ -6054,7 +6104,7 @@ Object.assign(ITEM_DB, {
   silver_bow:   {name:'Arco de Prata',     icon:'🏹',  type:'weapon', slot:'weapon', effect:{atk:14,critBonus:.05},desc:'+14 ATK +5%CRIT',rarity:'rare',forClass:['archer']},
   steel_crossbow:{name:'Besta de Aço',     icon:'🎯',  type:'weapon', slot:'weapon', effect:{atk:15},         desc:'+15 ATK',         rarity:'rare',   forClass:['archer']},
   storm_bow:    {name:'Arco da Tempestade',icon:'⚡',  type:'weapon', slot:'weapon', effect:{atk:23},         desc:'+23 ATK',         rarity:'epic',   forClass:['archer']},
-  shadow_xbow:  {name:'Besta das Sombras', icon:'🌑',  type:'weapon', slot:'weapon', effect:{atk:25,critBonus:.08},desc:'+25 ATK +8%CRIT',rarity:'epic',forClass:['archer']},
+  shadow_xbow:  {name:'Besta das Sombras', icon:'🎯',  type:'weapon', slot:'weapon', effect:{atk:25,critBonus:.08},desc:'+25 ATK +8%CRIT',rarity:'epic',forClass:['archer']},
 
   // ── OFFHAND ───────────────────────────────────────────────────────
   wooden_shield:{name:'Escudo de Madeira', icon:'🪵',  type:'armor', slot:'offhand', effect:{def:3},          desc:'+3 DEF',          rarity:'common', forClass:['warrior']},
@@ -6068,26 +6118,26 @@ Object.assign(ITEM_DB, {
   elven_quiver: {name:'Aljava Élfica',     icon:'🍃',  type:'armor', slot:'offhand', effect:{atk:10,critBonus:.06},desc:'+10ATK +6%CRIT',rarity:'epic',forClass:['archer']},
 
   // ── HEAD ──────────────────────────────────────────────────────────
-  iron_helm:    {name:'Elmo de Ferro',     icon:'⛑️',  type:'armor', slot:'head', effect:{def:4},             desc:'+4 DEF',          rarity:'common', forClass:['warrior']},
+  iron_helm:    {name:'Elmo de Ferro',     icon:'🪖',  type:'armor', slot:'head', effect:{def:4},             desc:'+4 DEF',          rarity:'common', forClass:['warrior']},
   steel_helm:   {name:'Elmo de Aço',       icon:'🪖',  type:'armor', slot:'head', effect:{def:8},             desc:'+8 DEF',          rarity:'rare',   forClass:['warrior']},
-  knight_helm:  {name:'Elmo do Cavaleiro', icon:'👑',  type:'armor', slot:'head', effect:{def:12,hp:20},      desc:'+12 DEF +20HP',   rarity:'rare',   forClass:['warrior']},
+  knight_helm:  {name:'Elmo do Cavaleiro', icon:'🪖',  type:'armor', slot:'head', effect:{def:12,hp:20},      desc:'+12 DEF +20HP',   rarity:'rare',   forClass:['warrior']},
   dragon_helm:  {name:'Elmo do Dragão',    icon:'🐲',  type:'armor', slot:'head', effect:{def:18,hp:40},      desc:'+18 DEF +40HP',   rarity:'epic',   forClass:['warrior']},
-  cloth_hood:   {name:'Capuz de Pano',     icon:'🎓',  type:'armor', slot:'head', effect:{def:2,mp:15},       desc:'+2 DEF +15MP',    rarity:'common', forClass:['mage']},
-  wizard_hat:   {name:'Chapéu do Mago',    icon:'🪄',  type:'armor', slot:'head', effect:{def:4,mp:30},       desc:'+4 DEF +30MP',    rarity:'rare',   forClass:['mage']},
+  cloth_hood:   {name:'Capuz de Pano',     icon:'🧢',  type:'armor', slot:'head', effect:{def:2,mp:15},       desc:'+2 DEF +15MP',    rarity:'common', forClass:['mage']},
+  wizard_hat:   {name:'Chapéu do Mago',    icon:'🧢',  type:'armor', slot:'head', effect:{def:4,mp:30},       desc:'+4 DEF +30MP',    rarity:'rare',   forClass:['mage']},
   archmage_crown:{name:'Coroa do Arcamago',icon:'👑',  type:'armor', slot:'head', effect:{def:6,mp:60,atk:8}, desc:'+6DEF +60MP +8ATK',rarity:'epic',  forClass:['mage']},
   leather_hood: {name:'Capuz de Couro',    icon:'🧢',  type:'armor', slot:'head', effect:{def:3},             desc:'+3 DEF',          rarity:'common', forClass:['archer']},
-  ranger_hood:  {name:'Capuz do Ranger',   icon:'🎩',  type:'armor', slot:'head', effect:{def:6,critBonus:.04},desc:'+6DEF +4%CRIT',  rarity:'rare',   forClass:['archer']},
-  shadow_hood:  {name:'Capuz das Sombras', icon:'🌑',  type:'armor', slot:'head', effect:{def:8,critBonus:.07,atk:5},desc:'+8DEF +7%CRIT +5ATK',rarity:'epic',forClass:['archer']},
+  ranger_hood:  {name:'Capuz do Ranger',   icon:'🧢',  type:'armor', slot:'head', effect:{def:6,critBonus:.04},desc:'+6DEF +4%CRIT',  rarity:'rare',   forClass:['archer']},
+  shadow_hood:  {name:'Capuz das Sombras', icon:'🧢',  type:'armor', slot:'head', effect:{def:8,critBonus:.07,atk:5},desc:'+8DEF +7%CRIT +5ATK',rarity:'epic',forClass:['archer']},
 
   // ── CHEST ─────────────────────────────────────────────────────────
-  chainmail:    {name:'Cota de Malha',     icon:'🧥',  type:'armor', slot:'chest', effect:{def:6,hp:15},      desc:'+6 DEF +15HP',    rarity:'common', forClass:['warrior']},
-  plate_armor:  {name:'Armadura de Placas',icon:'⚜️',  type:'armor', slot:'chest', effect:{def:12,hp:25},     desc:'+12 DEF +25HP',   rarity:'rare',   forClass:['warrior']},
+  chainmail:    {name:'Cota de Malha',     icon:'🔗',  type:'armor', slot:'chest', effect:{def:6,hp:15},      desc:'+6 DEF +15HP',    rarity:'common', forClass:['warrior']},
+  plate_armor:  {name:'Armadura de Placas',icon:'🛡️',  type:'armor', slot:'chest', effect:{def:12,hp:25},     desc:'+12 DEF +25HP',   rarity:'rare',   forClass:['warrior']},
   titan_plate:  {name:'Placa dos Titãs',   icon:'🛡️',  type:'armor', slot:'chest', effect:{def:24,hp:60},     desc:'+24 DEF +60HP',   rarity:'epic',   forClass:['warrior']},
-  cloth_robe:   {name:'Robe de Pano',      icon:'👘',  type:'armor', slot:'chest', effect:{def:2,mp:20},      desc:'+2 DEF +20MP',    rarity:'common', forClass:['mage']},
-  archmage_robe:{name:'Manto do Arcamago', icon:'🌟',  type:'armor', slot:'chest', effect:{def:7,mp:60,atk:6},desc:'+7DEF +60MP +6ATK',rarity:'epic',  forClass:['mage']},
-  void_robe:    {name:'Manto do Vazio',    icon:'🌑',  type:'armor', slot:'chest', effect:{def:8,mp:80,atk:8},desc:'+8DEF +80MP +8ATK',rarity:'epic',  forClass:['mage']},
-  studded_leather:{name:'Couro Cravejado', icon:'🎽',  type:'armor', slot:'chest', effect:{def:8,spd:15},     desc:'+8 DEF +15SPD',   rarity:'rare',   forClass:['archer']},
-  windwalker:   {name:'Armadura do Vento', icon:'💨',  type:'armor', slot:'chest', effect:{def:10,spd:30,critBonus:.05},desc:'+10DEF +30SPD +5%CRIT',rarity:'epic',forClass:['archer']},
+  cloth_robe:   {name:'Robe de Pano',      icon:'🥼',  type:'armor', slot:'chest', effect:{def:2,mp:20},      desc:'+2 DEF +20MP',    rarity:'common', forClass:['mage']},
+  archmage_robe:{name:'Manto do Arcamago', icon:'🥼',  type:'armor', slot:'chest', effect:{def:7,mp:60,atk:6},desc:'+7DEF +60MP +6ATK',rarity:'epic',  forClass:['mage']},
+  void_robe:    {name:'Manto do Vazio',    icon:'🥼',  type:'armor', slot:'chest', effect:{def:8,mp:80,atk:8},desc:'+8DEF +80MP +8ATK',rarity:'epic',  forClass:['mage']},
+  studded_leather:{name:'Couro Cravejado', icon:'🦺',  type:'armor', slot:'chest', effect:{def:8,spd:15},     desc:'+8 DEF +15SPD',   rarity:'rare',   forClass:['archer']},
+  windwalker:   {name:'Armadura do Vento', icon:'🦺',  type:'armor', slot:'chest', effect:{def:10,spd:30,critBonus:.05},desc:'+10DEF +30SPD +5%CRIT',rarity:'epic',forClass:['archer']},
 
   // Update existing items to add slot field
   old_sword:    {name:'Espada Velha',      icon:'🗡️',  type:'weapon', slot:'weapon', effect:{atk:4},          desc:'+4 ATK',          rarity:'common', forClass:['warrior']},
@@ -6102,43 +6152,43 @@ Object.assign(ITEM_DB, {
   arcane_tome:  {name:'Tomo das Eras',     icon:'📖',  type:'weapon', slot:'weapon', effect:{atk:22,mp:50},   desc:'+22 ATK +50MP',   rarity:'epic',   forClass:['mage']},
   shield:       {name:'Escudo de Ferro',   icon:'🛡️',  type:'armor',  slot:'offhand',effect:{def:6},          desc:'+6 DEF',          rarity:'rare',   forClass:['warrior']},
   leather_armor:{name:'Armadura de Couro', icon:'🦺',  type:'armor',  slot:'chest',  effect:{def:4,spd:10},   desc:'+4 DEF +SPD',     rarity:'common', forClass:['archer']},
-  robe:         {name:'Manto Arcano',      icon:'👘',  type:'armor',  slot:'chest',  effect:{def:4,mp:35},    desc:'+4 DEF +35MP',    rarity:'rare',   forClass:['mage']},
-  heavy_armor:  {name:'Armadura Pesada',   icon:'⚔️',  type:'armor',  slot:'chest',  effect:{def:18,hp:40},   desc:'+18 DEF +40HP',   rarity:'epic',   forClass:['warrior']},
-  shadow_cloak: {name:'Manto das Sombras', icon:'🌑',  type:'armor',  slot:'chest',  effect:{def:12,spd:20},  desc:'+12 DEF +20SPD',  rarity:'epic',   forClass:['archer','mage']},
+  robe:         {name:'Manto Arcano',      icon:'🥼',  type:'armor',  slot:'chest',  effect:{def:4,mp:35},    desc:'+4 DEF +35MP',    rarity:'rare',   forClass:['mage']},
+  heavy_armor:  {name:'Armadura Pesada',   icon:'🛡️',  type:'armor',  slot:'chest',  effect:{def:18,hp:40},   desc:'+18 DEF +40HP',   rarity:'epic',   forClass:['warrior']},
+  shadow_cloak: {name:'Manto das Sombras', icon:'🧣',  type:'armor',  slot:'chest',  effect:{def:12,spd:20},  desc:'+12 DEF +20SPD',  rarity:'epic',   forClass:['archer','mage']},
 
   // ── GLOVES ────────────────────────────────────────────────────────
-  iron_gauntlets:{name:'Manoplas de Ferro',icon:'🧤',  type:'armor', slot:'gloves', effect:{def:3,atk:2},     desc:'+3 DEF +2ATK',    rarity:'common', forClass:['warrior']},
+  iron_gauntlets:{name:'Manoplas de Ferro',icon:'🥊',  type:'armor', slot:'gloves', effect:{def:3,atk:2},     desc:'+3 DEF +2ATK',    rarity:'common', forClass:['warrior']},
   steel_gauntlets:{name:'Manoplas de Aço', icon:'🥊',  type:'armor', slot:'gloves', effect:{def:5,atk:4},     desc:'+5 DEF +4ATK',    rarity:'rare',   forClass:['warrior']},
-  dragon_gauntlets:{name:'Manoplas Dracônicas',icon:'🐲',type:'armor',slot:'gloves',effect:{def:8,atk:8},     desc:'+8 DEF +8ATK',    rarity:'epic',   forClass:['warrior']},
+  dragon_gauntlets:{name:'Manoplas Dracônicas',icon:'🥊',type:'armor',slot:'gloves',effect:{def:8,atk:8},     desc:'+8 DEF +8ATK',    rarity:'epic',   forClass:['warrior']},
   spell_gloves: {name:'Luvas de Feiticeiro',icon:'🧤', type:'armor', slot:'gloves', effect:{def:2,mp:20},     desc:'+2 DEF +20MP',    rarity:'common', forClass:['mage']},
-  arcane_gloves:{name:'Luvas Arcanas',     icon:'✋',  type:'armor', slot:'gloves', effect:{def:3,mp:35,atk:4},desc:'+3DEF +35MP +4ATK',rarity:'rare',  forClass:['mage']},
-  void_gloves:  {name:'Luvas do Vazio',    icon:'🖐️',  type:'armor', slot:'gloves', effect:{def:5,mp:50,atk:8},desc:'+5DEF +50MP +8ATK',rarity:'epic',  forClass:['mage']},
-  leather_gloves:{name:'Luvas de Couro',   icon:'🤜',  type:'armor', slot:'gloves', effect:{def:2,critBonus:.02},desc:'+2DEF +2%CRIT', rarity:'common', forClass:['archer']},
-  hunter_gloves:{name:'Luvas do Caçador',  icon:'🎯',  type:'armor', slot:'gloves', effect:{def:4,critBonus:.04,atk:3},desc:'+4DEF +4%CRIT +3ATK',rarity:'rare',forClass:['archer']},
-  shadow_gloves:{name:'Luvas das Sombras', icon:'🌑',  type:'armor', slot:'gloves', effect:{def:6,critBonus:.07,atk:6},desc:'+6DEF +7%CRIT +6ATK',rarity:'epic',forClass:['archer']},
+  arcane_gloves:{name:'Luvas Arcanas',     icon:'🧤',  type:'armor', slot:'gloves', effect:{def:3,mp:35,atk:4},desc:'+3DEF +35MP +4ATK',rarity:'rare',  forClass:['mage']},
+  void_gloves:  {name:'Luvas do Vazio',    icon:'🧤',  type:'armor', slot:'gloves', effect:{def:5,mp:50,atk:8},desc:'+5DEF +50MP +8ATK',rarity:'epic',  forClass:['mage']},
+  leather_gloves:{name:'Luvas de Couro',   icon:'🧤',  type:'armor', slot:'gloves', effect:{def:2,critBonus:.02},desc:'+2DEF +2%CRIT', rarity:'common', forClass:['archer']},
+  hunter_gloves:{name:'Luvas do Caçador',  icon:'🧤',  type:'armor', slot:'gloves', effect:{def:4,critBonus:.04,atk:3},desc:'+4DEF +4%CRIT +3ATK',rarity:'rare',forClass:['archer']},
+  shadow_gloves:{name:'Luvas das Sombras', icon:'🧤',  type:'armor', slot:'gloves', effect:{def:6,critBonus:.07,atk:6},desc:'+6DEF +7%CRIT +6ATK',rarity:'epic',forClass:['archer']},
 
   // ── LEGS ──────────────────────────────────────────────────────────
-  iron_greaves: {name:'Grevas de Ferro',   icon:'👖',  type:'armor', slot:'legs', effect:{def:4,hp:10},       desc:'+4 DEF +10HP',    rarity:'common', forClass:['warrior']},
-  steel_greaves:{name:'Grevas de Aço',     icon:'🦵',  type:'armor', slot:'legs', effect:{def:8,hp:20},       desc:'+8 DEF +20HP',    rarity:'rare',   forClass:['warrior']},
-  titan_greaves:{name:'Grevas dos Titãs',  icon:'⚜️',  type:'armor', slot:'legs', effect:{def:14,hp:35},      desc:'+14 DEF +35HP',   rarity:'epic',   forClass:['warrior']},
-  cloth_pants:  {name:'Calças de Pano',    icon:'👖',  type:'armor', slot:'legs', effect:{def:2,mp:15},       desc:'+2 DEF +15MP',    rarity:'common', forClass:['mage']},
-  silk_pants:   {name:'Calças de Seda',    icon:'👗',  type:'armor', slot:'legs', effect:{def:3,mp:30},       desc:'+3 DEF +30MP',    rarity:'rare',   forClass:['mage']},
-  arcane_pants: {name:'Calças Arcanas',    icon:'🌀',  type:'armor', slot:'legs', effect:{def:5,mp:50,atk:5}, desc:'+5DEF +50MP +5ATK',rarity:'epic',  forClass:['mage']},
-  leather_pants:{name:'Calças de Couro',   icon:'🩳',  type:'armor', slot:'legs', effect:{def:3,spd:8},       desc:'+3 DEF +8SPD',    rarity:'common', forClass:['archer']},
-  ranger_pants: {name:'Calças do Ranger',  icon:'👖',  type:'armor', slot:'legs', effect:{def:5,spd:15},      desc:'+5 DEF +15SPD',   rarity:'rare',   forClass:['archer']},
-  shadow_pants: {name:'Calças das Sombras',icon:'🌑',  type:'armor', slot:'legs', effect:{def:7,spd:25,critBonus:.03},desc:'+7DEF +25SPD +3%CRIT',rarity:'epic',forClass:['archer']},
+  iron_greaves: {name:'Grevas de Ferro',   icon:'⛓️',  type:'armor', slot:'legs', effect:{def:4,hp:10},       desc:'+4 DEF +10HP',    rarity:'common', forClass:['warrior']},
+  steel_greaves:{name:'Grevas de Aço',     icon:'⛓️',  type:'armor', slot:'legs', effect:{def:8,hp:20},       desc:'+8 DEF +20HP',    rarity:'rare',   forClass:['warrior']},
+  titan_greaves:{name:'Grevas dos Titãs',  icon:'⛓️',  type:'armor', slot:'legs', effect:{def:14,hp:35},      desc:'+14 DEF +35HP',   rarity:'epic',   forClass:['warrior']},
+  cloth_pants:  {name:'Calças de Pano',    icon:'🪡',  type:'armor', slot:'legs', effect:{def:2,mp:15},       desc:'+2 DEF +15MP',    rarity:'common', forClass:['mage']},
+  silk_pants:   {name:'Calças de Seda',    icon:'🪡',  type:'armor', slot:'legs', effect:{def:3,mp:30},       desc:'+3 DEF +30MP',    rarity:'rare',   forClass:['mage']},
+  arcane_pants: {name:'Calças Arcanas',    icon:'🪡',  type:'armor', slot:'legs', effect:{def:5,mp:50,atk:5}, desc:'+5DEF +50MP +5ATK',rarity:'epic',  forClass:['mage']},
+  leather_pants:{name:'Calças de Couro',   icon:'🪢',  type:'armor', slot:'legs', effect:{def:3,spd:8},       desc:'+3 DEF +8SPD',    rarity:'common', forClass:['archer']},
+  ranger_pants: {name:'Calças do Ranger',  icon:'🪢',  type:'armor', slot:'legs', effect:{def:5,spd:15},      desc:'+5 DEF +15SPD',   rarity:'rare',   forClass:['archer']},
+  shadow_pants: {name:'Calças das Sombras',icon:'🪢',  type:'armor', slot:'legs', effect:{def:7,spd:25,critBonus:.03},desc:'+7DEF +25SPD +3%CRIT',rarity:'epic',forClass:['archer']},
 
   // ── BOOTS ─────────────────────────────────────────────────────────
   iron_boots:   {name:'Botas de Ferro',    icon:'👢',  type:'armor', slot:'boots', effect:{def:3},            desc:'+3 DEF',          rarity:'common', forClass:['warrior']},
-  steel_boots:  {name:'Botas de Aço',      icon:'🥾',  type:'armor', slot:'boots', effect:{def:6,hp:15},      desc:'+6 DEF +15HP',    rarity:'rare',   forClass:['warrior']},
-  titan_boots:  {name:'Botas dos Titãs',   icon:'⚜️',  type:'armor', slot:'boots', effect:{def:10,hp:25},     desc:'+10 DEF +25HP',   rarity:'epic',   forClass:['warrior']},
-  cloth_boots:  {name:'Botas de Pano',     icon:'🥿',  type:'armor', slot:'boots', effect:{def:1,mp:10,spd:5},desc:'+1DEF +10MP +SPD',rarity:'common', forClass:['mage']},
-  silk_boots:   {name:'Botas de Seda',     icon:'👟',  type:'armor', slot:'boots', effect:{def:2,mp:25,spd:10},desc:'+2DEF +25MP +SPD',rarity:'rare',   forClass:['mage']},
-  arcane_boots: {name:'Botas Arcanas',     icon:'🌟',  type:'armor', slot:'boots', effect:{def:4,mp:40,spd:15,atk:4},desc:'+4DEF +40MP +SPD +4ATK',rarity:'epic',forClass:['mage']},
+  steel_boots:  {name:'Botas de Aço',      icon:'👢',  type:'armor', slot:'boots', effect:{def:6,hp:15},      desc:'+6 DEF +15HP',    rarity:'rare',   forClass:['warrior']},
+  titan_boots:  {name:'Botas dos Titãs',   icon:'👢',  type:'armor', slot:'boots', effect:{def:10,hp:25},     desc:'+10 DEF +25HP',   rarity:'epic',   forClass:['warrior']},
+  cloth_boots:  {name:'Botas de Pano',     icon:'👢',  type:'armor', slot:'boots', effect:{def:1,mp:10,spd:5},desc:'+1DEF +10MP +SPD',rarity:'common', forClass:['mage']},
+  silk_boots:   {name:'Botas de Seda',     icon:'👢',  type:'armor', slot:'boots', effect:{def:2,mp:25,spd:10},desc:'+2DEF +25MP +SPD',rarity:'rare',   forClass:['mage']},
+  arcane_boots: {name:'Botas Arcanas',     icon:'👢',  type:'armor', slot:'boots', effect:{def:4,mp:40,spd:15,atk:4},desc:'+4DEF +40MP +SPD +4ATK',rarity:'epic',forClass:['mage']},
   leather_boots:{name:'Botas de Couro',    icon:'👢',  type:'armor', slot:'boots', effect:{def:2,spd:12},     desc:'+2 DEF +12SPD',   rarity:'common', forClass:['archer']},
-  swift_boots:  {name:'Botas Velozes',     icon:'⚡',  type:'armor', slot:'boots', effect:{def:4,spd:22},     desc:'+4 DEF +22SPD',   rarity:'rare',   forClass:['archer']},
-  wind_boots:   {name:'Botas do Vento',    icon:'💨',  type:'armor', slot:'boots', effect:{def:5,spd:35},     desc:'+5 DEF +35SPD',   rarity:'epic',   forClass:['archer']},
-  traveler_boots:{name:'Botas do Viajante',icon:'🥾',  type:'armor', slot:'boots', effect:{def:2,spd:10},     desc:'+2 DEF +10SPD',   rarity:'common', forClass:null},
+  swift_boots:  {name:'Botas Velozes',     icon:'👢',  type:'armor', slot:'boots', effect:{def:4,spd:22},     desc:'+4 DEF +22SPD',   rarity:'rare',   forClass:['archer']},
+  wind_boots:   {name:'Botas do Vento',    icon:'👢',  type:'armor', slot:'boots', effect:{def:5,spd:35},     desc:'+5 DEF +35SPD',   rarity:'epic',   forClass:['archer']},
+  traveler_boots:{name:'Botas do Viajante',icon:'👢',  type:'armor', slot:'boots', effect:{def:2,spd:10},     desc:'+2 DEF +10SPD',   rarity:'common', forClass:null},
 
   // ── RINGS ─────────────────────────────────────────────────────────
   copper_ring:  {name:'Anel de Cobre',     icon:'💍',  type:'armor', slot:'ring', effect:{atk:2},             desc:'+2 ATK',          rarity:'common', forClass:null},
@@ -6624,7 +6674,41 @@ function showItemPopup(idx, anchorEl) {
   const popup = document.getElementById('item-popup');
   const info  = document.getElementById('popup-info-content');
   const acts  = document.getElementById('popup-actions');
-  const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce'}[db.rarity]||'#aaa';
+  const rarityColor = {common:'#aaa',rare:'#5dade2',epic:'#bb8fce',mythic:'#ffe066'}[db.rarity]||'#aaa';
+
+  // ── Fragmento do Vazio — exibição especial ────────────────
+  if (db.type === 'void_fragment') {
+    const qty  = invItem.qty || 1;
+    const cost = (typeof VOID_FRAG_COST !== 'undefined' && db.grantItem) ? (VOID_FRAG_COST[db.grantItem]||5) : 5;
+    const pct  = Math.min(100, Math.round(qty/cost*100));
+    const targetDb = ITEM_DB[db.grantItem];
+    const barClr = pct>=100?'#50e080':pct>=60?'#ff8090':'#c04060';
+    info.innerHTML =
+      `<div class="tt-name" style="color:#ff6080">♦️ ${db.name}</div>`+
+      `<div class="tt-rarity" style="color:#ff4060">RUBY DO VAZIO</div>`+
+      `<div style="margin:6px 0;font-size:11px">
+        <div style="color:#9a7080;margin-bottom:3px">Progresso para forjar:</div>
+        <div style="color:#ffe066;font-size:14px;font-family:VT323,monospace">${targetDb?.icon||'🌑'} ${targetDb?.name||db.grantItem}</div>
+        <div style="color:${pct>=100?'#50e080':'#ff8090'};font-size:13px;margin-top:2px">${qty} / ${cost} Rubies (${pct}%)</div>
+        <div style="width:100%;height:5px;background:#1a0a0a;border-radius:3px;margin-top:4px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${barClr};border-radius:3px"></div>
+        </div>
+      </div>`+
+      (pct>=100?`<div style="color:#50e080;font-size:11px">✨ Pronto! Visite Valdris para forjar!</div>`:
+        `<div style="color:#5a3030;font-size:10px;font-style:italic">Derrote o Guardião Eterno ou o Dragão Lendário.</div>`);
+    acts.innerHTML = '';
+    info.innerHTML += `<div style="color:#5a3030;font-size:10px;margin-top:4px">Não pode ser vendido</div>`;
+    popup.style.display = 'block';
+    const rect = anchorEl.getBoundingClientRect();
+    const pw=220, ph=220;
+    let x=rect.right+6, y=rect.top;
+    if (x+pw>window.innerWidth-8) x=rect.left-pw-6;
+    if (y+ph>window.innerHeight-8) y=window.innerHeight-ph-8;
+    if (y<4) y=4;
+    popup.style.left=x+'px'; popup.style.top=y+'px';
+    return;
+  }
+
   const canEquip = !db.forClass || db.forClass.includes(player.classId);
   const isEq = isItemEquipped(invItem.id, invItem.uid);
   const isArtEquipped = db.type==='artifact' && equippedArtifacts.includes(invItem.id);
@@ -6674,13 +6758,13 @@ SHOP_CATALOG.length = 0;
   'potion','big_potion','elixir','mana_potion','big_mana_pot','full_elixir',
   // Warrior weapons
   'old_sword','iron_axe','wooden_club','steel_sword','war_hammer','battle_axe','troll_club','dragon_sword','cursed_blade','titan_maul',
-  // Mage weapons
-  'oak_staff','crystal_wand','bone_staff','mage_staff','ember_wand','frost_rod','arcane_tome','void_staff','chaos_orb',
+  // Mage weapons  (void_staff removido — só via Fragmentos)
+  'oak_staff','crystal_wand','bone_staff','mage_staff','ember_wand','frost_rod','arcane_tome','chaos_orb',
   // Archer weapons
   'short_bow','hunting_bow','wood_crossbow','venom_bow','silver_bow','steel_crossbow','elven_bow','storm_bow','shadow_xbow',
   // Offhands
   'wooden_shield','shield','kite_shield','aegis',
-  'spell_focus','arcane_focus','void_tome',
+  'spell_focus','arcane_focus',
   'iron_quiver','silver_quiver','elven_quiver',
   // Head
   'iron_helm','steel_helm','knight_helm','dragon_helm',
@@ -6688,11 +6772,11 @@ SHOP_CATALOG.length = 0;
   'leather_hood','ranger_hood','shadow_hood',
   // Chest
   'chainmail','plate_armor','heavy_armor','titan_plate',
-  'cloth_robe','robe','archmage_robe','void_robe',
+  'cloth_robe','robe','archmage_robe',
   'leather_armor','studded_leather','shadow_cloak','windwalker',
   // Gloves
   'iron_gauntlets','steel_gauntlets','dragon_gauntlets',
-  'spell_gloves','arcane_gloves','void_gloves',
+  'spell_gloves','arcane_gloves',
   'leather_gloves','hunter_gloves','shadow_gloves',
   // Legs
   'iron_greaves','steel_greaves','titan_greaves',
@@ -6750,15 +6834,15 @@ Object.assign(CHEST_LOOT, {
   epic: [
     'elixir','full_elixir',
     'dragon_sword','cursed_blade','titan_maul',
-    'arcane_tome','void_staff','chaos_orb',
+    'arcane_tome','chaos_orb',
     'elven_bow','storm_bow','shadow_xbow',
     'dragon_helm','archmage_crown','shadow_hood',
-    'heavy_armor','titan_plate','archmage_robe','void_robe','shadow_cloak','windwalker',
+    'heavy_armor','titan_plate','archmage_robe','shadow_cloak','windwalker',
     'titan_boots','arcane_boots','wind_boots',
     'ring_power','ring_arcane','ring_critmaster','ring_fortress',
-    'dragon_gauntlets','void_gloves','shadow_gloves',
+    'dragon_gauntlets','shadow_gloves',
     'titan_greaves','arcane_pants','shadow_pants',
-    'aegis','void_tome','elven_quiver',
+    'aegis','elven_quiver',
     'amulet_titan','soul_pendant','assassin_mark','berserker_heart',
   ],
 });
@@ -10885,7 +10969,7 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 @keyframes setToastAnim { from{opacity:0;transform:translate(-50%,-60%) scale(.8)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
 </style>
 
-<div id="shard-hud"><span>💎</span><span id="shard-count">0</span> Ruby</div>
+<div id="shard-hud"><span>♦️</span><span id="shard-count">0</span><span> Ruby</span></div>
 <div id="void-merchant-panel">
   <div class="vm-win">
     <div class="vm-header">
@@ -10909,14 +10993,14 @@ console.log('[CraftNPCs] Ferreiro e Alquimista carregados ✓');
 // ═══════════════════════════════════════════════════════════
 
 // ── Ruby (moeda especial) ────────────────────────────────
-const SHARD_ICON = '💎';
+const SHARD_ICON = '♦️';
 const SHARD_NAME = 'Ruby';
 
 function addShards(amount) {
   if (!player) return;
   player.rubies = (player.rubies || 0) + amount;
   updateShardHUD();
-  addLog(`💎 +${amount} Ruby!`, 'llvl');
+  addLog(`♦️ +${amount} Ruby!`, 'llvl');
 }
 
 function updateShardHUD() {
@@ -10924,9 +11008,14 @@ function updateShardHUD() {
   const cnt = document.getElementById('shard-count');
   if (!hud || !cnt || !player) return;
   const rubies = player.rubies || 0;
-  cnt.textContent = rubies;
-  if (rubies > 0 || endgameState.dragonEverSpawned) {
+  // Conta fragmentos do Vazio apenas para exibir total como rubies
+  const totalFrags = (typeof VOID_FRAGMENTS !== 'undefined')
+    ? Object.keys(VOID_FRAGMENTS).reduce((n, fid) => n + countFragment(fid), 0)
+    : 0;
+  const display = rubies + totalFrags;
+  if (display > 0 || endgameState.dragonEverSpawned) {
     hud.classList.add('visible');
+    cnt.textContent = display;
   }
 }
 
@@ -10936,80 +11025,80 @@ function updateShardHUD() {
 Object.assign(ITEM_DB, {
   // ── MYTHIC WEAPONS (1 per class) ─────────────────────────
   void_blade: {
-    name:'Lâmina do Vazio',   icon:'⚔', type:'weapon', slot:'weapon',
+    name:'Lâmina do Vazio',   icon:'🗡️', type:'weapon', slot:'weapon',
     effect:{atk:50, critBonus:.12}, desc:'+50 ATK +12% CRIT',
     rarity:'mythic', forClass:['warrior'],
     setId:'void_set',
   },
   void_bow: {
-    name:'Arco do Vazio',     icon:'🌑', type:'weapon', slot:'weapon',
+    name:'Arco do Vazio',     icon:'🏹', type:'weapon', slot:'weapon',
     effect:{atk:44, critBonus:.18}, desc:'+44 ATK +18% CRIT',
     rarity:'mythic', forClass:['archer'],
     setId:'void_set',
   },
   void_staff: {
-    name:'Cajado do Vazio',   icon:'🔮', type:'weapon', slot:'weapon',
+    name:'Cajado do Vazio',   icon:'🪄', type:'weapon', slot:'weapon',
     effect:{atk:42, mp:120}, desc:'+42 ATK +120 MP',
     rarity:'mythic', forClass:['mage'],
     setId:'void_set',
   },
   // ── MYTHIC ARMOR ─────────────────────────────────────────
   void_plate: {
-    name:'Armadura do Vazio', icon:'🌑', type:'armor', slot:'chest',
+    name:'Armadura do Vazio', icon:'🛡️', type:'armor', slot:'chest',
     effect:{def:30, hp:120}, desc:'+30 DEF +120 HP',
     rarity:'mythic', forClass:['warrior'],
     setId:'void_set',
   },
   void_mantle: {
-    name:'Manto do Vazio',    icon:'⭐', type:'armor', slot:'chest',
+    name:'Manto do Vazio',    icon:'🥼', type:'armor', slot:'chest',
     effect:{def:20, spd:30, mp:80}, desc:'+20 DEF +30 SPD +80 MP',
     rarity:'mythic', forClass:['archer','mage'],
     setId:'void_set',
   },
   void_amulet: {
-    name:'Colar do Vazio',    icon:'💫', type:'armor', slot:'amulet',
+    name:'Colar do Vazio',    icon:'📿', type:'armor', slot:'amulet',
     effect:{atk:18, def:12, hp:80, mp:60}, desc:'+18 ATK +12 DEF +80 HP +60 MP',
     rarity:'mythic', forClass:null,
     setId:'void_set',
   },
-  // ── VOID SET — slots complementares (elmo, escudo, anel, luvas, calça, bota) ──
+  // ── VOID SET — slots complementares ──────────────────────
   void_helm: {
-    name:'Elmo do Vazio',     icon:'🌑', type:'armor', slot:'head',
+    name:'Elmo do Vazio',     icon:'🪖', type:'armor', slot:'head',
     effect:{def:22, hp:60},  desc:'+22 DEF +60 HP',
     rarity:'mythic', forClass:null, setId:'void_set',
   },
   void_shield: {
-    name:'Escudo do Vazio',   icon:'🌑', type:'armor', slot:'offhand',
+    name:'Escudo do Vazio',   icon:'🛡️', type:'armor', slot:'offhand',
     effect:{def:26, hp:40},  desc:'+26 DEF +40 HP',
     rarity:'mythic', forClass:['warrior'], setId:'void_set',
   },
   void_focus: {
-    name:'Foco do Vazio',     icon:'🌀', type:'armor', slot:'offhand',
+    name:'Foco do Vazio',     icon:'🔯', type:'armor', slot:'offhand',
     effect:{def:10, mp:80, atk:12}, desc:'+10 DEF +80 MP +12 ATK',
     rarity:'mythic', forClass:['mage'], setId:'void_set',
   },
   void_quiver: {
-    name:'Aljava do Vazio',   icon:'🌑', type:'armor', slot:'offhand',
+    name:'Aljava do Vazio',   icon:'🗝️', type:'armor', slot:'offhand',
     effect:{atk:14, critBonus:0.10}, desc:'+14 ATK +10% CRIT',
     rarity:'mythic', forClass:['archer'], setId:'void_set',
   },
   void_ring: {
-    name:'Anel do Vazio',     icon:'💠', type:'armor', slot:'ring',
+    name:'Anel do Vazio',     icon:'💍', type:'armor', slot:'ring',
     effect:{atk:16, def:8, hp:40}, desc:'+16 ATK +8 DEF +40 HP',
     rarity:'mythic', forClass:null, setId:'void_set',
   },
   void_gloves: {
-    name:'Luvas do Vazio',    icon:'🌑', type:'armor', slot:'gloves',
+    name:'Luvas do Vazio',    icon:'🧤', type:'armor', slot:'gloves',
     effect:{atk:10, def:8, critBonus:0.06}, desc:'+10 ATK +8 DEF +6% CRIT',
     rarity:'mythic', forClass:null, setId:'void_set',
   },
   void_legs: {
-    name:'Calça do Vazio',    icon:'🌑', type:'armor', slot:'legs',
+    name:'Calça do Vazio',    icon:'⛓️', type:'armor', slot:'legs',
     effect:{def:18, hp:50, spd:10}, desc:'+18 DEF +50 HP +10 SPD',
     rarity:'mythic', forClass:null, setId:'void_set',
   },
   void_boots: {
-    name:'Botas do Vazio',    icon:'🌑', type:'armor', slot:'boots',
+    name:'Botas do Vazio',    icon:'👢', type:'armor', slot:'boots',
     effect:{def:14, hp:30, spd:20}, desc:'+14 DEF +30 HP +20 SPD',
     rarity:'mythic', forClass:null, setId:'void_set',
   },
@@ -11105,16 +11194,26 @@ function closeVoidMerchant() {
 }
 
 function buyVoidItem(itemId) {
-  const shop = VOID_SHOP.find(s => s.id === itemId);
-  if (!shop) return;
-  const rubies = player.rubies || 0;
-  if (rubies < shop.cost) { showVmMsg('❌ Rubies insuficientes!', 'err'); return; }
+  const db = ITEM_DB[itemId];
+  if (!db) return;
+
+  // Descobre o fragmento correspondente
+  const fragId = Object.keys(VOID_FRAGMENTS).find(fid => VOID_FRAGMENTS[fid].grantItem === itemId);
+  if (!fragId) { showVmMsg('❌ Fragmento não mapeado!', 'err'); return; }
+
+  const cost = VOID_FRAG_COST[itemId] || 5;
+  const have = countFragment(fragId);
+  if (have < cost) {
+    showVmMsg(`❌ Fragmentos insuficientes! (${have}/${cost} ${ITEM_DB[fragId]?.name})`, 'err');
+    return;
+  }
   if (player.inventory.filter(Boolean).length >= 60) { showVmMsg('❌ Inventário cheio!', 'err'); return; }
-  player.rubies -= shop.cost;
+
+  removeFragments(fragId, cost);
   addItemToInventory(itemId);
   if (typeof playRareItemSound === 'function') playRareItemSound();
-  addLog(`👑 ${ITEM_DB[itemId].icon} ${ITEM_DB[itemId].name} adquirido!`, 'llvl');
-  showVmMsg(`✓ ${ITEM_DB[itemId].name} obtido!`, 'ok');
+  addLog(`👑 ${db.icon} ${db.name} forjado! (usou ${cost} ${ITEM_DB[fragId]?.name})`, 'llvl');
+  showVmMsg(`✓ ${db.name} forjado!`, 'ok');
   updateShardHUD();
   renderVoidMerchant();
 }
@@ -11175,7 +11274,6 @@ function renderVoidMerchant() {
   const tabsEl = document.getElementById('vm-tabs');
   if (!body || !player) return;
 
-  const rubies    = player.rubies || 0;
   const setPieces = countEquippedSetPieces();
   const curTab    = voidMerchantState.tab || 'warrior';
 
@@ -11187,31 +11285,63 @@ function renderVoidMerchant() {
     ).join('');
   }
 
-  // ── Currency row ──────────────────────────────────────────
-  const currencyRow = `<div class="vm-currency-row">💎 <span style="font-weight:700">${rubies}</span> Rubies disponíveis</div>`;
+  // ── Resumo de fragmentos do jogador ──────────────────────
+  const fragSummary = (() => {
+    const owned = Object.keys(VOID_FRAGMENTS).filter(fid => countFragment(fid) > 0);
+    if (owned.length === 0)
+      return `<div class="vm-currency-row" style="color:#6a4a2a">♦️ Nenhum Ruby ainda — derrote o <strong>Guardião Eterno</strong> ou o <strong>Dragão Lendário</strong></div>`;
+    const parts = owned.map(fid => {
+      const cfg = VOID_FRAGMENTS[fid];
+      const have = countFragment(fid);
+      const need = VOID_FRAG_COST[cfg.grantItem] || 5;
+      const done = have >= need;
+      return `<span style="color:${done?'#50e080':'#ff6080'};margin-right:8px">♦️ ${ITEM_DB[fid]?.name?.replace('Ruby ','')}: <strong>${have}/${need}</strong>${done?' ✓':''}</span>`;
+    }).join('');
+    return `<div class="vm-currency-row" style="flex-wrap:wrap;gap:4px;font-size:11px">♦️ Seus Rubies: ${parts}</div>`;
+  })();
 
   // ── Item sections for active tab ──────────────────────────
   const sections = VM_CATALOG[curTab] || [];
   const sectionsHtml = sections.map(sec => {
     const itemsHtml = sec.items.map(id => {
-      const shop = VOID_SHOP.find(s => s.id === id);
-      const db   = ITEM_DB[id];
+      const db = ITEM_DB[id];
       if (!db) return '';
-      const cost    = shop?.cost ?? 5;
-      const owned   = player.inventory.some(it => it?.id === id);
+
+      // Descobre fragmento ligado a este item
+      const fragId = Object.keys(VOID_FRAGMENTS).find(fid => VOID_FRAGMENTS[fid].grantItem === id);
+      const fragDb = fragId ? ITEM_DB[fragId] : null;
+      const cost   = VOID_FRAG_COST[id] || 5;
+      const have   = fragId ? countFragment(fragId) : 0;
+      const pct    = Math.min(100, Math.round(have / cost * 100));
+
+      const owned    = player.inventory.some(it => it?.id === id);
       const equipped = Object.values(player.equippedSlots||{}).some(e => (e?.itemId||e) === id);
-      const canBuy  = rubies >= cost && !owned && !equipped;
-      const statusDone = owned || equipped;
-      const statusLabel = equipped ? '✓ Equipado' : owned ? '📦 Obtido' : `💎 ${cost} Ruby`;
-      const cls = statusDone ? 'vm-item owned' : canBuy ? 'vm-item' : 'vm-item cant-afford';
-      const click = canBuy ? `onclick="buyVoidItem('${id}')"` : '';
+      const canForge = have >= cost && !owned && !equipped;
+      const done     = owned || equipped;
+
+      const barColor  = pct >= 100 ? '#50e080' : pct >= 50 ? '#a0c0ff' : '#6040a0';
+      const costLabel = done
+        ? (equipped ? '✓ Equipado' : '📦 Forjado')
+        : canForge
+          ? `✨ Forjar (${have}/${cost} ♦️)`
+          : `${have}/${cost} ♦️ ${fragDb?.name || 'Rubies'}`;
+
+      const cls   = done ? 'vm-item owned' : canForge ? 'vm-item' : 'vm-item cant-afford';
+      const click = canForge ? `onclick="buyVoidItem('${id}')"` : '';
+
+      const progressBar = !done ? `
+        <div style="width:100%;height:4px;background:#1a0a2e;border-radius:2px;margin-top:4px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;transition:width .3s"></div>
+        </div>` : '';
+
       return `<div class="${cls}" ${click} title="${db.desc}">
         <div class="vm-item-icon">${db.icon}</div>
         <div class="vm-item-name">${db.name}</div>
         <div class="vm-item-desc">${db.desc}</div>
-        <div class="vm-item-cost" style="${statusDone?'color:#40c870':''}">
-          ${statusDone ? statusLabel : statusLabel}
+        <div class="vm-item-cost" style="color:${done?'#40c870':canForge?'#ffe066':'#8050a0'};font-size:10px;margin-top:3px">
+          ${costLabel}
         </div>
+        ${progressBar}
       </div>`;
     }).join('');
 
@@ -11231,7 +11361,15 @@ function renderVoidMerchant() {
       ${setPieces >= MYTHIC_SET_IDS.length ? '<br><strong style="color:#ffe066">👑 ' + VOID_SET_BONUS.fullSet.desc + '</strong>' : ''}
     </div>` : '';
 
-  body.innerHTML = currencyRow + sectionsHtml + setStatus + `<div id="vm-msg" class="vm-msg"></div>`;
+  // ── Dica para novos jogadores ─────────────────────────────
+  const totalFrags = Object.keys(VOID_FRAGMENTS).reduce((n, fid) => n + countFragment(fid), 0);
+  const hint = totalFrags === 0
+    ? `<div style="font-size:10px;color:#4a2a5a;margin-top:10px;font-style:italic;text-align:center">
+        ⚜ Valdris aceita apenas Rubies do Vazio — não ouro comum.<br>
+        Derrote o <span style="color:#bb8fce">Guardião Eterno</span> e o <span style="color:#c04000">Dragão Lendário</span> para obtê-los.
+       </div>` : '';
+
+  body.innerHTML = fragSummary + sectionsHtml + setStatus + hint + `<div id="vm-msg" class="vm-msg"></div>`;
 }
 
 function showVmMsg(text, type) {
@@ -11423,10 +11561,110 @@ function spawnDragonEvent() {
   }
 }
 
-// Fake item ID to trigger shard drops
+// Fake item ID to trigger shard drops (legacy compat)
 Object.assign(ITEM_DB, {
-  shard_drop: { name: 'Ruby', icon: '💎', type:'ruby', effect:{}, desc:'Moeda especial de bosses', rarity:'mythic', forClass:null },
+  shard_drop: { name: 'Ruby', icon: '♦️', type:'ruby', effect:{}, desc:'Moeda especial de bosses', rarity:'mythic', forClass:null },
 });
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║         SISTEMA DE FRAGMENTOS DO VAZIO                  ║
+// ║  Itens do Vazio só são obtidos via fragmentos:          ║
+// ║  • Guardião Eterno  → 3–5 fragmentos por kill           ║
+// ║  • Dragão Lendário  → 2–4 fragmentos por kill           ║
+// ║  • Mercador Valdris → troca fragmentos por itens        ║
+// ╚══════════════════════════════════════════════════════════╝
+
+const VOID_FRAGMENTS = {
+  frag_blade:  { name:'Ruby da Lâmina',    icon:'♦️', forClass:['warrior'],        grantItem:'void_blade'  },
+  frag_bow:    { name:'Ruby do Arco',      icon:'♦️', forClass:['archer'],          grantItem:'void_bow'    },
+  frag_staff:  { name:'Ruby do Cajado',    icon:'♦️', forClass:['mage'],            grantItem:'void_staff'  },
+  frag_plate:  { name:'Ruby da Armadura',  icon:'♦️', forClass:['warrior'],        grantItem:'void_plate'  },
+  frag_mantle: { name:'Ruby do Manto',     icon:'♦️', forClass:['archer','mage'],   grantItem:'void_mantle' },
+  frag_helm:   { name:'Ruby do Elmo',      icon:'♦️', forClass:null,               grantItem:'void_helm'   },
+  frag_shield: { name:'Ruby do Escudo',    icon:'♦️', forClass:['warrior'],        grantItem:'void_shield' },
+  frag_focus:  { name:'Ruby do Foco',      icon:'♦️', forClass:['mage'],            grantItem:'void_focus'  },
+  frag_quiver: { name:'Ruby da Aljava',    icon:'♦️', forClass:['archer'],          grantItem:'void_quiver' },
+  frag_ring:   { name:'Ruby do Anel',      icon:'♦️', forClass:null,               grantItem:'void_ring'   },
+  frag_gloves: { name:'Ruby das Luvas',    icon:'♦️', forClass:null,               grantItem:'void_gloves' },
+  frag_legs:   { name:'Ruby da Calça',     icon:'♦️', forClass:null,               grantItem:'void_legs'   },
+  frag_boots:  { name:'Ruby das Botas',    icon:'♦️', forClass:null,               grantItem:'void_boots'  },
+  frag_amulet: { name:'Ruby do Colar',     icon:'♦️', forClass:null,               grantItem:'void_amulet' },
+};
+
+// Quantos fragmentos são necessários para forjar cada item void
+const VOID_FRAG_COST = {
+  void_blade:8, void_bow:8, void_staff:8,
+  void_plate:6, void_mantle:6, void_amulet:5,
+  void_helm:4,  void_shield:4, void_focus:4, void_quiver:4,
+  void_ring:3,  void_gloves:3, void_legs:3,  void_boots:3,
+};
+
+// Registra fragmentos como itens stackáveis
+(function _registerVoidFragments() {
+  const entries = {};
+  for (const [fragId, cfg] of Object.entries(VOID_FRAGMENTS)) {
+    const cost = VOID_FRAG_COST[cfg.grantItem] || 5;
+    entries[fragId] = {
+      name: cfg.name, icon: cfg.icon,
+      type: 'void_fragment', effect: {},
+      desc: `Junte ${cost} para forjar ${ITEM_DB[cfg.grantItem]?.name || cfg.grantItem}`,
+      rarity: 'mythic', forClass: cfg.forClass,
+      grantItem: cfg.grantItem,
+    };
+  }
+  Object.assign(ITEM_DB, entries);
+})();
+
+function countFragment(fragId) {
+  if (!player?.inventory) return 0;
+  return player.inventory.reduce((n, s) => n + (!s || s.id !== fragId ? 0 : (s.qty||1)), 0);
+}
+
+function removeFragments(fragId, amount) {
+  if (!player?.inventory) return;
+  let rem = amount;
+  for (let i = player.inventory.length - 1; i >= 0 && rem > 0; i--) {
+    const s = player.inventory[i];
+    if (!s || s.id !== fragId) continue;
+    const q = s.qty || 1;
+    if (q <= rem) { rem -= q; player.inventory[i] = null; }
+    else { player.inventory[i].qty = q - rem; rem = 0; }
+  }
+}
+
+function _rollFragmentDrops(pool, amount) {
+  const classId = player?.classId || 'warrior';
+  const relevant = pool.filter(fid => { const c=VOID_FRAGMENTS[fid]; return !c.forClass||c.forClass.includes(classId); });
+  const drops = [];
+  for (let i = 0; i < amount; i++) {
+    const src = (relevant.length > 0 && Math.random() < 0.65) ? relevant : pool;
+    drops.push(src[Math.floor(Math.random() * src.length)]);
+  }
+  return drops;
+}
+
+function _grantFragmentDrops(ex, ey, pool, minAmt, maxAmt) {
+  const wl = typeof worldLevel !== 'undefined' ? worldLevel : 1;
+  const bonus = Math.floor(wl * 0.5);
+  const amount = minAmt + bonus + Math.floor(Math.random() * (maxAmt - minAmt + 1));
+  const frags = _rollFragmentDrops(pool, amount);
+  const grouped = {};
+  for (const fid of frags) grouped[fid] = (grouped[fid]||0)+1;
+  for (const [fid, qty] of Object.entries(grouped)) {
+    for (let i = 0; i < qty; i++) {
+      const jx = ex + (Math.random()-0.5)*40;
+      const jy = ey + (Math.random()-0.5)*40;
+      if (typeof spawnLoot === 'function') spawnLoot(jx, jy, fid);
+    }
+  }
+  return frags;
+}
+
+const GUARDIAN_FRAG_POOL = Object.keys(VOID_FRAGMENTS);
+const DRAGON_FRAG_POOL   = [
+  'frag_helm','frag_ring','frag_gloves','frag_legs','frag_boots','frag_amulet',
+  'frag_blade','frag_bow','frag_staff','frag_plate','frag_mantle','frag_shield','frag_focus','frag_quiver',
+];
 
 // ── Final Boss — The Eternal Abyss ────────────────────────
 const FINAL_BOSS_DEF = {
@@ -11582,21 +11820,56 @@ function triggerVictory() {
   addLog('🏆 VITÓRIA! O Abismo Eterno foi derrotado! O jogo foi zerado!', 'lboss');
 }
 
-// ── Override killEnemy to handle shard drops & final boss ─
+// ── Override killEnemy to handle fragment drops & final boss ─
 const _egOrigKillEnemy = typeof killEnemy === 'function' ? killEnemy : null;
 if (_egOrigKillEnemy) {
   killEnemy = function(e) {
-    // Handle shard drops for boss chest bosses
-    if (e.isBoss && !e.isCentralBoss && !e.isFinalBoss) {
-      const shardAmt = 1 + Math.floor(worldLevel * 0.5);
+    // ── Guardião Eterno → dropa fragmentos do Vazio (3-5 base + worldLevel/2) ──
+    if (e.isCentralBoss && !e.isFinalBoss) {
+      const wl = typeof worldLevel !== 'undefined' ? worldLevel : 1;
+      const base = 3;
+      const extra = Math.floor(wl * 0.6);
+      const total = base + extra + Math.floor(Math.random() * 3); // 3-5 + escala
+      const frags = _rollFragmentDrops(GUARDIAN_FRAG_POOL, total);
+      const grouped = {};
+      for (const fid of frags) grouped[fid] = (grouped[fid]||0)+1;
+      for (const [fid, qty] of Object.entries(grouped)) {
+        for (let i = 0; i < qty; i++) {
+          const jx = e.x + (Math.random()-0.5)*60;
+          const jy = e.y + (Math.random()-0.5)*60;
+          if (typeof spawnLoot === 'function') spawnLoot(jx, jy, fid);
+        }
+      }
+      addLog(`💀 Guardião Eterno derrotado! +${total} Rubies do Vazio liberados! ♦️`, 'lboss');
+      // Rubies legacy para compatibilidade do HUD
+      addShards(2 + Math.floor(wl * 0.3));
+    }
+    // ── Dragão Lendário → dropa fragmentos do Vazio (2-4 base + worldLevel/2) ──
+    if (e.isDragonEvent) {
+      const wl = typeof worldLevel !== 'undefined' ? worldLevel : 1;
+      const base = 2;
+      const extra = Math.floor(wl * 0.4);
+      const total = base + extra + Math.floor(Math.random() * 3); // 2-4 + escala
+      const frags = _rollFragmentDrops(DRAGON_FRAG_POOL, total);
+      const grouped = {};
+      for (const fid of frags) grouped[fid] = (grouped[fid]||0)+1;
+      for (const [fid, qty] of Object.entries(grouped)) {
+        for (let i = 0; i < qty; i++) {
+          const jx = e.x + (Math.random()-0.5)*60;
+          const jy = e.y + (Math.random()-0.5)*60;
+          if (typeof spawnLoot === 'function') spawnLoot(jx, jy, fid);
+        }
+      }
+      addLog(`🐉 Dragão Lendário derrotado! +${total} Rubies do Vazio! ♦️`, 'lboss');
+      // Rubies legacy
+      addShards(1 + Math.floor(wl * 0.2));
+    }
+    // ── Boss de baú → continua dando Rubies legacy ──
+    if (e.isBoss && !e.isCentralBoss && !e.isFinalBoss && !e.isDragonEvent) {
+      const shardAmt = 1 + Math.floor((typeof worldLevel!=='undefined'?worldLevel:1) * 0.5);
       addShards(shardAmt);
     }
-    // Dragon event — extra rubies
-    if (e.isDragonEvent) {
-      addShards(3 + Math.floor(worldLevel));
-      addLog(`🐉 Dragão derrotado! +${3+Math.floor(worldLevel)} Ruby!`, 'llvl');
-    }
-    // Final boss victory
+    // ── Boss final → vitória ──
     if (e.isFinalBoss) {
       setTimeout(triggerVictory, 1200);
     }
@@ -12063,9 +12336,9 @@ function _spawnLegendaryDragonImpl() {
     isDragonEvent: true,
     isLegendaryDragon: true,
     drops: [
-      { id: 'shard_drop', chance: 1 },
-      { id: 'big_potion',  chance: 1 },
+      { id: 'big_potion',   chance: 1 },
       { id: 'big_mana_pot', chance: 1 },
+      { id: 'elixir',       chance: 0.5 },
     ],
     minLevel: 1,
     vx: 0, vy: 0, atkTimer: 0,
