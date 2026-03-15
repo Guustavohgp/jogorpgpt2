@@ -2165,166 +2165,362 @@ function renderPet() {
     ctx.restore();
 
   } else {
-    // LOBO ALBINO PET — orgânico, pequeno, pelo branco, olhos cyan
-    const bob2  = Math.sin(now / 420) * 1.2;
-    const tailA = Math.sin(now / 320) * 0.5;   // balançar cauda
-    const mouthA= 0.3 + Math.sin(now / 380) * 0.2; // rosnar leve
+    // ── LOBO ALBINO PET — fiel à imagem de referência ────
+    // Postura agachada, corpo inclinado, cabeça baixa, boca aberta
+    const now2  = now;
+    const tail  = Math.sin(now2/280)*0.4;
+    const snrl  = Math.abs(Math.sin(now2/600))*0.6 + 0.4; // boca oscila
+    const brth  = Math.sin(now2/700)*1.5;
 
-    // escala menor: s=t/16 → lobo pequeno como NPC
-    const ws = t / 16;
+    const S = t / 13; // escala
     ctx.save();
-    ctx.translate(x, y + bob2);
-    ctx.scale(ws, ws);
+    ctx.translate(x, y + brth*0.3);
+    ctx.scale(S, S);
 
-    const W0='#f4f4ff', W1='#d4d4e8', W2='#a8a8c0', BK='#18181e';
-    const CY='#20ccf0', CYG='#70eaff';
+    // Paleta fiel à referência
+    const W   = '#ffffff';   // branco puro (centro do pelo)
+    const WG  = '#e0e0f0';   // branco levemente azulado
+    const G1  = '#c8c8d8';   // cinza claro
+    const G2  = '#a0a0b8';   // cinza médio (sombras)
+    const G3  = '#707088';   // cinza escuro (contornos internos)
+    const BK  = '#101018';   // preto contorno
+    const CY  = '#10d8ff';   // cyan olhos/relâmpago
+    const CYL = '#80f0ff';   // cyan claro glow
 
-    // ─── sombra base ──────────────────────────────────
-    ctx.fillStyle='rgba(0,0,0,0.18)';
-    ctx.beginPath(); ctx.ellipse(0,16,16,4,0,0,Math.PI*2); ctx.fill();
+    // helper: stroke de contorno preto
+    function outline(r=1){ ctx.strokeStyle=BK; ctx.lineWidth=r; ctx.stroke(); }
 
-    // ─── cauda (superior direita, curvada) ────────────
+    // ── sombra no chão ────────────────────────────────
+    ctx.fillStyle='rgba(0,0,0,0.15)';
+    ctx.beginPath(); ctx.ellipse(0,22,22,5,0,0,Math.PI*2); ctx.fill();
+
+    // ── CAUDA (atrás, curvada para cima) ──────────────
     ctx.save();
-    ctx.translate(18,-4);
-    ctx.rotate(-tailA);
+    ctx.translate(24,-4);
+    ctx.rotate(tail - 0.5);
+    // outline
     ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(8,-4,14,-14,10,-18);
-    ctx.bezierCurveTo(8,-20,5,-16,6,-12); ctx.bezierCurveTo(8,-8,4,-2,0,2); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(6,-4,11,-12,8,-16);
-    ctx.bezierCurveTo(6,-18,4,-14,5,-11); ctx.bezierCurveTo(7,-7,3,-2,0,1); ctx.fill();
-    ctx.fillStyle=W1;
-    ctx.beginPath(); ctx.moveTo(1,-1); ctx.bezierCurveTo(5,-4,9,-10,7,-13);
-    ctx.bezierCurveTo(6,-11,5,-8,4,-6); ctx.bezierCurveTo(6,-4,3,-1,1,0); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-2,2); ctx.bezierCurveTo(4,-4,12,-18,10,-28);
+    ctx.bezierCurveTo(8,-34,3,-30,4,-22);
+    ctx.bezierCurveTo(6,-14,2,-6,-2,4); ctx.fill();
+    // pelo principal
+    ctx.fillStyle=G1;
+    ctx.beginPath();
+    ctx.moveTo(-1,1); ctx.bezierCurveTo(3,-4,10,-16,8,-25);
+    ctx.bezierCurveTo(7,-30,3,-27,4,-20);
+    ctx.bezierCurveTo(5,-13,2,-5,-1,3); ctx.fill();
+    // highlight
+    ctx.fillStyle=WG;
+    ctx.beginPath();
+    ctx.moveTo(0,0); ctx.bezierCurveTo(2,-4,7,-14,6,-22);
+    ctx.bezierCurveTo(5,-27,3,-24,3,-18);
+    ctx.bezierCurveTo(4,-12,1,-4,0,2); ctx.fill();
+    ctx.fillStyle=W;
+    ctx.beginPath();
+    ctx.moveTo(0,-1); ctx.bezierCurveTo(1,-4,5,-12,4,-19);
+    ctx.bezierCurveTo(4,-22,2,-20,3,-16);
+    ctx.bezierCurveTo(3,-10,1,-4,0,1); ctx.fill();
+    // topetes pelo da cauda
+    ctx.fillStyle=G2;
+    for(let i=0;i<5;i++){
+      const a=-0.8+i*0.35, r=5+i*0.5;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r-8-i*2);
+      ctx.lineTo(Math.cos(a+0.15)*r*0.4, Math.sin(a+0.15)*r*0.4-7-i*2);
+      ctx.lineTo(Math.cos(a-0.15)*r*0.4, Math.sin(a-0.15)*r*0.4-7-i*2);
+      ctx.fill();
+    }
     ctx.restore();
 
-    // ─── corpo principal (oval, inclinado levemente) ──
+    // ── PATAS TRASEIRAS ───────────────────────────────
+    // coxa traseira dir (mais à frente, visível)
     ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.ellipse(2,-6,16,9,-0.1,0,Math.PI*2); ctx.fill();
-    const cg=ctx.createRadialGradient(-2,-10,1,2,-6,16);
-    cg.addColorStop(0,'#fafaff'); cg.addColorStop(0.5,W0); cg.addColorStop(1,W1);
-    ctx.fillStyle=cg;
-    ctx.beginPath(); ctx.ellipse(2,-7,14,8,-0.1,0,Math.PI*2); ctx.fill();
-    // pelo dorso
-    ctx.fillStyle=W2;
-    for(let i=0;i<4;i++){
-      const px=-8+i*5.5, py=-14-Math.sin(i*0.9)*1.5;
-      ctx.beginPath(); ctx.moveTo(px-2.5,py+3); ctx.lineTo(px,py-4); ctx.lineTo(px+2.5,py+3); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(18,4,9,11,0.3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath(); ctx.ellipse(18,4,8,10,0.3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=WG;
+    ctx.beginPath(); ctx.ellipse(17,2,5,7,0.2,0,Math.PI*2); ctx.fill();
+    // canela traseira
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(12,10); ctx.bezierCurveTo(10,16,11,22,15,24);
+    ctx.bezierCurveTo(19,24,21,18,20,13); ctx.bezierCurveTo(19,9,14,8,12,10); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.moveTo(13,11); ctx.bezierCurveTo(11,16,12,21,15,23);
+    ctx.bezierCurveTo(18,23,20,18,19,13); ctx.bezierCurveTo(18,10,14,9,13,11); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath(); ctx.moveTo(14,11); ctx.bezierCurveTo(12,15,13,20,16,22);
+    ctx.bezierCurveTo(18,21,19,17,18,13); ctx.bezierCurveTo(18,11,15,10,14,11); ctx.fill();
+    // pata traseira
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(15,24,8,4,-0.1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=G3;
+    ctx.beginPath(); ctx.ellipse(15,23,7,3.5,-0.1,0,Math.PI*2); ctx.fill();
+    // garras traseiras (azuis como na imagem)
+    ctx.fillStyle='#5070a0';
+    [[9,26],[12,27],[16,27],[19,26],[22,25]].forEach(([gx,gy])=>{
+      ctx.beginPath(); ctx.moveTo(gx,gy); ctx.bezierCurveTo(gx-2,gy+2,gx-1,gy+5,gx+0.5,gy+5);
+      ctx.bezierCurveTo(gx+2,gy+5,gx+3,gy+2,gx+1,gy); ctx.fill();
+    });
+    // coxa traseira esq (mais atrás, parcialmente oculta)
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.ellipse(10,6,6,8,0.1,0,Math.PI*2); ctx.fill();
+
+    // ── CORPO (inclinado para frente, arqueado) ────────
+    // outline corpo
+    ctx.fillStyle=BK;
+    ctx.beginPath();
+    ctx.moveTo(-16,8);
+    ctx.bezierCurveTo(-18,-2,-14,-16,-4,-22);
+    ctx.bezierCurveTo(6,-28,18,-24,24,-14);
+    ctx.bezierCurveTo(28,-6,26,4,22,8);
+    ctx.bezierCurveTo(14,12,0,12,-16,8);
+    ctx.fill();
+    // corpo gradiente (branco centro, cinza bordas)
+    const bg=ctx.createRadialGradient(4,-14,2,4,-6,22);
+    bg.addColorStop(0,W); bg.addColorStop(0.4,WG); bg.addColorStop(0.75,G1); bg.addColorStop(1,G2);
+    ctx.fillStyle=bg;
+    ctx.beginPath();
+    ctx.moveTo(-15,7);
+    ctx.bezierCurveTo(-17,-2,-13,-15,-3,-21);
+    ctx.bezierCurveTo(6,-27,17,-23,23,-13);
+    ctx.bezierCurveTo(27,-5,25,3,21,7);
+    ctx.bezierCurveTo(13,11,0,11,-15,7);
+    ctx.fill();
+    // mancha oval branca no flanco (como na referência)
+    ctx.fillStyle=W;
+    ctx.beginPath(); ctx.ellipse(10,-8,10,7,-0.15,0,Math.PI*2); ctx.fill();
+    // pelo do dorso (espinhado, como na imagem)
+    ctx.fillStyle=G3;
+    const dorsalX=[-10,-4,2,8,14], dorsalY=[-20,-24,-26,-24,-20];
+    for(let i=0;i<5;i++){
+      ctx.beginPath();
+      ctx.moveTo(dorsalX[i]-4,dorsalY[i]+5);
+      ctx.bezierCurveTo(dorsalX[i]-2,dorsalY[i]-4,dorsalX[i]+2,dorsalY[i]-4,dorsalX[i]+4,dorsalY[i]+5);
+      ctx.fill();
+    }
+    ctx.fillStyle=G2;
+    for(let i=0;i<5;i++){
+      ctx.beginPath();
+      ctx.moveTo(dorsalX[i]-3,dorsalY[i]+4);
+      ctx.bezierCurveTo(dorsalX[i]-1,dorsalY[i]-2,dorsalX[i]+1,dorsalY[i]-2,dorsalX[i]+3,dorsalY[i]+4);
+      ctx.fill();
     }
 
-    // ─── patas traseiras ──────────────────────────────
+    // ── PATAS DIANTEIRAS ──────────────────────────────
+    // pata dianteira esq (à frente, dobrada)
     ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.roundRect(10,1,7,12,[2,2,4,4]); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.roundRect(11,2,5,10,[1,1,3,3]); ctx.fill();
-    ctx.fillStyle=W1;
-    ctx.beginPath(); ctx.roundRect(11,8,5,4,[0,0,3,3]); ctx.fill();
-    // garras
-    ctx.fillStyle='#5878b0';
-    [9,12,15,18].forEach(gx=>{ctx.beginPath();ctx.moveTo(gx,12);ctx.lineTo(gx-1,15);ctx.lineTo(gx+1,15);ctx.fill();});
-
-    // ─── patas dianteiras ─────────────────────────────
+    ctx.beginPath(); ctx.moveTo(-18,2); ctx.bezierCurveTo(-22,-4,-22,-12,-18,-16);
+    ctx.bezierCurveTo(-14,-18,-10,-14,-10,-8); ctx.bezierCurveTo(-10,-2,-14,4,-18,2); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath(); ctx.moveTo(-17,2); ctx.bezierCurveTo(-21,-3,-21,-11,-17,-15);
+    ctx.bezierCurveTo(-14,-17,-10,-14,-11,-8); ctx.bezierCurveTo(-11,-2,-14,3,-17,2); ctx.fill();
+    ctx.fillStyle=WG;
+    ctx.beginPath(); ctx.ellipse(-16,-8,4,6,-0.15,0,Math.PI*2); ctx.fill();
+    // antebraço esq
     ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.roundRect(-14,2,7,13,[2,2,4,4]); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.roundRect(-13,3,5,11,[1,1,3,3]); ctx.fill();
-    ctx.fillStyle=W1;
-    ctx.beginPath(); ctx.roundRect(-13,9,5,5,[0,0,3,3]); ctx.fill();
-    ctx.fillStyle='#5878b0';
-    [-15,-12,-9,-6].forEach(gx=>{ctx.beginPath();ctx.moveTo(gx,13);ctx.lineTo(gx-1,16);ctx.lineTo(gx+1,16);ctx.fill();});
-
-    // pata dir dianteira
+    ctx.beginPath(); ctx.moveTo(-22,0); ctx.bezierCurveTo(-26,4,-26,14,-22,18);
+    ctx.bezierCurveTo(-18,18,-16,12,-16,6); ctx.bezierCurveTo(-16,2,-20,-2,-22,0); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.moveTo(-21,1); ctx.bezierCurveTo(-25,4,-25,13,-21,17);
+    ctx.bezierCurveTo(-18,17,-17,12,-17,7); ctx.bezierCurveTo(-17,3,-19,-1,-21,1); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath(); ctx.moveTo(-20,1); ctx.bezierCurveTo(-24,4,-24,12,-20,16);
+    ctx.bezierCurveTo(-18,16,-17,12,-18,7); ctx.bezierCurveTo(-18,4,-19,0,-20,1); ctx.fill();
+    // pata esq
     ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.roundRect(-4,3,7,12,[2,2,4,4]); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.roundRect(-3,4,5,10,[1,1,3,3]); ctx.fill();
-    ctx.fillStyle=W1;
-    ctx.beginPath(); ctx.roundRect(-3,9,5,5,[0,0,3,3]); ctx.fill();
-    ctx.fillStyle='#5878b0';
-    [-5,-2,1,4].forEach(gx=>{ctx.beginPath();ctx.moveTo(gx,13);ctx.lineTo(gx-1,16);ctx.lineTo(gx+1,16);ctx.fill();});
-
-    // ─── pescoço + cabeça ─────────────────────────────
-    // pescoço
-    ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.moveTo(-12,-4); ctx.bezierCurveTo(-15,-10,-17,-16,-13,-19);
-    ctx.bezierCurveTo(-9,-21,-7,-15,-8,-8); ctx.closePath(); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.moveTo(-11,-5); ctx.bezierCurveTo(-14,-10,-15,-15,-12,-17);
-    ctx.bezierCurveTo(-9,-19,-7,-14,-8,-8); ctx.closePath(); ctx.fill();
-    // juba pequena
-    ctx.fillStyle=W1;
-    for(let i=0;i<3;i++){const a=-0.3+i*0.28;
-      ctx.beginPath();
-      ctx.moveTo(-12+Math.cos(a)*5,-12+Math.sin(a)*5);
-      ctx.lineTo(-12+Math.cos(a)*9,-12+Math.sin(a)*8);
-      ctx.lineTo(-12+Math.cos(a+0.3)*5,-12+Math.sin(a+0.3)*5);
-      ctx.fill();}
-
-    // crânio
-    ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.ellipse(-17,-18,10,9,-0.12,0,Math.PI*2); ctx.fill();
-    const hg=ctx.createRadialGradient(-19,-21,1,-17,-18,10);
-    hg.addColorStop(0,'#fafaff'); hg.addColorStop(0.6,W0); hg.addColorStop(1,W1);
-    ctx.fillStyle=hg;
-    ctx.beginPath(); ctx.ellipse(-17,-19,9,8,-0.12,0,Math.PI*2); ctx.fill();
-
-    // orelhas
-    ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.moveTo(-24,-24); ctx.lineTo(-27,-32); ctx.lineTo(-18,-24); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.moveTo(-24,-25); ctx.lineTo(-26,-30); ctx.lineTo(-19,-25); ctx.fill();
-    ctx.fillStyle=W2;
-    ctx.beginPath(); ctx.moveTo(-24,-26); ctx.lineTo(-25,-29); ctx.lineTo(-20,-26); ctx.fill();
-    // orelha dir (menor)
-    ctx.fillStyle=W1;
-    ctx.beginPath(); ctx.moveTo(-13,-23); ctx.lineTo(-11,-29); ctx.lineTo(-7,-22); ctx.fill();
-
-    // focinho
-    ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.ellipse(-22,-14,7,5.5,-0.08,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=W1;
-    ctx.beginPath(); ctx.ellipse(-22,-15,5.5,4.5,-0.08,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=W0;
-    ctx.beginPath(); ctx.ellipse(-21,-15,4,3.5,-0.08,0,Math.PI*2); ctx.fill();
-    // nariz
-    ctx.fillStyle='#1e1e28';
-    ctx.beginPath(); ctx.ellipse(-25,-13,2.2,1.8,0.1,0,Math.PI*2); ctx.fill();
-
-    // boca aberta
-    ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.ellipse(-22,-10+mouthA*0.5,5.5,2.5+mouthA,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#3e0808';
-    ctx.beginPath(); ctx.ellipse(-22,-10+mouthA*0.4,4,1.5+mouthA*0.7,0,0,Math.PI*2); ctx.fill();
-    // presas
-    ctx.fillStyle='#f0ece0';
-    [[-26,-10],[-23,-10],[-20,-10],[-17,-10]].forEach(([px,py])=>{
-      ctx.beginPath(); ctx.moveTo(px-1.2,py); ctx.lineTo(px,py+2.8+mouthA); ctx.lineTo(px+1.2,py); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-21,18,7,4,0.1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=G3;
+    ctx.beginPath(); ctx.ellipse(-21,17,6,3.5,0.1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#5070a0';
+    [[-27,19],[-24,21],[-20,22],[-17,21],[-14,19]].forEach(([gx,gy])=>{
+      ctx.beginPath(); ctx.moveTo(gx,gy); ctx.bezierCurveTo(gx-2,gy+2,gx-1,gy+5,gx+0.5,gy+5);
+      ctx.bezierCurveTo(gx+2,gy+5,gx+3,gy+2,gx+1,gy); ctx.fill();
     });
 
-    // ─── olho azul brilhante ──────────────────────────
+    // pata dianteira dir (ligeiramente atrás)
     ctx.fillStyle=BK;
-    ctx.beginPath(); ctx.ellipse(-14,-20,4.5,3.8,-0.1,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#70b8d8';
-    ctx.beginPath(); ctx.ellipse(-14,-20,3.2,2.8,-0.1,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=CY; ctx.shadowColor=CYG; ctx.shadowBlur=8;
-    ctx.beginPath(); ctx.ellipse(-14,-20,2.2,2,-0.1,0,Math.PI*2); ctx.fill();
-    ctx.shadowBlur=0;
-    ctx.fillStyle='#0e0e18';
-    ctx.beginPath(); ctx.ellipse(-14,-20,1,1.4,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.9)';
-    ctx.beginPath(); ctx.ellipse(-15,-21.2,0.9,0.7,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-6,4); ctx.bezierCurveTo(-9,-2,-9,-10,-5,-14);
+    ctx.bezierCurveTo(-1,-16,3,-12,3,-6); ctx.bezierCurveTo(3,0,0,6,-6,4); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.moveTo(-5,3); ctx.bezierCurveTo(-8,-2,-8,-9,-4,-13);
+    ctx.bezierCurveTo(0,-15,2,-12,2,-6); ctx.bezierCurveTo(2,-1,-1,5,-5,3); ctx.fill();
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(-8,4); ctx.bezierCurveTo(-10,9,-9,17,-5,19);
+    ctx.bezierCurveTo(-1,19,1,14,1,9); ctx.bezierCurveTo(1,5,-5,2,-8,4); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.moveTo(-7,5); ctx.bezierCurveTo(-9,9,-8,16,-5,18);
+    ctx.bezierCurveTo(-2,18,0,13,0,9); ctx.bezierCurveTo(0,5,-5,3,-7,5); ctx.fill();
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-5,19,6,3.5,0.05,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=G3;
+    ctx.beginPath(); ctx.ellipse(-5,18,5,3,0.05,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#5070a0';
+    [[-10,20],[-7,22],[-4,22],[-1,22],[2,20]].forEach(([gx,gy])=>{
+      ctx.beginPath(); ctx.moveTo(gx,gy); ctx.bezierCurveTo(gx-2,gy+2,gx-1,gy+5,gx+0.5,gy+5);
+      ctx.bezierCurveTo(gx+2,gy+5,gx+3,gy+2,gx+1,gy); ctx.fill();
+    });
 
-    // relâmpago cyan
-    ctx.strokeStyle=CY; ctx.shadowColor=CYG; ctx.shadowBlur=6;
-    ctx.lineWidth=1.3; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(-10,-20); ctx.lineTo(-6,-19); ctx.lineTo(-3,-21); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-18,-20); ctx.lineTo(-23,-19); ctx.stroke();
+    // ── PESCOÇO ───────────────────────────────────────
+    ctx.fillStyle=BK;
+    ctx.beginPath();
+    ctx.moveTo(-15,4); ctx.bezierCurveTo(-20,-2,-22,-12,-18,-18);
+    ctx.bezierCurveTo(-14,-22,-8,-20,-8,-14);
+    ctx.bezierCurveTo(-8,-8,-10,2,-15,4); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath();
+    ctx.moveTo(-14,3); ctx.bezierCurveTo(-19,-2,-20,-11,-17,-16);
+    ctx.bezierCurveTo(-13,-20,-9,-18,-9,-13);
+    ctx.bezierCurveTo(-9,-7,-11,2,-14,3); ctx.fill();
+    ctx.fillStyle=WG;
+    ctx.beginPath(); ctx.ellipse(-14,-8,4,7,0.2,0,Math.PI*2); ctx.fill();
+    // pelo pescoço/juba
+    ctx.fillStyle=G3;
+    for(let i=0;i<5;i++){
+      const a=-1.2+i*0.4, r=9;
+      const bx=-16+Math.cos(a)*r, by=-8+Math.sin(a)*r;
+      ctx.beginPath(); ctx.moveTo(-16+Math.cos(a)*5,-8+Math.sin(a)*4);
+      ctx.bezierCurveTo(bx-1,by-2,bx+1,by-2,-16+Math.cos(a+0.25)*5,-8+Math.sin(a+0.25)*4);
+      ctx.fill();
+    }
+
+    // ── CABEÇA (baixa, inclinada — postura de ataque) ──
+    ctx.fillStyle=BK;
+    ctx.beginPath();
+    ctx.moveTo(-18,-16);
+    ctx.bezierCurveTo(-22,-20,-24,-28,-20,-34);
+    ctx.bezierCurveTo(-16,-38,-10,-36,-8,-30);
+    ctx.bezierCurveTo(-6,-24,-8,-16,-12,-14);
+    ctx.bezierCurveTo(-14,-13,-16,-14,-18,-16);
+    ctx.fill();
+    const hg=ctx.createRadialGradient(-15,-28,1,-14,-24,12);
+    hg.addColorStop(0,W); hg.addColorStop(0.5,WG); hg.addColorStop(1,G1);
+    ctx.fillStyle=hg;
+    ctx.beginPath();
+    ctx.moveTo(-17,-17);
+    ctx.bezierCurveTo(-21,-20,-22,-27,-19,-32);
+    ctx.bezierCurveTo(-16,-36,-10,-35,-9,-29);
+    ctx.bezierCurveTo(-7,-24,-9,-17,-13,-15);
+    ctx.bezierCurveTo(-14,-14,-15,-15,-17,-17);
+    ctx.fill();
+
+    // ── ORELHAS ───────────────────────────────────────
+    // orelha esq
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(-19,-31); ctx.bezierCurveTo(-22,-38,-18,-44,-14,-40);
+    ctx.bezierCurveTo(-11,-36,-12,-30,-15,-28); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath(); ctx.moveTo(-19,-32); ctx.bezierCurveTo(-21,-37,-18,-42,-15,-39);
+    ctx.bezierCurveTo(-12,-36,-13,-31,-15,-29); ctx.fill();
+    ctx.fillStyle=G3;
+    ctx.beginPath(); ctx.moveTo(-18,-33); ctx.bezierCurveTo(-20,-36,-18,-40,-16,-38);
+    ctx.bezierCurveTo(-14,-36,-14,-32,-16,-30); ctx.fill();
+    // orelha dir
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(-12,-28); ctx.bezierCurveTo(-10,-35,-7,-38,-6,-32);
+    ctx.bezierCurveTo(-6,-28,-8,-25,-11,-26); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.moveTo(-12,-29); ctx.bezierCurveTo(-10,-34,-8,-36,-7,-31);
+    ctx.bezierCurveTo(-7,-28,-9,-26,-11,-27); ctx.fill();
+    // topetes testa
+    ctx.fillStyle=G2;
+    for(let i=0;i<4;i++){
+      const px=-20+i*4, py=-34-Math.sin(i*0.8)*2;
+      ctx.beginPath(); ctx.moveTo(px-2,py+4); ctx.bezierCurveTo(px,py-4,px,py-4,px+2,py+4); ctx.fill();
+    }
+
+    // ── FOCINHO ───────────────────────────────────────
+    ctx.fillStyle=BK;
+    ctx.beginPath();
+    ctx.moveTo(-24,-22); ctx.bezierCurveTo(-28,-22,-32,-18,-30,-14);
+    ctx.bezierCurveTo(-28,-10,-22,-9,-19,-12);
+    ctx.bezierCurveTo(-16,-15,-16,-20,-19,-22); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath();
+    ctx.moveTo(-24,-22); ctx.bezierCurveTo(-27,-22,-30,-19,-29,-15);
+    ctx.bezierCurveTo(-27,-11,-22,-10,-20,-13);
+    ctx.bezierCurveTo(-17,-15,-17,-20,-20,-22); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=G1;
+    ctx.beginPath(); ctx.ellipse(-23,-19,4,2.5,-0.1,0,Math.PI*2); ctx.fill();
+    // nariz preto
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-29,-16,3,2.2,0.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#2a2a38';
+    ctx.beginPath(); ctx.ellipse(-28.5,-16.5,1.8,1.4,0.1,0,Math.PI*2); ctx.fill();
+
+    // ── BOCA ABERTA + PRESAS (ponto forte da imagem) ──
+    // gengiva/boca
+    ctx.fillStyle=BK;
+    ctx.beginPath();
+    ctx.moveTo(-30,-13); ctx.bezierCurveTo(-32,-10+snrl,-28,-8+snrl,-22,-9+snrl);
+    ctx.bezierCurveTo(-18,-9+snrl,-17,-12,-19,-14);
+    ctx.bezierCurveTo(-22,-12,-27,-12,-30,-13); ctx.fill();
+    ctx.fillStyle='#8a1020';
+    ctx.beginPath();
+    ctx.moveTo(-29,-13); ctx.bezierCurveTo(-31,-10+snrl*0.9,-27,-8+snrl*0.9,-22,-9+snrl*0.9);
+    ctx.bezierCurveTo(-18,-9+snrl*0.9,-18,-12,-20,-14);
+    ctx.bezierCurveTo(-22,-12,-27,-12,-29,-13); ctx.fill();
+    // língua rosada
+    ctx.fillStyle='#c02840';
+    ctx.beginPath(); ctx.ellipse(-24,-9+snrl*0.7,4.5,2.5,0.05,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e03858';
+    ctx.beginPath(); ctx.ellipse(-24,-9.5+snrl*0.6,3,1.8,0.05,0,Math.PI*2); ctx.fill();
+    // presas superiores (grandes, como na imagem)
+    ctx.fillStyle=W;
+    const fangData=[[-30,-13],[-27,-13],[-24,-13],[-21,-13],[-19,-13]];
+    fangData.forEach(([fx,fy],i)=>{
+      const h = i===1||i===3 ? 6+snrl : 4+snrl*0.6;
+      ctx.beginPath();
+      ctx.moveTo(fx-2,fy);
+      ctx.bezierCurveTo(fx-1.5,fy+h,fx+1.5,fy+h,fx+2,fy);
+      ctx.fill();
+    });
+    // presas inferiores
+    ctx.fillStyle=WG;
+    [[-28,-9+snrl],[-25,-9+snrl],[-22,-9+snrl]].forEach(([fx,fy])=>{
+      ctx.beginPath(); ctx.moveTo(fx-1.5,fy); ctx.bezierCurveTo(fx-1,fy-4,fx+1,fy-4,fx+1.5,fy); ctx.fill();
+    });
+
+    // ── OLHO AZUL + SOBRANCELHA FRANZIDA ─────────────
+    // sobrancelha (franzida = raiva)
+    ctx.fillStyle=G3;
+    ctx.beginPath(); ctx.moveTo(-20,-28); ctx.bezierCurveTo(-17,-31,-14,-30,-12,-28); ctx.fill();
+    ctx.fillStyle=G2;
+    ctx.beginPath(); ctx.moveTo(-19,-29); ctx.bezierCurveTo(-17,-31,-14,-30,-12,-28.5); ctx.fill();
+    // órbita
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-16,-26,5.5,4.5,-0.1,0,Math.PI*2); ctx.fill();
+    // esclera
+    ctx.fillStyle='#d0e8f8';
+    ctx.beginPath(); ctx.ellipse(-16,-26,4.2,3.5,-0.1,0,Math.PI*2); ctx.fill();
+    // íris
+    ctx.fillStyle='#3090c0';
+    ctx.beginPath(); ctx.ellipse(-16,-26,3,3,-0.1,0,Math.PI*2); ctx.fill();
+    // pupila + glow cyan
+    ctx.fillStyle=CY; ctx.shadowColor=CYL; ctx.shadowBlur=12;
+    ctx.beginPath(); ctx.ellipse(-16,-26,2,2,0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-16,-26,0.9,1.3,0,0,Math.PI*2); ctx.fill();
+    // reflexo
+    ctx.fillStyle='rgba(255,255,255,0.95)';
+    ctx.beginPath(); ctx.ellipse(-17.5,-27.5,1.1,0.9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.ellipse(-14.5,-25,0.7,0.6,0,0,Math.PI*2); ctx.fill();
+
+    // ── RELÂMPAGO CYAN (saindo do olho pros 2 lados) ──
+    ctx.strokeStyle=CY; ctx.shadowColor=CYL; ctx.shadowBlur=8;
+    ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.lineJoin='round';
+    // lado direito (focinho)
+    ctx.beginPath();
+    ctx.moveTo(-11,-26); ctx.lineTo(-6,-25); ctx.lineTo(-3,-27); ctx.stroke();
+    // lado esquerdo
+    ctx.beginPath();
+    ctx.moveTo(-21,-26); ctx.lineTo(-26,-25); ctx.stroke();
     ctx.shadowBlur=0;
 
     ctx.restore();
   }
-
-  ctx.shadowBlur = 0;
   ctx.restore();
 }
 
@@ -3129,8 +3325,15 @@ function updateEnemies(dt){
       }
       e.atkTimer=Math.max(0,e.atkTimer-dt);
       if(e.atkTimer<=0&&dist<e.atkRange+10){
-        e.atkTimer=e.atkSpeed;
-        let dmg=Math.floor(e.atk*(0.8+Math.random()*.4));
+        // ── Fase de raiva do boss final ───────────────────────
+        let atkSpeedMult = 1, dmgMult = 1;
+        if (e.isFinalBoss) {
+          const hpPct = e.hp / (e.maxHp || FINAL_BOSS_DEF.hp);
+          if (hpPct <= 0.25) { atkSpeedMult = 0.35; dmgMult = 2.2; }  // Frenzy
+          else if (hpPct <= 0.5) { atkSpeedMult = 0.55; dmgMult = 1.6; }  // Rage
+        }
+        e.atkTimer=e.atkSpeed * atkSpeedMult;
+        let dmg=Math.floor(e.atk*(0.8+Math.random()*.4) * dmgMult);
         if(preferTank){
           // Atacar o pet golem
           dmg=Math.max(1,dmg-2);
@@ -5960,10 +6163,7 @@ document.addEventListener('keydown', ev => {
     ev.preventDefault();return;
   }
   if(ev.key==='p'||ev.key==='P'){
-    if(npcPanelOpen){closeNpcPanel();return;}
-    const inv=document.getElementById('inv-panel');
-    if(inv.classList.contains('open'))closeInventory();
-    if(merchantNpcState.open){closeMerchant();}else{openMerchant();}
+    // Loja acessível apenas pelo NPC no mapa
     ev.preventDefault();return;
   }
   if(ev.key==='m'||ev.key==='M'){
@@ -10690,8 +10890,12 @@ function closeAlchemistPanel() {
 function applyEnchantment(enchKey, level) {
   const cfg = ALCHEMIST_CONFIG.enchantments[enchKey];
   if (!cfg) return;
-  const cost = ALCHEMIST_CONFIG.upgradeCost[level];
-  if (player.gold < cost) { showCraftMsg('alchemist', '❌ Ouro insuficiente!', 'err'); return; }
+  const isSwitch = player.enchantment?.key && player.enchantment.key !== enchKey;
+  const switchCostByLevel = [0, 500, 1500, 2500];
+  const cost = isSwitch
+    ? (switchCostByLevel[player.enchantment?.level || 0] || 500)
+    : ALCHEMIST_CONFIG.upgradeCost[level];
+  if (player.gold < cost) { showCraftMsg('alchemist', `❌ Ouro insuficiente! (${cost} 🪙)`, 'err'); return; }
   player.gold -= cost;
   if (!player.enchantment) player.enchantment = { key: null, level: 0 };
   // Remove previous enchant if switching type
@@ -10703,10 +10907,10 @@ function applyEnchantment(enchKey, level) {
 
   if (typeof playLevelUpSound === 'function') playLevelUpSound();
   if (typeof updateHUD === 'function') updateHUD();
-  showCraftMsg('alchemist', `✨ ${cfg.label} Nv.${level} aplicado!`, 'ok');
+  const msg = isSwitch ? `🔄 Trocou para ${cfg.label} Nv.1!` : `✨ ${cfg.label} Nv.${level} aplicado!`;
+  showCraftMsg('alchemist', msg, 'ok');
   renderAlchemistPanel();
   _craftParticles(alchemistState.x, alchemistState.y, cfg.color, 35);
-  // Visual glow on weapon icon in HUD
   _enchWeaponGlow(cfg.color);
 }
 
@@ -10739,10 +10943,10 @@ function renderAlchemistPanel() {
   const body = document.getElementById('alchemist-body');
   if (!body || !player) return;
 
-  // Current weapon
-  const eqEntry = player.equippedSlots?.weapon || player.equippedSlots?.['weapon'];
-  let weaponId  = null, weaponUid = null;
-  if (eqEntry) { weaponId = eqEntry.itemId || eqEntry; weaponUid = eqEntry.uid; }
+  // Arma equipada
+  const eqEntry = player.equippedSlots?.weapon;
+  let weaponId = null;
+  if (eqEntry) { weaponId = eqEntry.itemId || eqEntry; }
   else if (player.equippedWeapon) weaponId = player.equippedWeapon;
   const weaponDb = weaponId ? ITEM_DB[weaponId] : null;
 
@@ -10753,102 +10957,109 @@ function renderAlchemistPanel() {
     return;
   }
 
-  const curEnch  = player.enchantment || { key: null, level: 0 };
-  const curCfg   = curEnch.key ? ALCHEMIST_CONFIG.enchantments[curEnch.key] : null;
-  const subclass = player.subclass || '';
-  const selKey   = alchemistState.selectedEnch || curEnch.key || Object.keys(ALCHEMIST_CONFIG.enchantments)[0];
-  const selCfg   = ALCHEMIST_CONFIG.enchantments[selKey];
-  const curSelLvl = (curEnch.key === selKey) ? curEnch.level : 0;
-  const nextLvl   = Math.min(curSelLvl + 1, ALCHEMIST_CONFIG.maxLevel);
-  const cost      = ALCHEMIST_CONFIG.upgradeCost[nextLvl];
-  const canAfford = player.gold >= cost;
-  const isMaxed   = curEnch.key === selKey && curSelLvl >= ALCHEMIST_CONFIG.maxLevel;
-  const isSwitch  = curEnch.key && curEnch.key !== selKey;
+  const curEnch   = player.enchantment || { key: null, level: 0 };
+  const curCfg    = curEnch.key ? ALCHEMIST_CONFIG.enchantments[curEnch.key] : null;
+  const subclass  = player.subclass || '';
+  const enchKeys  = Object.keys(ALCHEMIST_CONFIG.enchantments);
+  const selKey    = alchemistState.selectedEnch || curEnch.key || enchKeys[0];
+  const selCfg    = ALCHEMIST_CONFIG.enchantments[selKey];
+  const hasEnch   = !!curEnch.key;
+  const isSame    = curEnch.key === selKey;
+  const isSwitch  = hasEnch && !isSame;
+  const curLevel  = isSame ? curEnch.level : 0;
+  const isMaxed   = isSame && curLevel >= ALCHEMIST_CONFIG.maxLevel;
 
-  // Current enchant display
+  // ── Custos ────────────────────────────────────────────────
+  // Encantamento inicial: sempre upgradeCost[1]
+  // Upgrade: upgradeCost[nextLvl]
+  // Troca de encantamento: 500/1500/2500 dependendo do nível atual
+  const switchCostByLevel = [0, 500, 1500, 2500];
+  const switchCost   = switchCostByLevel[curEnch.level] || 500;
+  const nextLvl      = Math.min(curLevel + 1, ALCHEMIST_CONFIG.maxLevel);
+  const upgradeCost  = ALCHEMIST_CONFIG.upgradeCost[nextLvl];
+  const gold         = player.gold || 0;
+
+  // ── Arma card ─────────────────────────────────────────────
+  const rarityColor = { common:'#aaa', rare:'#5dade2', epic:'#bb8fce', mythic:'#ffe066' }[weaponDb.rarity] || '#aaa';
+  const enchGlow    = curCfg ? `0 0 14px ${curCfg.color}40` : 'none';
   const enchStatusHtml = curCfg
-    ? `<div style="font-size:11px;font-family:'Crimson Text',serif;color:#40c870;margin-bottom:10px;">
-        Encantamento atual: <strong>${curCfg.icon} ${curCfg.label} Nv.${curEnch.level}</strong>
-      </div>`
-    : `<div style="font-size:11px;font-family:'Crimson Text',serif;color:#206840;margin-bottom:10px;font-style:italic;">Sem encantamento ativo.</div>`;
+    ? `<div style="font-size:11px;color:#40c870;margin-top:4px">✦ ${curCfg.icon} ${curCfg.label} <strong>Nv.${curEnch.level}</strong></div>`
+    : `<div style="font-size:11px;color:#206840;font-style:italic;margin-top:4px">Sem encantamento</div>`;
 
-  // Weapon card
-  const rarityColor = { common:'#aaa', rare:'#5dade2', epic:'#bb8fce' }[weaponDb.rarity] || '#aaa';
-  const enchGlow = curCfg ? `0 0 14px ${curCfg.color}40` : 'none';
-
-  // Enchantment grid — all open to all classes
-  const enchKeys = Object.keys(ALCHEMIST_CONFIG.enchantments);
-  const gridHtml = `<div class="ench-grid">` + enchKeys.map(key => {
-    const cfg = ALCHEMIST_CONFIG.enchantments[key];
-    const isActive   = key === selKey;
-    const hasCurrent = curEnch.key === key;
-    const isMatch    = cfg.matchClass && subclass && cfg.matchClass.includes(subclass);
+  // ── Grid de encantamentos ─────────────────────────────────
+  const gridHtml = `<div style="margin:12px 0 8px;font-size:11px;color:#30a060;font-family:'Cinzel',serif;letter-spacing:.06em">
+    ${hasEnch ? '🔄 Escolha um encantamento para trocar:' : '✨ Escolha um encantamento:'}
+  </div>
+  <div class="ench-grid">` + enchKeys.map(key => {
+    const cfg      = ALCHEMIST_CONFIG.enchantments[key];
+    const isActive = key === selKey;
+    const isCur    = curEnch.key === key;
+    const isMatch  = cfg.matchClass && subclass && cfg.matchClass.includes(subclass);
     return `<button class="ench-btn ${isActive?'active':''} ${isMatch?'ench-match':''}"
       onclick="alchemistState.selectedEnch='${key}';renderAlchemistPanel()"
-      title="${cfg.desc}${hasCurrent ? ' [Nv.'+curEnch.level+']':''}${isMatch?' ★ Bônus de Classe':''}"
-      style="${isActive ? `border-color:${cfg.color};box-shadow:0 0 8px ${cfg.color}60;` : ''}"
-    >${cfg.icon}<br><span style="font-size:10px">${cfg.label}${hasCurrent?` ✦`:''}${isMatch?' ★':''}</span></button>`;
+      title="${cfg.desc}${isMatch?' ★ Bônus de Classe':''}"
+      style="${isActive ? `border-color:${cfg.color};box-shadow:0 0 8px ${cfg.color}60;` : ''}
+             ${isCur ? `background:rgba(${cfg.color.slice(1).match(/../g).map(h=>parseInt(h,16)).join(',')},0.15);` : ''}"
+    >${cfg.icon}<br><span style="font-size:9px">${cfg.label}${isCur?' ✦':''}${isMatch?' ★':''}</span>
+    </button>`;
   }).join('') + `</div>`;
 
-  // Upgrade section
-  const selIsMatch = selCfg.matchClass && subclass && selCfg.matchClass.includes(subclass);
-  const selValues = selCfg.values;
-  const curVal = selValues[curSelLvl];
-  const nextVal = selValues[nextLvl];
-  const pct = v => v ? `${Math.round((v-1)*100)}%` : '0%';
+  // ── Painel de ação ────────────────────────────────────────
+  let actionHtml = '';
 
-  // Calculate what apply() would actually produce for display
-  function calcApplied(lvl) {
-    const stat = selCfg.stat;
-    if (stat === 'dmgReduce')   return selIsMatch ? lvl*0.18 : lvl*0.12;
-    if (stat === 'holyRegen')   return selIsMatch ? [0,14,25,40][lvl] : [0,8,15,25][lvl];
-    if (stat === 'atkSpeedMult')return selIsMatch ? 1+(lvl*0.30) : 1+(lvl*0.15);
-    if (stat === 'windMult')    return selIsMatch ? 1+(lvl*0.47) : 1+(lvl*0.25);
-    if (stat === 'arcaneMult')  return selIsMatch ? 1+(lvl*0.47) : 1+(lvl*0.25);
-    if (stat === 'staffMult')   return selIsMatch ? 1+(lvl*0.47) : 1+(lvl*0.25);
-    if (stat === 'swordMult')   return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
-    if (stat === 'bowMult')     return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
-    if (stat === 'poisonMult')  return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
-    if (stat === 'fireMult')    return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
-    if (stat === 'iceMult')     return selIsMatch ? 1+(lvl*0.50) : 1+(lvl*0.30);
-    return nextVal;
+  if (!hasEnch) {
+    // Sem encantamento: botão de encantar pela primeira vez
+    const canAfford = gold >= upgradeCost;
+    actionHtml = `<div class="craft-upgrade-box">
+      <div class="craft-upgrade-title" style="color:${selCfg.color}">${selCfg.icon} ${selCfg.label} · Nível 1</div>
+      <div style="font-size:11px;color:#50a870;margin:6px 0">${selCfg.desc}</div>
+      <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="applyEnchantment('${selKey}',1)"
+        style="${canAfford?`box-shadow:0 0 14px ${selCfg.color}60`:''}">
+        ✨ Encantar Arma
+        <span class="craft-btn-cost">${canAfford ? '🪙 '+upgradeCost : '❌ Precisa de '+upgradeCost+' 🪙'}</span>
+      </button>
+    </div>`;
+
+  } else if (isSame && !isMaxed) {
+    // Mesmo encantamento: upgrade de nível
+    const canAfford = gold >= upgradeCost;
+    const selIsMatch = selCfg.matchClass && subclass && selCfg.matchClass.includes(subclass);
+    actionHtml = `<div class="craft-upgrade-box">
+      <div class="craft-upgrade-title" style="color:${selCfg.color}">${selCfg.icon} ${selCfg.label} · Nível ${nextLvl}</div>
+      <div style="font-size:11px;color:#50a870;margin:6px 0">
+        Nv.${curLevel} → <strong style="color:${selCfg.color}">Nv.${nextLvl}</strong>
+        ${selIsMatch ? '<br><span style="color:#ffe066;font-size:10px">★ Bônus de Classe ativo!</span>' : ''}
+      </div>
+      <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="applyEnchantment('${selKey}',${nextLvl})"
+        style="${canAfford?`box-shadow:0 0 14px ${selCfg.color}60`:''}">
+        ⬆ Melhorar Encantamento
+        <span class="craft-btn-cost">${canAfford ? '🪙 '+upgradeCost : '❌ Precisa de '+upgradeCost+' 🪙'}</span>
+      </button>
+    </div>`;
+
+  } else if (isSame && isMaxed) {
+    actionHtml = `<div class="craft-maxed">✨ Encantamento no Nível Máximo
+      <div class="craft-maxed-sub">Selecione outro encantamento para trocar.</div>
+    </div>`;
+
+  } else if (isSwitch) {
+    // Troca de encantamento — custo baseado no nível atual
+    const canAfford = gold >= switchCost;
+    actionHtml = `<div class="craft-upgrade-box" style="border-color:#c0392b40">
+      <div class="craft-upgrade-title" style="color:${selCfg.color}">${selCfg.icon} ${selCfg.label}</div>
+      <div style="font-size:11px;color:#e07060;margin:6px 0">
+        ⚠ Isso removerá <strong>${curCfg.icon} ${curCfg.label} Nv.${curEnch.level}</strong><br>
+        O encantamento novo começará no Nível 1.
+        <br><span style="font-size:10px;color:#806060">Custo de troca aumenta com o nível atual.</span>
+      </div>
+      <button class="craft-btn ${canAfford?'':'cant-afford'}"
+        onclick="if(confirm('Trocar ${curCfg.label} por ${selCfg.label}? Custo: ${switchCost} 🪙'))applyEnchantment('${selKey}',1)"
+        style="${canAfford?'box-shadow:0 0 14px #c0392b60':''}">
+        🔄 Trocar Encantamento
+        <span class="craft-btn-cost">${canAfford ? '🪙 '+switchCost : '❌ Precisa de '+switchCost+' 🪙'}</span>
+      </button>
+    </div>`;
   }
-
-  const curApplied  = calcApplied(curSelLvl);
-  const nextApplied = calcApplied(nextLvl);
-
-  let previewText = '';
-  const stat = selCfg.stat;
-  if (stat === 'dmgReduce') {
-    previewText = `Redução atual: <span class="craft-preview-val">${Math.round((curApplied||0)*100)}%</span> → Nv.${nextLvl}: <span class="craft-preview-new">${Math.round(nextApplied*100)}%</span>`;
-  } else if (stat === 'holyRegen') {
-    previewText = `Cura atual: <span class="craft-preview-val">${curApplied||0} HP/s</span> → Nv.${nextLvl}: <span class="craft-preview-new">${nextApplied} HP/s</span>`;
-  } else if (stat === 'atkSpeedMult') {
-    previewText = `Vel. atual: <span class="craft-preview-val">+${pct(curApplied||1)}</span> → Nv.${nextLvl}: <span class="craft-preview-new">+${pct(nextApplied)}</span>`;
-  } else if (stat === 'windMult') {
-    const spdNext = selIsMatch ? 1+(nextLvl*0.20) : 1+(nextLvl*0.10);
-    previewText = `Dano vento: <span class="craft-preview-val">+${pct(curApplied||1)}</span> → <span class="craft-preview-new">+${pct(nextApplied)}</span><br>Vel. ataque: <span class="craft-preview-new">+${pct(spdNext)}</span>`;
-  } else {
-    previewText = `Bônus atual: <span class="craft-preview-val">+${pct(curApplied||1)}</span> → Nv.${nextLvl}: <span class="craft-preview-new">+${pct(nextApplied)}</span>`;
-  }
-
-  if (selIsMatch) previewText += `<br><span style="color:#ffe066;font-size:10px">★ Bônus de Classe ativo — dano extra para sua subclasse!</span>`;
-  if (isSwitch)   previewText += `<br><span style="color:#e74c3c;font-size:10px">⚠ Substituirá ${curCfg?.icon} ${curCfg?.label}</span>`;
-
-  const upgradeHtml = isMaxed
-    ? `<div class="craft-maxed">✨ Encantamento no Nível Máximo<div class="craft-maxed-sub">Esta runa atingiu sua plena potência.</div></div>`
-    : `<div class="craft-upgrade-box">
-        <div class="craft-upgrade-title" style="color:${selCfg.color}">${selCfg.icon} ${selCfg.label} · Nível ${nextLvl}</div>
-        <div class="craft-preview">
-          <span class="craft-preview-icon" style="text-shadow:0 0 8px ${selCfg.glowColor||selCfg.color}">${selCfg.icon}</span>
-          <span class="craft-preview-arrow">→</span>
-          <div class="craft-preview-text">${previewText}</div>
-        </div>
-        <button class="craft-btn ${canAfford?'':'cant-afford'}" onclick="applyEnchantment('${selKey}',${nextLvl})" style="${canAfford?`box-shadow:0 0 14px ${selCfg.color}60`:''}">
-          ✨ Encantar Arma
-          <span class="craft-btn-cost">${canAfford ? '🪙 '+cost+' ouro' : '❌ Precisa de '+cost+' 🪙'}</span>
-        </button>
-      </div>`;
 
   body.innerHTML = `
     <div class="craft-item-card">
@@ -10863,7 +11074,7 @@ function renderAlchemistPanel() {
       </div>
     </div>
     ${gridHtml}
-    ${upgradeHtml}
+    ${actionHtml}
     <div id="alchemist-msg" class="craft-msg"></div>`;
 }
 
@@ -11450,7 +11661,10 @@ Object.assign(ITEM_DB, {
 // ── SET BONUS DEFINITION ──────────────────────────────────
 const MYTHIC_SET_IDS = [
   'void_blade','void_bow','void_staff',
-  'void_plate','void_mantle','void_amulet',
+  'void_plate','void_mantle','void_helm',
+  'void_shield','void_focus','void_quiver',
+  'void_ring','void_gloves','void_legs',
+  'void_boots','void_amulet',
 ];
 
 const VOID_SET_BONUS = {
@@ -11815,6 +12029,7 @@ const endgameState = {
   finalBossDefeated: false,
   setToastShown: false,
   lastSetPieces: 0,
+  guardianKilledAtLevel30: false,  // guardião morto com player nv 30+
 };
 
 // Agenda a próxima verificação num intervalo aleatório
@@ -11905,23 +12120,55 @@ const GUARDIAN_FRAG_POOL = [];
 const DRAGON_FRAG_POOL   = [];
 
 // ── Final Boss — The Eternal Abyss ────────────────────────
+// Stats muito mais difíceis
 const FINAL_BOSS_DEF = {
   id:'abyssal_void', name:'☯ ABISMO ETERNO ☯',
-  color:'#0a0014', hp:12000, atk:150, def:80, spd:65,
-  xp:5000, atkRange:65, atkSpeed:1200, goldRange:[500,1000],
-  size:52, isBoss:true, isCentralBoss:false, isFinalBoss:true,
-  drops:[{id:'shard_drop',chance:1},{id:'art_atk',chance:1},{id:'art_hp',chance:1}],
-  minLevel:15,
+  color:'#0a0014', hp:80000, atk:420, def:180, spd:85,
+  xp:50000, atkRange:80, atkSpeed:600, goldRange:[2000,5000],
+  size:58, isBoss:true, isCentralBoss:false, isFinalBoss:true,
+  drops:[{id:'shard_drop',chance:1},{id:'art_atk',chance:1},{id:'art_hp',chance:1},{id:'art_auto',chance:1}],
+  minLevel:30,
 };
 
 function checkFinalBossUnlock() {
   if (endgameState.finalBossUnlocked || endgameState.finalBossDefeated) return;
-  const pieces = countEquippedSetPieces();
-  if (pieces < MYTHIC_SET_IDS.length) return;
+
+  // ── Condição 1: Guardião Eterno morto com jogador nível 30+ ──
+  if (!endgameState.guardianKilledAtLevel30) {
+    return; // não libera ainda
+  }
+
+  // ── Condição 2: Todos os 14 itens do Vazio no inventário ou equipados ──
+  const allVoidItems = [
+    'void_blade','void_bow','void_staff',
+    'void_plate','void_mantle','void_helm',
+    'void_shield','void_focus','void_quiver',
+    'void_ring','void_gloves','void_legs',
+    'void_boots','void_amulet',
+  ];
+
+  const equippedIds = Object.values(player?.equippedSlots || {}).map(e => e?.itemId || e).filter(Boolean);
+  const inventoryIds = (player?.inventory || []).filter(Boolean).map(s => s.id);
+  const ownedIds = new Set([...equippedIds, ...inventoryIds]);
+
+  const missingItems = allVoidItems.filter(id => !ownedIds.has(id));
+  if (missingItems.length > 0) {
+    // Mostra o que ainda falta
+    const missing = missingItems.map(id => ITEM_DB[id]?.name || id).join(', ');
+    addLog(`☯ Itens do Vazio em falta para invocar o Abismo: ${missing}`, 'lboss');
+    return;
+  }
+
+  // ── Condição 3: Nível 30+ ──────────────────────────────────
+  if ((player?.level || 0) < 30) {
+    addLog(`☯ O Abismo exige Nível 30! (Nv.${player?.level||0}/30)`, 'lboss');
+    return;
+  }
+
+  // Todas as condições satisfeitas!
   endgameState.finalBossUnlocked = true;
-  // Spawn the final boss at a dramatic location (north of map center)
   const fx = (MAP_W / 2) * T + T / 2;
-  const fy = (MAP_H / 2 - 10) * T + T / 2;
+  const fy = (MAP_H / 2 - 12) * T + T / 2;
   const boss = {
     ...FINAL_BOSS_DEF,
     uid: 'final_boss_' + Date.now(),
@@ -11931,14 +12178,17 @@ function checkFinalBossUnlock() {
     isAlive:true, hitFlash:0, deathTimer:0,
     roamTimer:0, roamDX:0, roamDY:0,
     guardingChest:null, poisonTimer:0, poisonStacks:0, frozenTimer:0,
-    aggroRange:280,
+    aggroRange:400,
     drawFn: drawAbyssalBoss,
+    // Fases de rage
+    phase: 1,       // 1=normal, 2=rage(50%), 3=frenzy(25%)
+    enrageTimer: 0,
   };
   enemies.push(boss);
-  addLog('☯ O ABISMO ETERNO foi invocado! O fim está próximo!', 'lboss');
-  addLog('⚠ Enfrente-o ao norte do centro do mapa!', 'lboss');
-  showSetBonusToast('☯ ABISMO ETERNO INVOCADO!\nDerrote-o para zerar o jogo!', '#ffe066');
-  if (typeof playRareItemSound === 'function') { playRareItemSound(); setTimeout(playRareItemSound, 600); }
+  addLog('☯ O ABISMO ETERNO foi invocado! O fim do mundo começou!', 'lboss');
+  addLog('💀 80.000 HP · 420 ATK · 180 DEF — Prepare-se!', 'lboss');
+  showSetBonusToast('☯ ABISMO ETERNO INVOCADO!\n⚠ Criatura de HP: 80.000\n💀 O fim está próximo!', '#ff4040');
+  if (typeof playRareItemSound === 'function') { playRareItemSound(); setTimeout(playRareItemSound, 400); setTimeout(playRareItemSound, 800); }
 }
 
 function drawAbyssalBoss(ctx, e) {
@@ -11946,49 +12196,134 @@ function drawAbyssalBoss(ctx, e) {
   const now = Date.now();
   const pulse = Math.sin(now/300)*0.15+0.85;
   const t = e.size;
+  const hpPct = e.hp / (e.maxHp || FINAL_BOSS_DEF.hp);
 
-  // Massive void aura
-  for (let ring=3; ring>=0; ring--) {
-    const aura = ctx.createRadialGradient(e.x, e.y, t, e.x, e.y, t*(2+ring*0.7));
-    aura.addColorStop(0, `rgba(60,0,120,${(0.15+pulse*0.1)*(1-ring*0.18)})`);
+  // Fase baseada no HP
+  const phase = hpPct > 0.5 ? 1 : hpPct > 0.25 ? 2 : 3;
+  const phaseColor = phase===1 ? [60,0,120] : phase===2 ? [140,0,60] : [200,40,0];
+  const [pr,pg,pb] = phaseColor;
+  const pulseSpeed = phase===1 ? 300 : phase===2 ? 180 : 100;
+  const fastPulse = Math.sin(now/pulseSpeed)*0.2+0.8;
+
+  // ── AURA EXTERNA (aumenta com cada fase) ──────────────
+  const rings = phase + 2;
+  for (let ring=rings; ring>=0; ring--) {
+    const aura = ctx.createRadialGradient(e.x, e.y, t*0.5, e.x, e.y, t*(2.5+ring*0.8));
+    aura.addColorStop(0, `rgba(${pr},${pg},${pb},${(0.2+fastPulse*0.15)*(1-ring*0.12)})`);
     aura.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle=aura; ctx.beginPath(); ctx.arc(e.x,e.y,t*(2+ring*0.7),0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=aura;
+    ctx.beginPath(); ctx.arc(e.x,e.y,t*(2.5+ring*0.8),0,Math.PI*2); ctx.fill();
   }
-  // Rotating void rings
-  for (let r=0;r<3;r++) {
-    const ang = now/1200*(r%2===0?1:-1) + r*Math.PI/3;
-    ctx.strokeStyle=`rgba(${100+r*30},0,${180+r*25},${0.4+pulse*0.2})`;
-    ctx.lineWidth=2+r;
-    ctx.beginPath(); ctx.ellipse(e.x,e.y,t*(1.2+r*0.3),t*(0.8+r*0.2),ang,0,Math.PI*2); ctx.stroke();
-  }
-  // Core body
-  const bodyGrad = ctx.createRadialGradient(e.x,e.y,t*0.3,e.x,e.y,t);
-  bodyGrad.addColorStop(0, e.hitFlash>0?'#ffffff':'#2a0060');
-  bodyGrad.addColorStop(0.6, e.hitFlash>0?'#cccccc':'#0a0014');
-  bodyGrad.addColorStop(1, '#000000');
-  ctx.fillStyle=bodyGrad;
-  ctx.beginPath(); ctx.arc(e.x,e.y,t,0,Math.PI*2); ctx.fill();
-  // Eyes — two void eyes
-  const eyeGlow = 0.7+pulse*0.3;
-  ctx.fillStyle=`rgba(255,200,40,${eyeGlow})`;
-  ctx.beginPath(); ctx.arc(e.x-t*.35, e.y-t*.2, t*.18, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(e.x+t*.35, e.y-t*.2, t*.18, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle='#000';
-  ctx.beginPath(); ctx.arc(e.x-t*.35, e.y-t*.2, t*.08, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(e.x+t*.35, e.y-t*.2, t*.08, 0, Math.PI*2); ctx.fill();
-  // Void tendrils
-  for (let i=0;i<8;i++) {
-    const ta=now/800+i*Math.PI/4, len=t*(1.2+Math.sin(now/500+i)*.4);
-    ctx.strokeStyle=`rgba(120,0,200,${0.3+pulse*0.2})`;
-    ctx.lineWidth=3;
+
+  // ── ANÉIS ORBITAIS (velocidade aumenta por fase) ──────
+  const ringSpeed = [1200, 700, 400][phase-1];
+  for (let r=0;r<4;r++) {
+    const ang = now/ringSpeed*(r%2===0?1:-1) + r*Math.PI/4;
+    const alpha = 0.4+fastPulse*0.3;
+    ctx.strokeStyle = phase===3
+      ? `rgba(255,${60+r*20},0,${alpha})`
+      : `rgba(${pr+r*20},${pg},${pb+r*20},${alpha})`;
+    ctx.lineWidth = 2+r*0.7;
     ctx.beginPath();
-    ctx.moveTo(e.x+Math.cos(ta)*t*.6, e.y+Math.sin(ta)*t*.6);
+    ctx.ellipse(e.x,e.y, t*(1.1+r*0.35), t*(0.7+r*0.2), ang, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  // ── TENTÁCULOS (mais e mais rápidos por fase) ──────────
+  const tentCount = 6 + phase * 2;
+  const tentSpeed = [800, 500, 300][phase-1];
+  for (let i=0; i<tentCount; i++) {
+    const ta = now/tentSpeed + i*(Math.PI*2/tentCount);
+    const len = t*(1.3 + Math.sin(now/400+i)*.5 + (phase-1)*0.3);
+    const alpha = 0.35+fastPulse*0.2;
+    ctx.strokeStyle = phase===3
+      ? `rgba(255,${80+i*10},0,${alpha})`
+      : `rgba(${pr+i*8},${pg},${pb+i*10},${alpha})`;
+    ctx.lineWidth = 3+(phase-1);
+    ctx.beginPath();
+    ctx.moveTo(e.x+Math.cos(ta)*t*.7, e.y+Math.sin(ta)*t*.7);
     ctx.quadraticCurveTo(
-      e.x+Math.cos(ta+0.4)*len*0.7, e.y+Math.sin(ta+0.4)*len*0.7,
-      e.x+Math.cos(ta+0.8)*len, e.y+Math.sin(ta+0.8)*len
+      e.x+Math.cos(ta+0.5)*len*.75, e.y+Math.sin(ta+0.5)*len*.75,
+      e.x+Math.cos(ta+1.0)*len,     e.y+Math.sin(ta+1.0)*len
     );
     ctx.stroke();
   }
+
+  // ── CORPO PRINCIPAL ───────────────────────────────────
+  const bodyGrad = ctx.createRadialGradient(e.x,e.y,t*0.2,e.x,e.y,t*1.1);
+  if (e.hitFlash>0) {
+    bodyGrad.addColorStop(0, '#ffffff');
+    bodyGrad.addColorStop(0.5, '#cccccc');
+    bodyGrad.addColorStop(1, '#888888');
+  } else if (phase===3) {
+    bodyGrad.addColorStop(0, '#600000');
+    bodyGrad.addColorStop(0.4, '#300000');
+    bodyGrad.addColorStop(1, '#000000');
+  } else if (phase===2) {
+    bodyGrad.addColorStop(0, '#3a0040');
+    bodyGrad.addColorStop(0.4, '#1a0020');
+    bodyGrad.addColorStop(1, '#000000');
+  } else {
+    bodyGrad.addColorStop(0, '#2a0060');
+    bodyGrad.addColorStop(0.5, '#0a0020');
+    bodyGrad.addColorStop(1, '#000000');
+  }
+  ctx.fillStyle=bodyGrad;
+  ctx.beginPath(); ctx.arc(e.x,e.y,t,0,Math.PI*2); ctx.fill();
+
+  // ── CRÂNIO (face no corpo) ────────────────────────────
+  // testa
+  ctx.fillStyle = `rgba(${pr},${pg},${pb},0.5)`;
+  ctx.beginPath(); ctx.arc(e.x, e.y-t*0.12, t*0.65, Math.PI, Math.PI*2); ctx.fill();
+
+  // olhos — cor muda por fase
+  const eyeColor = phase===3 ? '#ff2000' : phase===2 ? '#ff6000' : '#ffc828';
+  const eyeGlow  = 0.7+fastPulse*0.3;
+  ctx.fillStyle=eyeColor;
+  ctx.shadowColor=eyeColor; ctx.shadowBlur=20*fastPulse;
+  ctx.beginPath(); ctx.ellipse(e.x-t*.3, e.y-t*.18, t*.15, t*.2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(e.x+t*.3, e.y-t*.18, t*.15, t*.2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(e.x-t*.3, e.y-t*.18, t*.06, t*.09, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(e.x+t*.3, e.y-t*.18, t*.06, t*.09, 0, 0, Math.PI*2); ctx.fill();
+
+  // boca (sorriso maligno com dentes)
+  ctx.strokeStyle=`rgba(${pr+60},${pg},${pb+40},0.8)`;
+  ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(e.x-t*.35, e.y+t*.1);
+  ctx.bezierCurveTo(e.x-t*.1, e.y+t*.3, e.x+t*.1, e.y+t*.3, e.x+t*.35, e.y+t*.1);
+  ctx.stroke();
+  // dentes
+  ctx.fillStyle = `rgba(255,200,200,0.7)`;
+  for(let i=0;i<5;i++){
+    const tx2 = e.x - t*0.3 + i*t*0.15;
+    ctx.beginPath(); ctx.moveTo(tx2, e.y+t*0.14); ctx.lineTo(tx2+t*0.05, e.y+t*0.24); ctx.lineTo(tx2+t*0.10, e.y+t*0.14); ctx.fill();
+  }
+
+  // ── INDICADOR DE FASE ─────────────────────────────────
+  if (phase > 1) {
+    const phaseLabel = phase===2 ? '💢 RAGE' : '🔥 FRENZY';
+    const phaseClr   = phase===2 ? '#ff6000' : '#ff2000';
+    ctx.font = `bold ${Math.round(t*0.28)}px Cinzel,serif`;
+    ctx.textAlign='center';
+    ctx.fillStyle=phaseClr;
+    ctx.shadowColor=phaseClr; ctx.shadowBlur=12;
+    ctx.fillText(phaseLabel, e.x, e.y - t*1.6);
+    ctx.shadowBlur=0;
+  }
+
+  // ── HP BAR (vermelho intenso) ─────────────────────────
+  const barW = t*3.5, barH=10, bx=e.x-barW/2, by=e.y-t*2.2;
+  ctx.fillStyle='#200010'; ctx.fillRect(bx-1,by-1,barW+2,barH+2);
+  const barColor = phase===3?'#ff2000':phase===2?'#ff6000':'#cc00ff';
+  ctx.fillStyle=barColor;
+  ctx.fillRect(bx,by,barW*Math.max(0,hpPct),barH);
+  ctx.strokeStyle='#400020'; ctx.lineWidth=1; ctx.strokeRect(bx,by,barW,barH);
+  ctx.font=`bold ${Math.round(t*0.22)}px Cinzel,serif`;
+  ctx.textAlign='center'; ctx.fillStyle='#fff';
+  ctx.fillText(`☯ ABISMO ETERNO  ${Math.ceil(e.hp).toLocaleString()} HP`, e.x, by-6);
 }
 
 // ── Set bonus toast & checks ──────────────────────────────
@@ -12068,6 +12403,13 @@ if (_egOrigKillEnemy) {
       const total = 3 + Math.floor(wl * 0.6) + Math.floor(Math.random() * 3);
       addShards(total);
       addLog(`💀 Guardião Eterno derrotado! +${total} ♦️ Rubies!`, 'lboss');
+      // Marca se o jogador estava no nível 30+
+      if ((player?.level || 0) >= 30) {
+        endgameState.guardianKilledAtLevel30 = true;
+        addLog('☯ O Guardião foi vencido em seu poder máximo! O Abismo aguarda...', 'lboss');
+      } else {
+        addLog(`⚠ Para invocar o Abismo Eterno, chegue ao Nível 30 antes de matar o Guardião! (Nv.${player?.level||0}/30)`, 'lboss');
+      }
     }
     // ── Dragão Lendário → Rubies direto ──────────────────────
     if (e.isDragonEvent) {
