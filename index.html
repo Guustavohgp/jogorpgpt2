@@ -1864,63 +1864,470 @@ function renderPet() {
   if (!pet || !pet.isAlive) return;
   ctx.save();
   if (pet.hitFlash > 0) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; }
-  const t = pet.size, bob = Math.sin(pet.bobTimer) * 2;
-  const x = pet.x, y = pet.y + bob;
 
+  const now = Date.now();
+  const bob  = Math.sin(pet.bobTimer) * 2;
+  const t    = pet.size;
+  const x    = pet.x, y = pet.y + bob;
+
+  // ─────────────────────────────────────────────────────
+  // FADA CURADORA — asas teal, armadura esmeralda, brilho verde
+  // ─────────────────────────────────────────────────────
   if (pet.petType === 'healer') {
-    // Fairy / spirit: glowing orb with sparkles
-    const aura = ctx.createRadialGradient(x, y, 0, x, y, t * 3);
-    aura.addColorStop(0, 'rgba(80,232,144,.4)'); aura.addColorStop(1, 'rgba(80,232,144,0)');
-    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(x, y, t * 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#50e890';
-    ctx.beginPath(); ctx.arc(x, y, t * 0.9, 0, Math.PI * 2); ctx.fill();
-    // Wings
-    ctx.fillStyle = 'rgba(180,255,200,.5)';
-    ctx.beginPath(); ctx.ellipse(x - t * 1.1, y - t * 0.3, t * 0.9, t * 0.45, -0.4, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(x + t * 1.1, y - t * 0.3, t * 0.9, t * 0.45,  0.4, 0, Math.PI * 2); ctx.fill();
-    // Core glow
-    ctx.fillStyle = '#b0ffcc'; ctx.beginPath(); ctx.arc(x, y, t * 0.4, 0, Math.PI * 2); ctx.fill();
-    // Cross heal symbol
-    const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
-    ctx.fillStyle = `rgba(255,255,255,${pulse})`;
-    ctx.fillRect(x - t * 0.05, y - t * 0.4, t * 0.1, t * 0.8);
-    ctx.fillRect(x - t * 0.4, y - t * 0.05, t * 0.8, t * 0.1);
+    const pulse  = 0.6 + Math.sin(now / 350) * 0.4;
+    const wFlap  = Math.sin(now / 250) * 0.18;
+    const s = t / 9;
 
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+
+    // aura verde externa
+    const aura = ctx.createRadialGradient(0,0,2, 0,0,32);
+    aura.addColorStop(0, `rgba(60,220,160,${0.25*pulse})`);
+    aura.addColorStop(1, 'rgba(40,200,130,0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath(); ctx.arc(0,0, 32,0,Math.PI*2); ctx.fill();
+
+    // sparkles ao redor
+    for (let i=0;i<6;i++) {
+      const a = now/800 + i*Math.PI/3;
+      const r = 22+Math.sin(now/400+i)*5;
+      const alpha = 0.4+Math.sin(now/300+i)*0.3;
+      ctx.fillStyle = `rgba(100,255,200,${alpha})`;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*r, Math.sin(a)*r*0.6-4, 1.8, 0, Math.PI*2); ctx.fill();
+      // diamond sparkle
+      if (i%2===0) {
+        const sx=Math.cos(a+0.3)*r*1.3, sy=Math.sin(a+0.3)*r*0.5-8;
+        ctx.fillStyle=`rgba(180,255,230,${alpha*0.7})`;
+        ctx.save(); ctx.translate(sx,sy); ctx.rotate(Math.PI/4);
+        ctx.fillRect(-2,-2,4,4); ctx.restore();
+      }
+    }
+
+    // ── ASAS (2 pares, teal/verde, nervuras) ──────────
+    const wingAlpha = 0.75 + Math.sin(now/200)*0.1;
+    ctx.save();
+    // asa superior esq
+    ctx.save(); ctx.rotate(-wFlap-0.15);
+    ctx.globalAlpha = wingAlpha;
+    // outline
+    ctx.fillStyle = '#0a2a20';
+    ctx.beginPath(); ctx.moveTo(-2,-8); ctx.bezierCurveTo(-12,-20,-26,-18,-24,-6);
+    ctx.bezierCurveTo(-22,2,-10,2,-2,-2); ctx.fill();
+    // asa
+    const wg1 = ctx.createLinearGradient(-24,-18, -2,-2);
+    wg1.addColorStop(0,'#80e8c0'); wg1.addColorStop(0.5,'#40c8a0'); wg1.addColorStop(1,'#a0f0d0');
+    ctx.fillStyle = wg1;
+    ctx.beginPath(); ctx.moveTo(-2,-7); ctx.bezierCurveTo(-10,-18,-23,-16,-21,-6);
+    ctx.bezierCurveTo(-19,1,-9,1,-2,-3); ctx.fill();
+    // nervuras
+    ctx.strokeStyle='rgba(20,100,80,0.5)'; ctx.lineWidth=0.8;
+    [[-8,-14],[-14,-12],[-18,-9]].forEach(([nx,ny])=>{
+      ctx.beginPath(); ctx.moveTo(-2,-5); ctx.lineTo(nx,ny); ctx.stroke();
+    });
+    ctx.restore();
+
+    // asa superior dir
+    ctx.save(); ctx.scale(-1,1); ctx.rotate(-wFlap-0.15);
+    ctx.globalAlpha = wingAlpha;
+    ctx.fillStyle = '#0a2a20';
+    ctx.beginPath(); ctx.moveTo(-2,-8); ctx.bezierCurveTo(-12,-20,-26,-18,-24,-6);
+    ctx.bezierCurveTo(-22,2,-10,2,-2,-2); ctx.fill();
+    const wg2 = ctx.createLinearGradient(-24,-18,-2,-2);
+    wg2.addColorStop(0,'#60d8b0'); wg2.addColorStop(0.5,'#80f0c0'); wg2.addColorStop(1,'#b0ffe0');
+    ctx.fillStyle = wg2;
+    ctx.beginPath(); ctx.moveTo(-2,-7); ctx.bezierCurveTo(-10,-18,-23,-16,-21,-6);
+    ctx.bezierCurveTo(-19,1,-9,1,-2,-3); ctx.fill();
+    ctx.restore();
+
+    // asa inferior esq
+    ctx.save(); ctx.rotate(wFlap+0.1);
+    ctx.globalAlpha = wingAlpha*0.85;
+    const wg3 = ctx.createLinearGradient(-18,4,-2,14);
+    wg3.addColorStop(0,'#40b890'); wg3.addColorStop(1,'#80e8c0');
+    ctx.fillStyle = wg3;
+    ctx.beginPath(); ctx.moveTo(-2,2); ctx.bezierCurveTo(-8,6,-18,10,-14,16);
+    ctx.bezierCurveTo(-10,20,-4,14,-2,8); ctx.fill();
+    ctx.restore();
+    // asa inferior dir
+    ctx.save(); ctx.scale(-1,1); ctx.rotate(wFlap+0.1);
+    ctx.globalAlpha = wingAlpha*0.85;
+    ctx.fillStyle = wg3;
+    ctx.beginPath(); ctx.moveTo(-2,2); ctx.bezierCurveTo(-8,6,-18,10,-14,16);
+    ctx.bezierCurveTo(-10,20,-4,14,-2,8); ctx.fill();
+    ctx.restore();
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // ── CORPO (armadura esmeralda) ────────────────────
+    // torso / armadura
+    ctx.fillStyle = '#0a1e18';
+    ctx.beginPath(); ctx.ellipse(0,-2, 7,9, 0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#2a9070';
+    ctx.beginPath(); ctx.ellipse(0,-2, 6,8, 0,0,Math.PI*2); ctx.fill();
+    // joias da armadura
+    ctx.fillStyle = '#60f0b8';
+    ctx.beginPath(); ctx.ellipse(0,-4, 2.5,2, 0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-3,0, 1.5,1.5, 0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 3,0, 1.5,1.5, 0,0,Math.PI*2); ctx.fill();
+    // saia / escamas inferiores
+    ctx.fillStyle = '#1a6050';
+    for (let i=-3;i<=3;i++) {
+      ctx.beginPath(); ctx.ellipse(i*2.2, 6+Math.abs(i)*0.5, 2.2,2.5, 0,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle = '#30a080';
+    for (let i=-3;i<=3;i++) {
+      ctx.beginPath(); ctx.ellipse(i*2.2, 5.5+Math.abs(i)*0.5, 1.6,1.8, 0,0,Math.PI*2); ctx.fill();
+    }
+    // botas
+    ctx.fillStyle = '#1a7060';
+    ctx.beginPath(); ctx.roundRect(-4,10, 3.5,6, [1,1,2,2]); ctx.fill();
+    ctx.beginPath(); ctx.roundRect( 0.5,10, 3.5,6, [1,1,2,2]); ctx.fill();
+    ctx.fillStyle = '#30a890';
+    ctx.beginPath(); ctx.roundRect(-3.5,10, 2.5,5, [1]); ctx.fill();
+    ctx.beginPath(); ctx.roundRect( 1,10, 2.5,5, [1]); ctx.fill();
+    // braços
+    ctx.fillStyle = '#c09070';  // pele
+    ctx.beginPath(); ctx.ellipse(-7,2, 2.5,4, 0.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 7,2, 2.5,4,-0.2,0,Math.PI*2); ctx.fill();
+
+    // ── CABEÇA ────────────────────────────────────────
+    ctx.fillStyle = '#0a1e18';
+    ctx.beginPath(); ctx.ellipse(0,-12, 7,6.5, 0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#c09070';  // rosto
+    ctx.beginPath(); ctx.ellipse(0,-12, 5.5,5.5, 0,0,Math.PI*2); ctx.fill();
+    // elmo
+    ctx.fillStyle = '#1a7060';
+    ctx.beginPath(); ctx.arc(0,-12, 5.8, Math.PI,0); ctx.fill();
+    ctx.fillStyle = '#2a9878';
+    ctx.beginPath(); ctx.arc(0,-12, 4.5, Math.PI,0); ctx.fill();
+    // antenas
+    ctx.strokeStyle='#1a8060'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-2,-17); ctx.lineTo(-3,-22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo( 2,-17); ctx.lineTo( 3,-22); ctx.stroke();
+    ctx.fillStyle='#40e0a0';
+    ctx.beginPath(); ctx.arc(-3,-22,1.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc( 3,-22,1.5,0,Math.PI*2); ctx.fill();
+    // gema da testa
+    ctx.fillStyle='#80f0d0';
+    ctx.shadowColor='#40ffc0'; ctx.shadowBlur=6*pulse;
+    ctx.beginPath(); ctx.ellipse(0,-17, 2.5,2, 0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    // olhos teal brilhantes
+    ctx.fillStyle='#0a0e0c';
+    ctx.beginPath(); ctx.ellipse(-2.5,-12.5, 2,2, 0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 2.5,-12.5, 2,2, 0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#40d8c0';
+    ctx.shadowColor='#60ffe0'; ctx.shadowBlur=5*pulse;
+    ctx.beginPath(); ctx.ellipse(-2.5,-12.5, 1.3,1.3, 0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 2.5,-12.5, 1.3,1.3, 0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    // sorriso
+    ctx.strokeStyle='#8a6050'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.arc(0,-10.5, 2.5, 0.2, Math.PI-0.2); ctx.stroke();
+
+    ctx.restore();
+
+  // ─────────────────────────────────────────────────────
+  // GOLEM DE PEDRA — blocos de pedra, rachaduras com lava, olhos laranja
+  // ─────────────────────────────────────────────────────
   } else if (pet.petType === 'tank') {
-    // Stone golem: big blocky shape
-    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#606878';
-    ctx.beginPath(); ctx.roundRect(x - t * 1.1, y - t * 0.9, t * 2.2, t * 1.8, [4]); ctx.fill();
-    ctx.fillStyle = '#7a8090';
-    ctx.beginPath(); ctx.roundRect(x - t * 0.8, y - t * 1.5, t * 1.6, t * 0.8, [3]); ctx.fill();
-    // Eyes (red aggressive)
-    ctx.fillStyle = '#e74c3c';
-    ctx.beginPath(); ctx.arc(x - t * 0.3, y - t * 1.2, t * 0.2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + t * 0.3, y - t * 1.2, t * 0.2, 0, Math.PI * 2); ctx.fill();
-    // Cracks
-    ctx.strokeStyle = '#3a4050'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(x - t * 0.4, y - t * 0.4); ctx.lineTo(x + t * 0.2, y + t * 0.5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + t * 0.5, y - t * 0.2); ctx.lineTo(x + t * 0.8, y + t * 0.6); ctx.stroke();
+    const lavaPulse = 0.5 + Math.sin(now / 400) * 0.5;
+    const s = t / 14;
+    const STONE = '#7a7060', STONED = '#504840', STONEL = '#a09880';
+    const LAVA = '#ff6010', LAVAH = '#ffb030';
+    const BLK = '#111';
+
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+
+    // aura de calor
+    const aura = ctx.createRadialGradient(0,0,5, 0,0,38);
+    aura.addColorStop(0,`rgba(255,100,0,${0.12*lavaPulse})`);
+    aura.addColorStop(1,'rgba(255,60,0,0)');
+    ctx.fillStyle=aura; ctx.beginPath(); ctx.arc(0,0,38,0,Math.PI*2); ctx.fill();
+
+    // ── PERNAS / BASE ─────────────────────────────────
+    // pé esq
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(-20,20, 18,14,[3]); ctx.fill();
+    ctx.fillStyle=STONED;
+    ctx.beginPath(); ctx.roundRect(-19,21, 16,12,[2]); ctx.fill();
+    ctx.fillStyle=STONE;
+    ctx.fillRect(-18,22,14,8);
+    // linhas de bloco pé esq
+    ctx.strokeStyle=BLK; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-14,21); ctx.lineTo(-14,33); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-18,27); ctx.lineTo(-3,27); ctx.stroke();
+    // lava no pé esq
+    ctx.strokeStyle=LAVA; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-17,24); ctx.lineTo(-13,28); ctx.lineTo(-10,25); ctx.stroke();
+
+    // pé dir
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(2,20, 18,14,[3]); ctx.fill();
+    ctx.fillStyle=STONED;
+    ctx.beginPath(); ctx.roundRect(3,21, 16,12,[2]); ctx.fill();
+    ctx.fillStyle=STONE;
+    ctx.fillRect(4,22,14,8);
+    ctx.strokeStyle=BLK; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(10,21); ctx.lineTo(10,33); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4,27); ctx.lineTo(18,27); ctx.stroke();
+    ctx.strokeStyle=LAVA; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(5,24); ctx.lineTo(9,28); ctx.lineTo(13,24); ctx.stroke();
+
+    // ── TORSO ─────────────────────────────────────────
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(-22,-10, 44,32,[4]); ctx.fill();
+    ctx.fillStyle=STONED;
+    ctx.beginPath(); ctx.roundRect(-21,-9, 42,30,[3]); ctx.fill();
+    // placas do torso
+    [[-18,-7,16,12],[-18,7,16,12],[2,-7,16,12],[2,7,16,12]].forEach(([tx,ty,tw,th])=>{
+      ctx.fillStyle=STONE;
+      ctx.beginPath(); ctx.roundRect(tx,ty,tw,th,[2]); ctx.fill();
+      ctx.strokeStyle=BLK; ctx.lineWidth=0.8;
+      ctx.beginPath(); ctx.roundRect(tx,ty,tw,th,[2]); ctx.stroke();
+    });
+    // lava no torso (Y invertida)
+    ctx.strokeStyle=LAVA; ctx.lineWidth=2;
+    ctx.shadowColor=LAVAH; ctx.shadowBlur=4*lavaPulse;
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(-5,2); ctx.lineTo(5,2); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-5,2); ctx.lineTo(-8,18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5,2); ctx.lineTo(8,18); ctx.stroke();
+    ctx.shadowBlur=0;
+    // lava nos lados do torso
+    ctx.strokeStyle=LAVA; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-20,0); ctx.lineTo(-15,8); ctx.lineTo(-20,14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(15,8); ctx.lineTo(20,14); ctx.stroke();
+
+    // ── OMBROS / PUNHOS LATERAIS GRANDES ─────────────
+    // punho esq
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(-44,-8, 26,28,[5]); ctx.fill();
+    ctx.fillStyle=STONED;
+    ctx.beginPath(); ctx.roundRect(-43,-7, 24,26,[4]); ctx.fill();
+    // blocos do punho
+    [[-42,-6,10,11],[-30,-6,10,11],[-42,7,10,10],[-30,7,10,10]].forEach(([bx,by,bw,bh])=>{
+      ctx.fillStyle=STONE; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,[2]); ctx.fill();
+      ctx.strokeStyle=BLK; ctx.lineWidth=0.8; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,[2]); ctx.stroke();
+    });
+    // lava punho esq + orbe
+    ctx.strokeStyle=LAVA; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-38,0); ctx.lineTo(-32,10); ctx.stroke();
+    ctx.fillStyle=LAVAH; ctx.shadowColor=LAVAH; ctx.shadowBlur=6*lavaPulse;
+    ctx.beginPath(); ctx.arc(-34,4, 3.5,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+
+    // punho dir
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(18,-8, 26,28,[5]); ctx.fill();
+    ctx.fillStyle=STONED;
+    ctx.beginPath(); ctx.roundRect(19,-7, 24,26,[4]); ctx.fill();
+    [[20,-6,10,11],[32,-6,10,11],[20,7,10,10],[32,7,10,10]].forEach(([bx,by,bw,bh])=>{
+      ctx.fillStyle=STONE; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,[2]); ctx.fill();
+      ctx.strokeStyle=BLK; ctx.lineWidth=0.8; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,[2]); ctx.stroke();
+    });
+    ctx.strokeStyle=LAVA; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(24,0); ctx.lineTo(30,10); ctx.stroke();
+    ctx.fillStyle=LAVAH; ctx.shadowColor=LAVAH; ctx.shadowBlur=6*lavaPulse;
+    ctx.beginPath(); ctx.arc(28,4, 3.5,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+
+    // ── CABEÇA ────────────────────────────────────────
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(-18,-36, 36,28,[6,6,3,3]); ctx.fill();
+    ctx.fillStyle=STONED;
+    ctx.beginPath(); ctx.roundRect(-17,-35, 34,26,[5,5,2,2]); ctx.fill();
+    // blocos da cabeça (padrão hexagonal)
+    [[-15,-34,14,10],[-15,-22,14,10],[1,-34,14,10],[1,-22,14,10],
+     [-15,-13,14,5],[1,-13,14,5]].forEach(([bx,by,bw,bh])=>{
+      ctx.fillStyle=STONEL; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,[2]); ctx.fill();
+      ctx.strokeStyle=BLK; ctx.lineWidth=0.7; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,[2]); ctx.stroke();
+    });
+    // rachadura vertical na cabeça
+    ctx.strokeStyle=LAVA; ctx.lineWidth=1.8;
+    ctx.shadowColor=LAVAH; ctx.shadowBlur=5*lavaPulse;
+    ctx.beginPath(); ctx.moveTo(0,-34); ctx.lineTo(-3,-24); ctx.lineTo(2,-16); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // ── OLHOS LARANJA/AMARELO ─────────────────────────
+    ctx.fillStyle=BLK;
+    ctx.beginPath(); ctx.roundRect(-14,-28, 10,6,[2]); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(4,-28, 10,6,[2]); ctx.fill();
+    ctx.fillStyle=LAVA;
+    ctx.shadowColor=LAVAH; ctx.shadowBlur=10*lavaPulse;
+    ctx.beginPath(); ctx.roundRect(-13,-27, 8,4,[1]); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(5,-27, 8,4,[1]); ctx.fill();
+    ctx.fillStyle=LAVAH;
+    ctx.beginPath(); ctx.roundRect(-12,-27, 5,3,[1]); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(6,-27, 5,3,[1]); ctx.fill();
+    ctx.shadowBlur=0;
+
+    ctx.restore();
 
   } else {
-    // Attack wolf (original golden wolf)
-    const aura = ctx.createRadialGradient(x, y, 0, x, y, t * 2.5);
-    aura.addColorStop(0, 'rgba(240,192,96,.3)'); aura.addColorStop(1, 'rgba(240,192,96,0)');
-    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(x, y, t * 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#d4a840';
-    ctx.beginPath(); ctx.ellipse(x, y, t * 1.1, t * 0.75, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = pet.hitFlash > 0 ? '#fff' : '#e8c060';
-    ctx.beginPath(); ctx.ellipse(x + t * 0.85, y - t * 0.2, t * 0.62, t * 0.55, 0.3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#c89040';
-    ctx.beginPath(); ctx.moveTo(x + t * 0.7, y - t * 0.6); ctx.lineTo(x + t * 0.5, y - t * 1.1); ctx.lineTo(x + t * 1.0, y - t * 0.75); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(x + t * 1.0, y - t * 0.55); ctx.lineTo(x + t * 0.85, y - t * 1.05); ctx.lineTo(x + t * 1.25, y - t * 0.65); ctx.fill();
-    ctx.fillStyle = '#f0e040'; ctx.beginPath(); ctx.arc(x + t * 1.0, y - t * 0.25, t * 0.14, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#c89040'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x - t * 0.9, y); ctx.quadraticCurveTo(x - t * 1.8, y - t * 1.2, x - t * 1.2, y - t * 0.4); ctx.stroke();
+    // LOBO ALBINO PET — orgânico, pequeno, pelo branco, olhos cyan
+    const bob2  = Math.sin(now / 420) * 1.2;
+    const tailA = Math.sin(now / 320) * 0.5;   // balançar cauda
+    const mouthA= 0.3 + Math.sin(now / 380) * 0.2; // rosnar leve
+
+    // escala menor: s=t/16 → lobo pequeno como NPC
+    const ws = t / 16;
+    ctx.save();
+    ctx.translate(x, y + bob2);
+    ctx.scale(ws, ws);
+
+    const W0='#f4f4ff', W1='#d4d4e8', W2='#a8a8c0', BK='#18181e';
+    const CY='#20ccf0', CYG='#70eaff';
+
+    // ─── sombra base ──────────────────────────────────
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.beginPath(); ctx.ellipse(0,16,16,4,0,0,Math.PI*2); ctx.fill();
+
+    // ─── cauda (superior direita, curvada) ────────────
+    ctx.save();
+    ctx.translate(18,-4);
+    ctx.rotate(-tailA);
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(8,-4,14,-14,10,-18);
+    ctx.bezierCurveTo(8,-20,5,-16,6,-12); ctx.bezierCurveTo(8,-8,4,-2,0,2); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(6,-4,11,-12,8,-16);
+    ctx.bezierCurveTo(6,-18,4,-14,5,-11); ctx.bezierCurveTo(7,-7,3,-2,0,1); ctx.fill();
+    ctx.fillStyle=W1;
+    ctx.beginPath(); ctx.moveTo(1,-1); ctx.bezierCurveTo(5,-4,9,-10,7,-13);
+    ctx.bezierCurveTo(6,-11,5,-8,4,-6); ctx.bezierCurveTo(6,-4,3,-1,1,0); ctx.fill();
+    ctx.restore();
+
+    // ─── corpo principal (oval, inclinado levemente) ──
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(2,-6,16,9,-0.1,0,Math.PI*2); ctx.fill();
+    const cg=ctx.createRadialGradient(-2,-10,1,2,-6,16);
+    cg.addColorStop(0,'#fafaff'); cg.addColorStop(0.5,W0); cg.addColorStop(1,W1);
+    ctx.fillStyle=cg;
+    ctx.beginPath(); ctx.ellipse(2,-7,14,8,-0.1,0,Math.PI*2); ctx.fill();
+    // pelo dorso
+    ctx.fillStyle=W2;
+    for(let i=0;i<4;i++){
+      const px=-8+i*5.5, py=-14-Math.sin(i*0.9)*1.5;
+      ctx.beginPath(); ctx.moveTo(px-2.5,py+3); ctx.lineTo(px,py-4); ctx.lineTo(px+2.5,py+3); ctx.fill();
+    }
+
+    // ─── patas traseiras ──────────────────────────────
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.roundRect(10,1,7,12,[2,2,4,4]); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.roundRect(11,2,5,10,[1,1,3,3]); ctx.fill();
+    ctx.fillStyle=W1;
+    ctx.beginPath(); ctx.roundRect(11,8,5,4,[0,0,3,3]); ctx.fill();
+    // garras
+    ctx.fillStyle='#5878b0';
+    [9,12,15,18].forEach(gx=>{ctx.beginPath();ctx.moveTo(gx,12);ctx.lineTo(gx-1,15);ctx.lineTo(gx+1,15);ctx.fill();});
+
+    // ─── patas dianteiras ─────────────────────────────
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.roundRect(-14,2,7,13,[2,2,4,4]); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.roundRect(-13,3,5,11,[1,1,3,3]); ctx.fill();
+    ctx.fillStyle=W1;
+    ctx.beginPath(); ctx.roundRect(-13,9,5,5,[0,0,3,3]); ctx.fill();
+    ctx.fillStyle='#5878b0';
+    [-15,-12,-9,-6].forEach(gx=>{ctx.beginPath();ctx.moveTo(gx,13);ctx.lineTo(gx-1,16);ctx.lineTo(gx+1,16);ctx.fill();});
+
+    // pata dir dianteira
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.roundRect(-4,3,7,12,[2,2,4,4]); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.roundRect(-3,4,5,10,[1,1,3,3]); ctx.fill();
+    ctx.fillStyle=W1;
+    ctx.beginPath(); ctx.roundRect(-3,9,5,5,[0,0,3,3]); ctx.fill();
+    ctx.fillStyle='#5878b0';
+    [-5,-2,1,4].forEach(gx=>{ctx.beginPath();ctx.moveTo(gx,13);ctx.lineTo(gx-1,16);ctx.lineTo(gx+1,16);ctx.fill();});
+
+    // ─── pescoço + cabeça ─────────────────────────────
+    // pescoço
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(-12,-4); ctx.bezierCurveTo(-15,-10,-17,-16,-13,-19);
+    ctx.bezierCurveTo(-9,-21,-7,-15,-8,-8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.moveTo(-11,-5); ctx.bezierCurveTo(-14,-10,-15,-15,-12,-17);
+    ctx.bezierCurveTo(-9,-19,-7,-14,-8,-8); ctx.closePath(); ctx.fill();
+    // juba pequena
+    ctx.fillStyle=W1;
+    for(let i=0;i<3;i++){const a=-0.3+i*0.28;
+      ctx.beginPath();
+      ctx.moveTo(-12+Math.cos(a)*5,-12+Math.sin(a)*5);
+      ctx.lineTo(-12+Math.cos(a)*9,-12+Math.sin(a)*8);
+      ctx.lineTo(-12+Math.cos(a+0.3)*5,-12+Math.sin(a+0.3)*5);
+      ctx.fill();}
+
+    // crânio
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-17,-18,10,9,-0.12,0,Math.PI*2); ctx.fill();
+    const hg=ctx.createRadialGradient(-19,-21,1,-17,-18,10);
+    hg.addColorStop(0,'#fafaff'); hg.addColorStop(0.6,W0); hg.addColorStop(1,W1);
+    ctx.fillStyle=hg;
+    ctx.beginPath(); ctx.ellipse(-17,-19,9,8,-0.12,0,Math.PI*2); ctx.fill();
+
+    // orelhas
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.moveTo(-24,-24); ctx.lineTo(-27,-32); ctx.lineTo(-18,-24); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.moveTo(-24,-25); ctx.lineTo(-26,-30); ctx.lineTo(-19,-25); ctx.fill();
+    ctx.fillStyle=W2;
+    ctx.beginPath(); ctx.moveTo(-24,-26); ctx.lineTo(-25,-29); ctx.lineTo(-20,-26); ctx.fill();
+    // orelha dir (menor)
+    ctx.fillStyle=W1;
+    ctx.beginPath(); ctx.moveTo(-13,-23); ctx.lineTo(-11,-29); ctx.lineTo(-7,-22); ctx.fill();
+
+    // focinho
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-22,-14,7,5.5,-0.08,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=W1;
+    ctx.beginPath(); ctx.ellipse(-22,-15,5.5,4.5,-0.08,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=W0;
+    ctx.beginPath(); ctx.ellipse(-21,-15,4,3.5,-0.08,0,Math.PI*2); ctx.fill();
+    // nariz
+    ctx.fillStyle='#1e1e28';
+    ctx.beginPath(); ctx.ellipse(-25,-13,2.2,1.8,0.1,0,Math.PI*2); ctx.fill();
+
+    // boca aberta
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-22,-10+mouthA*0.5,5.5,2.5+mouthA,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3e0808';
+    ctx.beginPath(); ctx.ellipse(-22,-10+mouthA*0.4,4,1.5+mouthA*0.7,0,0,Math.PI*2); ctx.fill();
+    // presas
+    ctx.fillStyle='#f0ece0';
+    [[-26,-10],[-23,-10],[-20,-10],[-17,-10]].forEach(([px,py])=>{
+      ctx.beginPath(); ctx.moveTo(px-1.2,py); ctx.lineTo(px,py+2.8+mouthA); ctx.lineTo(px+1.2,py); ctx.fill();
+    });
+
+    // ─── olho azul brilhante ──────────────────────────
+    ctx.fillStyle=BK;
+    ctx.beginPath(); ctx.ellipse(-14,-20,4.5,3.8,-0.1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#70b8d8';
+    ctx.beginPath(); ctx.ellipse(-14,-20,3.2,2.8,-0.1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=CY; ctx.shadowColor=CYG; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.ellipse(-14,-20,2.2,2,-0.1,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#0e0e18';
+    ctx.beginPath(); ctx.ellipse(-14,-20,1,1.4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath(); ctx.ellipse(-15,-21.2,0.9,0.7,0,0,Math.PI*2); ctx.fill();
+
+    // relâmpago cyan
+    ctx.strokeStyle=CY; ctx.shadowColor=CYG; ctx.shadowBlur=6;
+    ctx.lineWidth=1.3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-10,-20); ctx.lineTo(-6,-19); ctx.lineTo(-3,-21); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-18,-20); ctx.lineTo(-23,-19); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    ctx.restore();
   }
 
   ctx.shadowBlur = 0;
   ctx.restore();
 }
+
 
 function updatePetHUD() {
   const hud = document.getElementById('pet-hud');
@@ -8364,400 +8771,6 @@ function renderNpc() {
   ctx.textAlign = 'left';
 }
 
-// ── Pets ──────────────────────────────────────────────────────
-
-function renderPet() {
-  if (!pet || !pet.isAlive) return;
-  const t = Date.now() / 500;
-  const x = pet.x;
-  const y = pet.y;
-
-  if (pet.petType === 'healer') drawPetHealer(ctx, x, y, pet, t);
-  else if (pet.petType === 'attack') drawPetWolf(ctx, x, y, pet, t);
-  else if (pet.petType === 'tank') drawPetGolem(ctx, x, y, pet, t);
-}
-
-function drawPetHealer(ctx, x, y, pet, t) {
-  const bob = Math.sin(t * 1.2) * 4;
-  const fy = y + bob;
-  const s = (pet.size || 10) / 10;
-
-  drawShadow(ctx, x, pet.y + (pet.size||10), (pet.size||10) * 0.7, (pet.size||10) * 0.3);
-
-  // aura de cura pulsante
-  const auraR = 16 * s + Math.sin(t * 2) * 3 * s;
-  const auraGrad = _safeGrad(ctx, x, fy, 0, x, fy, auraR);
-  auraGrad.addColorStop(0, 'rgba(100,255,100,0.3)');
-  auraGrad.addColorStop(1, 'rgba(100,255,100,0)');
-  if (auraGrad) ctx.fillStyle = auraGrad;
-  ctx.beginPath();
-  ctx.arc(x, fy, auraR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // partículas de cura
-  for (let i = 0; i < 4; i++) {
-    const ang = t + (i / 4) * Math.PI * 2;
-    const px = x + Math.cos(ang) * 12 * s;
-    const py = fy + Math.sin(ang) * 8 * s;
-    ctx.save();
-    ctx.globalAlpha = 0.6 + Math.sin(t * 3 + i) * 0.3;
-    ctx.fillStyle = '#88ffaa';
-    ctx.shadowColor = '#00ff44';
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.arc(px, py, 2 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // asas de fada
-  ctx.save();
-  ctx.globalAlpha = 0.55;
-  ctx.fillStyle = '#aaffcc';
-  ctx.strokeStyle = '#44ff88';
-  ctx.lineWidth = 1;
-  // asa esquerda superior
-  ctx.beginPath();
-  ctx.ellipse(x - 10 * s, fy - 4 * s, 9 * s, 5 * s, -0.5, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  // asa esquerda inferior
-  ctx.beginPath();
-  ctx.ellipse(x - 8 * s, fy + 4 * s, 6 * s, 3.5 * s, 0.5, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  // asa direita superior
-  ctx.beginPath();
-  ctx.ellipse(x + 10 * s, fy - 4 * s, 9 * s, 5 * s, 0.5, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  // asa direita inferior
-  ctx.beginPath();
-  ctx.ellipse(x + 8 * s, fy + 4 * s, 6 * s, 3.5 * s, -0.5, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  ctx.restore();
-
-  // corpo da fada
-  const bodyGrad = _safeGrad(ctx, x - 2 * s, fy - 2 * s, 1, x, fy, 7 * s);
-  bodyGrad.addColorStop(0, '#ccffcc');
-  bodyGrad.addColorStop(1, '#22aa44');
-  if (bodyGrad) ctx.fillStyle = bodyGrad;
-  ctx.beginPath();
-  ctx.ellipse(x, fy, 7 * s, 8 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // brilho
-  ctx.save();
-  ctx.globalAlpha = 0.4;
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.ellipse(x - 2 * s, fy - 3 * s, 2.5 * s, 1.5 * s, -0.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // cabeça
-  ctx.fillStyle = '#eeffcc';
-  ctx.beginPath();
-  ctx.arc(x, fy - 10 * s, 5 * s, 0, Math.PI * 2);
-  ctx.fill();
-
-  // olhos brilhantes
-  ctx.fillStyle = '#005500';
-  ctx.beginPath();
-  ctx.ellipse(x - 2 * s, fy - 11 * s, 1.5 * s, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 2 * s, fy - 11 * s, 1.5 * s, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(x - 1.3 * s, fy - 12 * s, 0.7 * s, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 2.7 * s, fy - 12 * s, 0.7 * s, 0, Math.PI * 2);
-  ctx.fill();
-
-  // antenas
-  ctx.strokeStyle = '#44aa44';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x - 2 * s, fy - 15 * s);
-  ctx.quadraticCurveTo(x - 5 * s, fy - 20 * s, x - 4 * s, fy - 22 * s);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x + 2 * s, fy - 15 * s);
-  ctx.quadraticCurveTo(x + 5 * s, fy - 20 * s, x + 4 * s, fy - 22 * s);
-  ctx.stroke();
-  ctx.fillStyle = '#88ffaa';
-  ctx.beginPath();
-  ctx.arc(x - 4 * s, fy - 22 * s, 1.5 * s, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 4 * s, fy - 22 * s, 1.5 * s, 0, Math.PI * 2);
-  ctx.fill();
-
-  // cruz de cura flutuante
-  const crossAlpha = 0.5 + Math.sin(t * 2.5) * 0.4;
-  ctx.save();
-  ctx.globalAlpha = crossAlpha;
-  ctx.fillStyle = '#00ff44';
-  ctx.shadowColor = '#00ff44';
-  ctx.shadowBlur = 6;
-  ctx.fillRect(x - 1 * s, fy - 5 * s, 2 * s, 6 * s);
-  ctx.fillRect(x - 3 * s, fy - 3 * s, 6 * s, 2 * s);
-  ctx.restore();
-}
-
-function drawPetWolf(ctx, x, y, pet, t) {
-  const bob = Math.sin(t * 2) * 2;
-  const wy = y + bob;
-  const s = (pet.size || 10) / 10;
-
-  drawShadow(ctx, x, pet.y + (pet.size||10), (pet.size||10), (pet.size||10));
-
-  // aura de ataque
-  const auraR = 14 * s + Math.sin(t * 3) * 2 * s;
-  const auraGrad = _safeGrad(ctx, x, wy, 0, x, wy, auraR);
-  auraGrad.addColorStop(0, 'rgba(255,80,0,0.2)');
-  auraGrad.addColorStop(1, 'rgba(255,0,0,0)');
-  if (auraGrad) ctx.fillStyle = auraGrad;
-  ctx.beginPath();
-  ctx.arc(x, wy, auraR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // cauda
-  ctx.fillStyle = '#555577';
-  ctx.beginPath();
-  ctx.moveTo(x + 8 * s, wy + 2 * s);
-  ctx.bezierCurveTo(x + 18 * s, wy - 4 * s, x + 20 * s, wy - 14 * s, x + 16 * s, wy - 16 * s);
-  ctx.lineTo(x + 13 * s, wy - 12 * s);
-  ctx.bezierCurveTo(x + 16 * s, wy - 10 * s, x + 14 * s, wy - 3 * s, x + 6 * s, wy + 2 * s);
-  ctx.fill();
-
-  // patas traseiras
-  ctx.fillStyle = '#444466';
-  ctx.fillRect(x + 2 * s, wy + 4 * s, 5 * s, 9 * s);
-  ctx.fillRect(x - 7 * s, wy + 4 * s, 5 * s, 9 * s);
-
-  // garras
-  ctx.fillStyle = '#222244';
-  ctx.fillRect(x + 1 * s, wy + 12 * s, 2 * s, 3 * s);
-  ctx.fillRect(x + 4 * s, wy + 12 * s, 2 * s, 3 * s);
-  ctx.fillRect(x - 8 * s, wy + 12 * s, 2 * s, 3 * s);
-  ctx.fillRect(x - 5 * s, wy + 12 * s, 2 * s, 3 * s);
-
-  // corpo
-  const bodyGrad = ctx.createLinearGradient(x - 10 * s, wy - 8 * s, x + 8 * s, wy + 6 * s);
-  bodyGrad.addColorStop(0, '#666688');
-  bodyGrad.addColorStop(1, '#333355');
-  if (bodyGrad) ctx.fillStyle = bodyGrad;
-  ctx.beginPath();
-  ctx.ellipse(x, wy + 2 * s, 12 * s, 9 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // patas dianteiras
-  ctx.fillStyle = '#444466';
-  ctx.fillRect(x - 10 * s, wy + 2 * s, 5 * s, 10 * s);
-  ctx.fillRect(x + 5 * s, wy + 2 * s, 5 * s, 10 * s);
-  ctx.fillStyle = '#222244';
-  ctx.fillRect(x - 11 * s, wy + 10 * s, 2 * s, 3 * s);
-  ctx.fillRect(x - 8 * s, wy + 10 * s, 2 * s, 3 * s);
-  ctx.fillRect(x + 4 * s, wy + 10 * s, 2 * s, 3 * s);
-  ctx.fillRect(x + 7 * s, wy + 10 * s, 2 * s, 3 * s);
-
-  // cabeça
-  ctx.fillStyle = '#5a5a7a';
-  ctx.beginPath();
-  ctx.ellipse(x - 8 * s, wy - 6 * s, 9 * s, 8 * s, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // focinho
-  ctx.fillStyle = '#444466';
-  ctx.beginPath();
-  ctx.ellipse(x - 14 * s, wy - 3 * s, 5 * s, 4 * s, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // dentes / presas
-  ctx.fillStyle = '#fffacc';
-  ctx.beginPath();
-  ctx.moveTo(x - 15 * s, wy - 2 * s);
-  ctx.lineTo(x - 13 * s, wy + 2 * s);
-  ctx.lineTo(x - 11 * s, wy - 2 * s);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x - 17 * s, wy - 1 * s);
-  ctx.lineTo(x - 15 * s, wy + 2 * s);
-  ctx.lineTo(x - 13 * s, wy - 1 * s);
-  ctx.fill();
-
-  // nariz
-  ctx.fillStyle = '#222';
-  ctx.beginPath();
-  ctx.ellipse(x - 18 * s, wy - 5 * s, 2.5 * s, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // orelhas pontiagudas
-  ctx.fillStyle = '#444466';
-  ctx.beginPath();
-  ctx.moveTo(x - 13 * s, wy - 12 * s);
-  ctx.lineTo(x - 17 * s, wy - 22 * s);
-  ctx.lineTo(x - 8 * s, wy - 13 * s);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x - 4 * s, wy - 12 * s);
-  ctx.lineTo(x - 4 * s, wy - 22 * s);
-  ctx.lineTo(x + 2 * s, wy - 13 * s);
-  ctx.fill();
-  ctx.fillStyle = '#885555';
-  ctx.beginPath();
-  ctx.moveTo(x - 13 * s, wy - 13 * s);
-  ctx.lineTo(x - 15 * s, wy - 19 * s);
-  ctx.lineTo(x - 9 * s, wy - 13 * s);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x - 4 * s, wy - 13 * s);
-  ctx.lineTo(x - 4 * s, wy - 19 * s);
-  ctx.lineTo(x + 1 * s, wy - 13 * s);
-  ctx.fill();
-
-  // olhos vermelhos furiosos
-  ctx.fillStyle = '#ff3300';
-  ctx.shadowColor = '#ff5500';
-  ctx.shadowBlur = 10;
-  ctx.beginPath();
-  ctx.ellipse(x - 10 * s, wy - 7 * s, 3 * s, 2.5 * s, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, wy - 7 * s, 3 * s, 2.5 * s, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.ellipse(x - 10 * s, wy - 7 * s, 1.5 * s, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x - 4 * s, wy - 7 * s, 1.5 * s, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // marcas rúnicas no corpo
-  ctx.strokeStyle = '#ff6600';
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(x - 4 * s, wy - 4 * s);
-  ctx.lineTo(x, wy + 2 * s);
-  ctx.lineTo(x + 4 * s, wy - 4 * s);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-}
-
-function drawPetGolem(ctx, x, y, pet, t) {
-  const bob = Math.sin(t * 0.8) * 2;
-  const gy = y + bob;
-  const s = (pet.size || 14) / 14;
-
-  drawShadow(ctx, x, pet.y + (pet.size||14), (pet.size||14) * 1.1, (pet.size||14));
-
-  // aura de pedra / terra
-  const auraR = 16 * s + Math.sin(t * 1.5) * 2 * s;
-  const auraGrad = _safeGrad(ctx, x, gy, 0, x, gy, auraR);
-  auraGrad.addColorStop(0, 'rgba(180,140,80,0.2)');
-  auraGrad.addColorStop(1, 'rgba(100,80,40,0)');
-  if (auraGrad) ctx.fillStyle = auraGrad;
-  ctx.beginPath();
-  ctx.arc(x, gy, auraR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // pernas de pedra
-  ctx.fillStyle = '#7a6a4a';
-  ctx.fillRect(x - 9 * s, gy + 4 * s, 7 * s, 12 * s);
-  ctx.fillRect(x + 2 * s, gy + 4 * s, 7 * s, 12 * s);
-
-  // detalhes das pernas (pedras)
-  ctx.strokeStyle = '#5a4a2a';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(x - 9 * s, gy + 4 * s, 7 * s, 6 * s);
-  ctx.strokeRect(x + 2 * s, gy + 4 * s, 7 * s, 6 * s);
-
-  // torso rochoso
-  const torsoGrad = _safeGrad(ctx, x - 3 * s, gy - 5 * s, 1, x, gy, 12 * s);
-  torsoGrad.addColorStop(0, '#a08060');
-  torsoGrad.addColorStop(0.5, '#7a6040');
-  torsoGrad.addColorStop(1, '#4a3820');
-  if (torsoGrad) ctx.fillStyle = torsoGrad;
-  ctx.beginPath();
-  ctx.ellipse(x, gy, 13 * s, 12 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // rachaduras no torso
-  ctx.strokeStyle = '#3a2a10';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x - 5 * s, gy - 8 * s);
-  ctx.lineTo(x - 2 * s, gy - 2 * s);
-  ctx.lineTo(x - 5 * s, gy + 3 * s);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x + 3 * s, gy - 6 * s);
-  ctx.lineTo(x + 6 * s, gy + 4 * s);
-  ctx.stroke();
-
-  // núcleo brilhante no peito
-  const coreGlow = 0.6 + Math.sin(t * 2) * 0.4;
-  ctx.fillStyle = `rgba(255,${Math.floor(180 * coreGlow)},0,${coreGlow})`;
-  ctx.shadowColor = '#ff8800';
-  ctx.shadowBlur = 12 * coreGlow;
-  ctx.beginPath();
-  ctx.arc(x, gy, 4 * s, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // braços maciços
-  ctx.fillStyle = '#7a6a4a';
-  ctx.beginPath();
-  ctx.ellipse(x - 18 * s, gy - 2 * s, 6 * s, 9 * s, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + 18 * s, gy - 2 * s, 6 * s, 9 * s, 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  // punhos
-  ctx.fillStyle = '#6a5a3a';
-  ctx.beginPath();
-  ctx.arc(x - 22 * s, gy + 4 * s, 5 * s, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 22 * s, gy + 4 * s, 5 * s, 0, Math.PI * 2);
-  ctx.fill();
-
-  // cabeça cúbica
-  ctx.fillStyle = '#8a7a5a';
-  ctx.fillRect(x - 9 * s, gy - 23 * s, 18 * s, 15 * s);
-  // detalhes da cabeça
-  ctx.strokeStyle = '#6a5a3a';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(x - 9 * s, gy - 23 * s, 18 * s, 15 * s);
-
-  // olhos que brilham
-  ctx.fillStyle = `rgba(255,${Math.floor(150 * coreGlow)},0,1)`;
-  ctx.shadowColor = '#ff6600';
-  ctx.shadowBlur = 10;
-  ctx.fillRect(x - 7 * s, gy - 20 * s, 5 * s, 4 * s);
-  ctx.fillRect(x + 2 * s, gy - 20 * s, 5 * s, 4 * s);
-  ctx.shadowBlur = 0;
-
-  // boca linha reta
-  ctx.strokeStyle = '#ff6600';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x - 5 * s, gy - 12 * s);
-  ctx.lineTo(x + 5 * s, gy - 12 * s);
-  ctx.stroke();
-
-  // pedras no topo da cabeça (cabelo de pedra)
-  ctx.fillStyle = '#9a8a6a';
-  [[x - 5 * s, gy - 24 * s, 3 * s], [x, gy - 26 * s, 3.5 * s], [x + 5 * s, gy - 24 * s, 3 * s]].forEach(([sx, sy, sr]) => {
-    ctx.beginPath();
-    ctx.arc(sx, sy, sr, Math.PI, Math.PI * 2);
-    ctx.fill();
-  });
-}
 
 // ── Aplicar overrides ─────────────────────────────────────────
 
@@ -11343,14 +11356,9 @@ function updateShardHUD() {
   const cnt = document.getElementById('shard-count');
   if (!hud || !cnt || !player) return;
   const rubies = player.rubies || 0;
-  // Conta fragmentos do Vazio apenas para exibir total como rubies
-  const totalFrags = (typeof VOID_FRAGMENTS !== 'undefined')
-    ? Object.keys(VOID_FRAGMENTS).reduce((n, fid) => n + countFragment(fid), 0)
-    : 0;
-  const display = rubies + totalFrags;
-  if (display > 0 || endgameState.dragonEverSpawned) {
+  if (rubies > 0 || (typeof endgameState !== 'undefined' && endgameState.dragonEverSpawned)) {
     hud.classList.add('visible');
-    cnt.textContent = display;
+    cnt.textContent = rubies;
   }
 }
 
@@ -11531,24 +11539,18 @@ function closeVoidMerchant() {
 function buyVoidItem(itemId) {
   const db = ITEM_DB[itemId];
   if (!db) return;
-
-  // Descobre o fragmento correspondente
-  const fragId = Object.keys(VOID_FRAGMENTS).find(fid => VOID_FRAGMENTS[fid].grantItem === itemId);
-  if (!fragId) { showVmMsg('❌ Fragmento não mapeado!', 'err'); return; }
-
   const cost = VOID_FRAG_COST[itemId] || 5;
-  const have = countFragment(fragId);
-  if (have < cost) {
-    showVmMsg(`❌ Fragmentos insuficientes! (${have}/${cost} ${ITEM_DB[fragId]?.name})`, 'err');
+  const rubies = player.rubies || 0;
+  if (rubies < cost) {
+    showVmMsg(`❌ Rubies insuficientes! (${rubies}/${cost} ♦️)`, 'err');
     return;
   }
   if (player.inventory.filter(Boolean).length >= 60) { showVmMsg('❌ Inventário cheio!', 'err'); return; }
-
-  removeFragments(fragId, cost);
+  player.rubies -= cost;
   addItemToInventory(itemId);
   if (typeof playRareItemSound === 'function') playRareItemSound();
-  addLog(`👑 ${db.icon} ${db.name} forjado! (usou ${cost} ${ITEM_DB[fragId]?.name})`, 'llvl');
-  showVmMsg(`✓ ${db.name} forjado!`, 'ok');
+  addLog(`👑 ${db.icon} ${db.name} forjado! (usou ${cost} ♦️ Ruby)`, 'llvl');
+  showVmMsg(`✓ ${db.name} obtido!`, 'ok');
   updateShardHUD();
   renderVoidMerchant();
 }
@@ -11609,8 +11611,9 @@ function renderVoidMerchant() {
   const tabsEl = document.getElementById('vm-tabs');
   if (!body || !player) return;
 
-  const setPieces = countEquippedSetPieces();
-  const curTab    = voidMerchantState.tab || 'warrior';
+  const rubies     = player.rubies || 0;
+  const setPieces  = countEquippedSetPieces();
+  const curTab     = voidMerchantState.tab || 'warrior';
 
   // ── Tabs ──────────────────────────────────────────────────
   if (tabsEl) {
@@ -11620,66 +11623,39 @@ function renderVoidMerchant() {
     ).join('');
   }
 
-  // ── Resumo de fragmentos do jogador ──────────────────────
-  const fragSummary = (() => {
-    const owned = Object.keys(VOID_FRAGMENTS).filter(fid => countFragment(fid) > 0);
-    if (owned.length === 0)
-      return `<div class="vm-currency-row" style="color:#6a4a2a">♦️ Nenhum Ruby ainda — derrote o <strong>Guardião Eterno</strong> ou o <strong>Dragão Lendário</strong></div>`;
-    const parts = owned.map(fid => {
-      const cfg = VOID_FRAGMENTS[fid];
-      const have = countFragment(fid);
-      const need = VOID_FRAG_COST[cfg.grantItem] || 5;
-      const done = have >= need;
-      return `<span style="color:${done?'#50e080':'#ff6080'};margin-right:8px">♦️ ${ITEM_DB[fid]?.name?.replace('Ruby ','')}: <strong>${have}/${need}</strong>${done?' ✓':''}</span>`;
-    }).join('');
-    return `<div class="vm-currency-row" style="flex-wrap:wrap;gap:4px;font-size:11px">♦️ Seus Rubies: ${parts}</div>`;
-  })();
+  // ── Saldo de Rubies ───────────────────────────────────────
+  const rubyRow = rubies > 0
+    ? `<div class="vm-currency-row">♦️ <span style="font-weight:700;color:#ff6060;font-size:18px">${rubies}</span> <span style="color:#ff8080">Rubies</span> disponíveis</div>`
+    : `<div class="vm-currency-row" style="color:#6a3030">♦️ Nenhum Ruby — derrote o <strong>Guardião Eterno</strong> ou o <strong>Dragão Lendário</strong></div>`;
 
-  // ── Item sections for active tab ──────────────────────────
+  // ── Itens por aba ─────────────────────────────────────────
   const sections = VM_CATALOG[curTab] || [];
   const sectionsHtml = sections.map(sec => {
     const itemsHtml = sec.items.map(id => {
       const db = ITEM_DB[id];
       if (!db) return '';
-
-      // Descobre fragmento ligado a este item
-      const fragId = Object.keys(VOID_FRAGMENTS).find(fid => VOID_FRAGMENTS[fid].grantItem === id);
-      const fragDb = fragId ? ITEM_DB[fragId] : null;
-      const cost   = VOID_FRAG_COST[id] || 5;
-      const have   = fragId ? countFragment(fragId) : 0;
-      const pct    = Math.min(100, Math.round(have / cost * 100));
-
+      const cost     = VOID_FRAG_COST[id] || 5;
       const owned    = player.inventory.some(it => it?.id === id);
       const equipped = Object.values(player.equippedSlots||{}).some(e => (e?.itemId||e) === id);
-      const canForge = have >= cost && !owned && !equipped;
+      const canBuy   = rubies >= cost && !owned && !equipped;
       const done     = owned || equipped;
 
-      const barColor  = pct >= 100 ? '#50e080' : pct >= 50 ? '#a0c0ff' : '#6040a0';
       const costLabel = done
-        ? (equipped ? '✓ Equipado' : '📦 Forjado')
-        : canForge
-          ? `✨ Forjar (${have}/${cost} ♦️)`
-          : `${have}/${cost} ♦️ ${fragDb?.name || 'Rubies'}`;
-
-      const cls   = done ? 'vm-item owned' : canForge ? 'vm-item' : 'vm-item cant-afford';
-      const click = canForge ? `onclick="buyVoidItem('${id}')"` : '';
-
-      const progressBar = !done ? `
-        <div style="width:100%;height:4px;background:#1a0a2e;border-radius:2px;margin-top:4px;overflow:hidden">
-          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;transition:width .3s"></div>
-        </div>` : '';
+        ? (equipped ? '✓ Equipado' : '📦 Obtido')
+        : `♦️ ${cost} Ruby${rubies < cost ? ` (faltam ${cost-rubies})` : ''}`;
+      const costColor = done ? '#40c870' : canBuy ? '#ff8060' : '#804040';
+      const cls   = done ? 'vm-item owned' : canBuy ? 'vm-item' : 'vm-item cant-afford';
+      const click = canBuy ? `onclick="buyVoidItem('${id}')"` : '';
 
       return `<div class="${cls}" ${click} title="${db.desc}">
         <div class="vm-item-icon">${db.icon}</div>
         <div class="vm-item-name">${db.name}</div>
         <div class="vm-item-desc">${db.desc}</div>
-        <div class="vm-item-cost" style="color:${done?'#40c870':canForge?'#ffe066':'#8050a0'};font-size:10px;margin-top:3px">
+        <div class="vm-item-cost" style="color:${costColor};font-size:11px;margin-top:4px;font-weight:bold">
           ${costLabel}
         </div>
-        ${progressBar}
       </div>`;
     }).join('');
-
     if (!itemsHtml.trim()) return '';
     return `<div class="vm-slot-section">
       <div class="vm-slot-title">${sec.section}</div>
@@ -11687,7 +11663,7 @@ function renderVoidMerchant() {
     </div>`;
   }).join('');
 
-  // ── Set bonus status ──────────────────────────────────────
+  // ── Set bonus ─────────────────────────────────────────────
   const setStatus = setPieces > 0
     ? `<div class="vm-set-banner">🌑 Set do Vazio: <strong style="color:#ffe066">${setPieces}/${MYTHIC_SET_IDS.length}</strong> peças equipadas
       ${setPieces >= 2 ? '<br>✦ ' + VOID_SET_BONUS.pieces2.desc : ''}
@@ -11696,15 +11672,13 @@ function renderVoidMerchant() {
       ${setPieces >= MYTHIC_SET_IDS.length ? '<br><strong style="color:#ffe066">👑 ' + VOID_SET_BONUS.fullSet.desc + '</strong>' : ''}
     </div>` : '';
 
-  // ── Dica para novos jogadores ─────────────────────────────
-  const totalFrags = Object.keys(VOID_FRAGMENTS).reduce((n, fid) => n + countFragment(fid), 0);
-  const hint = totalFrags === 0
-    ? `<div style="font-size:10px;color:#4a2a5a;margin-top:10px;font-style:italic;text-align:center">
-        ⚜ Valdris aceita apenas Rubies do Vazio — não ouro comum.<br>
-        Derrote o <span style="color:#bb8fce">Guardião Eterno</span> e o <span style="color:#c04000">Dragão Lendário</span> para obtê-los.
+  const hint = rubies === 0
+    ? `<div style="font-size:10px;color:#5a3030;margin-top:10px;font-style:italic;text-align:center">
+        ⚜ Valdris aceita apenas ♦️ Rubies — não ouro.<br>
+        Rubies dropam ao derrotar o <span style="color:#bb6060">Guardião</span> e o <span style="color:#c04000">Dragão</span>.
        </div>` : '';
 
-  body.innerHTML = fragSummary + sectionsHtml + setStatus + hint + `<div id="vm-msg" class="vm-msg"></div>`;
+  body.innerHTML = rubyRow + sectionsHtml + setStatus + hint + `<div id="vm-msg" class="vm-msg"></div>`;
 }
 
 function showVmMsg(text, type) {
@@ -11909,24 +11883,8 @@ Object.assign(ITEM_DB, {
 // ║  • Mercador Valdris → troca fragmentos por itens        ║
 // ╚══════════════════════════════════════════════════════════╝
 
-const VOID_FRAGMENTS = {
-  frag_blade:  { name:'Ruby da Lâmina',    icon:'♦️', forClass:['warrior'],        grantItem:'void_blade'  },
-  frag_bow:    { name:'Ruby do Arco',      icon:'♦️', forClass:['archer'],          grantItem:'void_bow'    },
-  frag_staff:  { name:'Ruby do Cajado',    icon:'♦️', forClass:['mage'],            grantItem:'void_staff'  },
-  frag_plate:  { name:'Ruby da Armadura',  icon:'♦️', forClass:['warrior'],        grantItem:'void_plate'  },
-  frag_mantle: { name:'Ruby do Manto',     icon:'♦️', forClass:['archer','mage'],   grantItem:'void_mantle' },
-  frag_helm:   { name:'Ruby do Elmo',      icon:'♦️', forClass:null,               grantItem:'void_helm'   },
-  frag_shield: { name:'Ruby do Escudo',    icon:'♦️', forClass:['warrior'],        grantItem:'void_shield' },
-  frag_focus:  { name:'Ruby do Foco',      icon:'♦️', forClass:['mage'],            grantItem:'void_focus'  },
-  frag_quiver: { name:'Ruby da Aljava',    icon:'♦️', forClass:['archer'],          grantItem:'void_quiver' },
-  frag_ring:   { name:'Ruby do Anel',      icon:'♦️', forClass:null,               grantItem:'void_ring'   },
-  frag_gloves: { name:'Ruby das Luvas',    icon:'♦️', forClass:null,               grantItem:'void_gloves' },
-  frag_legs:   { name:'Ruby da Calça',     icon:'♦️', forClass:null,               grantItem:'void_legs'   },
-  frag_boots:  { name:'Ruby das Botas',    icon:'♦️', forClass:null,               grantItem:'void_boots'  },
-  frag_amulet: { name:'Ruby do Colar',     icon:'♦️', forClass:null,               grantItem:'void_amulet' },
-};
-
-// Quantos fragmentos são necessários para forjar cada item void
+// ── Ruby: moeda única do Vazio ────────────────────────
+// Custo de cada item em Rubies (moeda única player.rubies)
 const VOID_FRAG_COST = {
   void_blade:8, void_bow:8, void_staff:8,
   void_plate:6, void_mantle:6, void_amulet:5,
@@ -11934,72 +11892,17 @@ const VOID_FRAG_COST = {
   void_ring:3,  void_gloves:3, void_legs:3,  void_boots:3,
 };
 
-// Registra fragmentos como itens stackáveis
-(function _registerVoidFragments() {
-  const entries = {};
-  for (const [fragId, cfg] of Object.entries(VOID_FRAGMENTS)) {
-    const cost = VOID_FRAG_COST[cfg.grantItem] || 5;
-    entries[fragId] = {
-      name: cfg.name, icon: cfg.icon,
-      type: 'void_fragment', effect: {},
-      desc: `Junte ${cost} para forjar ${ITEM_DB[cfg.grantItem]?.name || cfg.grantItem}`,
-      rarity: 'mythic', forClass: cfg.forClass,
-      grantItem: cfg.grantItem,
-    };
-  }
-  Object.assign(ITEM_DB, entries);
-})();
+// Compatibilidade: VOID_FRAGMENTS ainda referenciado em alguns lugares
+const VOID_FRAGMENTS = {};
 
-function countFragment(fragId) {
-  if (!player?.inventory) return 0;
-  return player.inventory.reduce((n, s) => n + (!s || s.id !== fragId ? 0 : (s.qty||1)), 0);
-}
-
+function countFragment() { return player?.rubies || 0; }
 function removeFragments(fragId, amount) {
-  if (!player?.inventory) return;
-  let rem = amount;
-  for (let i = player.inventory.length - 1; i >= 0 && rem > 0; i--) {
-    const s = player.inventory[i];
-    if (!s || s.id !== fragId) continue;
-    const q = s.qty || 1;
-    if (q <= rem) { rem -= q; player.inventory[i] = null; }
-    else { player.inventory[i].qty = q - rem; rem = 0; }
-  }
+  if (player) player.rubies = Math.max(0, (player.rubies||0) - amount);
 }
-
-function _rollFragmentDrops(pool, amount) {
-  const classId = player?.classId || 'warrior';
-  const relevant = pool.filter(fid => { const c=VOID_FRAGMENTS[fid]; return !c.forClass||c.forClass.includes(classId); });
-  const drops = [];
-  for (let i = 0; i < amount; i++) {
-    const src = (relevant.length > 0 && Math.random() < 0.65) ? relevant : pool;
-    drops.push(src[Math.floor(Math.random() * src.length)]);
-  }
-  return drops;
-}
-
-function _grantFragmentDrops(ex, ey, pool, minAmt, maxAmt) {
-  const wl = typeof worldLevel !== 'undefined' ? worldLevel : 1;
-  const bonus = Math.floor(wl * 0.5);
-  const amount = minAmt + bonus + Math.floor(Math.random() * (maxAmt - minAmt + 1));
-  const frags = _rollFragmentDrops(pool, amount);
-  const grouped = {};
-  for (const fid of frags) grouped[fid] = (grouped[fid]||0)+1;
-  for (const [fid, qty] of Object.entries(grouped)) {
-    for (let i = 0; i < qty; i++) {
-      const jx = ex + (Math.random()-0.5)*40;
-      const jy = ey + (Math.random()-0.5)*40;
-      if (typeof spawnLoot === 'function') spawnLoot(jx, jy, fid);
-    }
-  }
-  return frags;
-}
-
-const GUARDIAN_FRAG_POOL = Object.keys(VOID_FRAGMENTS);
-const DRAGON_FRAG_POOL   = [
-  'frag_helm','frag_ring','frag_gloves','frag_legs','frag_boots','frag_amulet',
-  'frag_blade','frag_bow','frag_staff','frag_plate','frag_mantle','frag_shield','frag_focus','frag_quiver',
-];
+function _rollFragmentDrops() { return []; }
+function _grantFragmentDrops() {}
+const GUARDIAN_FRAG_POOL = [];
+const DRAGON_FRAG_POOL   = [];
 
 // ── Final Boss — The Eternal Abyss ────────────────────────
 const FINAL_BOSS_DEF = {
@@ -12159,55 +12062,27 @@ function triggerVictory() {
 const _egOrigKillEnemy = typeof killEnemy === 'function' ? killEnemy : null;
 if (_egOrigKillEnemy) {
   killEnemy = function(e) {
-    // ── Guardião Eterno → dropa fragmentos do Vazio (3-5 base + worldLevel/2) ──
+    // ── Guardião Eterno → Rubies direto ──────────────────────
     if (e.isCentralBoss && !e.isFinalBoss) {
       const wl = typeof worldLevel !== 'undefined' ? worldLevel : 1;
-      const base = 3;
-      const extra = Math.floor(wl * 0.6);
-      const total = base + extra + Math.floor(Math.random() * 3); // 3-5 + escala
-      const frags = _rollFragmentDrops(GUARDIAN_FRAG_POOL, total);
-      const grouped = {};
-      for (const fid of frags) grouped[fid] = (grouped[fid]||0)+1;
-      for (const [fid, qty] of Object.entries(grouped)) {
-        for (let i = 0; i < qty; i++) {
-          const jx = e.x + (Math.random()-0.5)*60;
-          const jy = e.y + (Math.random()-0.5)*60;
-          if (typeof spawnLoot === 'function') spawnLoot(jx, jy, fid);
-        }
-      }
-      addLog(`💀 Guardião Eterno derrotado! +${total} Rubies do Vazio liberados! ♦️`, 'lboss');
-      // Rubies legacy para compatibilidade do HUD
-      addShards(2 + Math.floor(wl * 0.3));
+      const total = 3 + Math.floor(wl * 0.6) + Math.floor(Math.random() * 3);
+      addShards(total);
+      addLog(`💀 Guardião Eterno derrotado! +${total} ♦️ Rubies!`, 'lboss');
     }
-    // ── Dragão Lendário → dropa fragmentos do Vazio (2-4 base + worldLevel/2) ──
+    // ── Dragão Lendário → Rubies direto ──────────────────────
     if (e.isDragonEvent) {
       const wl = typeof worldLevel !== 'undefined' ? worldLevel : 1;
-      const base = 2;
-      const extra = Math.floor(wl * 0.4);
-      const total = base + extra + Math.floor(Math.random() * 3); // 2-4 + escala
-      const frags = _rollFragmentDrops(DRAGON_FRAG_POOL, total);
-      const grouped = {};
-      for (const fid of frags) grouped[fid] = (grouped[fid]||0)+1;
-      for (const [fid, qty] of Object.entries(grouped)) {
-        for (let i = 0; i < qty; i++) {
-          const jx = e.x + (Math.random()-0.5)*60;
-          const jy = e.y + (Math.random()-0.5)*60;
-          if (typeof spawnLoot === 'function') spawnLoot(jx, jy, fid);
-        }
-      }
-      addLog(`🐉 Dragão Lendário derrotado! +${total} Rubies do Vazio! ♦️`, 'lboss');
-      // Rubies legacy
-      addShards(1 + Math.floor(wl * 0.2));
+      const total = 2 + Math.floor(wl * 0.4) + Math.floor(Math.random() * 3);
+      addShards(total);
+      addLog(`🐉 Dragão Lendário derrotado! +${total} ♦️ Rubies!`, 'lboss');
     }
-    // ── Boss de baú → continua dando Rubies legacy ──
+    // ── Boss de baú → também dá Ruby ─────────────────────────
     if (e.isBoss && !e.isCentralBoss && !e.isFinalBoss && !e.isDragonEvent) {
-      const shardAmt = 1 + Math.floor((typeof worldLevel!=='undefined'?worldLevel:1) * 0.5);
-      addShards(shardAmt);
+      const amt = 1 + Math.floor((typeof worldLevel!=='undefined'?worldLevel:1) * 0.5);
+      addShards(amt);
     }
-    // ── Boss final → vitória ──
-    if (e.isFinalBoss) {
-      setTimeout(triggerVictory, 1200);
-    }
+    // ── Boss final → vitória ──────────────────────────────────
+    if (e.isFinalBoss) setTimeout(triggerVictory, 1200);
     _egOrigKillEnemy.apply(this, arguments);
   };
 }
