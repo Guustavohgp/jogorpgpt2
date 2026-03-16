@@ -11701,10 +11701,20 @@ function applySetBonuses() {
   if (pieces >= 2) VOID_SET_BONUS.pieces2.apply(player);
   if (pieces >= 3) VOID_SET_BONUS.pieces3.apply(player);
   if (pieces >= 4) VOID_SET_BONUS.pieces4.apply(player);
-  if (pieces >= MYTHIC_SET_IDS.length) {
+  // fullSet: ativa quando todos os 8 slots têm peça do Vazio equipada
+  // (não depende de possuir os 14 IDs únicos — impossível num único personagem)
+  const VOID_FULL_SLOTS = ['weapon','offhand','head','chest','gloves','legs','boots','amulet'];
+  const allSlotsVoid = VOID_FULL_SLOTS.every(slot => {
+    const entry = player.equippedSlots?.[slot];
+    if (!entry) return false;
+    const id = entry.itemId || entry;
+    return ITEM_DB[id]?.setId === 'void_set';
+  });
+  if (allSlotsVoid) {
     VOID_SET_BONUS.fullSet.apply(player);
-    checkFinalBossUnlock();
   }
+  // Verifica unlock do boss final sempre que o set for avaliado
+  checkFinalBossUnlock();
 }
 
 // ── Void Merchant State ───────────────────────────────────
@@ -12131,42 +12141,47 @@ const FINAL_BOSS_DEF = {
 };
 
 function checkFinalBossUnlock() {
+  // Só spawna uma única vez
   if (endgameState.finalBossUnlocked || endgameState.finalBossDefeated) return;
 
-  // ── Condição 1: Guardião Eterno morto com jogador nível 30+ ──
-  if (!endgameState.guardianKilledAtLevel30) {
-    return; // não libera ainda
-  }
+  // ── Condição 1: Guardião Eterno derrotado com jogador Nv.30+ ──
+  if (!endgameState.guardianKilledAtLevel30) return;
 
-  // ── Condição 2: Todos os 14 itens do Vazio no inventário ou equipados ──
-  const allVoidItems = [
-    'void_blade','void_bow','void_staff',
-    'void_plate','void_mantle','void_helm',
-    'void_shield','void_focus','void_quiver',
-    'void_ring','void_gloves','void_legs',
-    'void_boots','void_amulet',
-  ];
+  // ── Condição 2: Set completo do Vazio EQUIPADO ────────────────
+  // Verifica cada slot — exige arma + todas as armaduras do Vazio
+  if (!player?.equippedSlots) return;
 
-  const equippedIds = Object.values(player?.equippedSlots || {}).map(e => e?.itemId || e).filter(Boolean);
-  const inventoryIds = (player?.inventory || []).filter(Boolean).map(s => s.id);
-  const ownedIds = new Set([...equippedIds, ...inventoryIds]);
+  const VOID_ARMOR_SLOTS = ['offhand','head','chest','gloves','legs','boots','amulet'];
+  const missingArmorSlots = VOID_ARMOR_SLOTS.filter(slot => {
+    const entry = player.equippedSlots[slot];
+    if (!entry) return true;
+    const id = entry.itemId || entry;
+    return ITEM_DB[id]?.setId !== 'void_set';
+  });
 
-  const missingItems = allVoidItems.filter(id => !ownedIds.has(id));
-  if (missingItems.length > 0) {
-    // Mostra o que ainda falta
-    const missing = missingItems.map(id => ITEM_DB[id]?.name || id).join(', ');
-    addLog(`☯ Itens do Vazio em falta para invocar o Abismo: ${missing}`, 'lboss');
+  const weaponEntry = player.equippedSlots['weapon'];
+  const weaponId = weaponEntry?.itemId || weaponEntry;
+  const hasVoidWeapon = weaponId && ITEM_DB[weaponId]?.setId === 'void_set';
+
+  if (!hasVoidWeapon || missingArmorSlots.length > 0) {
+    // Avisa o que falta (throttle: no máximo 1x a cada 10s)
+    if (!checkFinalBossUnlock._warnedAt || Date.now() - checkFinalBossUnlock._warnedAt > 10000) {
+      checkFinalBossUnlock._warnedAt = Date.now();
+      const faltando = [];
+      if (!hasVoidWeapon) faltando.push('Arma do Vazio');
+      missingArmorSlots.forEach(s => {
+        const label = {offhand:'Escudo/Foco/Aljava',head:'Elmo',chest:'Armadura',
+          gloves:'Luvas',legs:'Calça',boots:'Botas',amulet:'Colar'}[s] || s;
+        faltando.push(label);
+      });
+      addLog(`☯ Set do Vazio incompleto — falta equipar: ${faltando.join(', ')}`, 'lboss');
+    }
     return;
   }
 
-  // ── Condição 3: Nível 30+ ──────────────────────────────────
-  if ((player?.level || 0) < 30) {
-    addLog(`☯ O Abismo exige Nível 30! (Nv.${player?.level||0}/30)`, 'lboss');
-    return;
-  }
-
-  // Todas as condições satisfeitas!
+  // ── Todas as condições satisfeitas — spawna o boss final ──────
   endgameState.finalBossUnlocked = true;
+
   const fx = (MAP_W / 2) * T + T / 2;
   const fy = (MAP_H / 2 - 12) * T + T / 2;
   const boss = {
@@ -12180,150 +12195,253 @@ function checkFinalBossUnlock() {
     guardingChest:null, poisonTimer:0, poisonStacks:0, frozenTimer:0,
     aggroRange:400,
     drawFn: drawAbyssalBoss,
-    // Fases de rage
-    phase: 1,       // 1=normal, 2=rage(50%), 3=frenzy(25%)
+    phase: 1,
     enrageTimer: 0,
+    maxHp: FINAL_BOSS_DEF.hp,
   };
   enemies.push(boss);
+
   addLog('☯ O ABISMO ETERNO foi invocado! O fim do mundo começou!', 'lboss');
-  addLog('💀 80.000 HP · 420 ATK · 180 DEF — Prepare-se!', 'lboss');
-  showSetBonusToast('☯ ABISMO ETERNO INVOCADO!\n⚠ Criatura de HP: 80.000\n💀 O fim está próximo!', '#ff4040');
-  if (typeof playRareItemSound === 'function') { playRareItemSound(); setTimeout(playRareItemSound, 400); setTimeout(playRareItemSound, 800); }
+  addLog('💀 80.000 HP · 420 ATK · 180 DEF — Prepare-se para o fim!', 'lboss');
+  showSetBonusToast('☯ ABISMO ETERNO INVOCADO!\n💀 HP: 80.000 · ATK: 420 · DEF: 180\n⚠ O fim está próximo...', '#cc00ff');
+  if (typeof playRareItemSound === 'function') {
+    playRareItemSound();
+    setTimeout(playRareItemSound, 400);
+    setTimeout(playRareItemSound, 800);
+  }
 }
 
 function drawAbyssalBoss(ctx, e) {
   if (!e.isAlive && e.deathTimer <= 0) return;
   const now = Date.now();
-  const pulse = Math.sin(now/300)*0.15+0.85;
   const t = e.size;
   const hpPct = e.hp / (e.maxHp || FINAL_BOSS_DEF.hp);
-
-  // Fase baseada no HP
   const phase = hpPct > 0.5 ? 1 : hpPct > 0.25 ? 2 : 3;
-  const phaseColor = phase===1 ? [60,0,120] : phase===2 ? [140,0,60] : [200,40,0];
-  const [pr,pg,pb] = phaseColor;
-  const pulseSpeed = phase===1 ? 300 : phase===2 ? 180 : 100;
-  const fastPulse = Math.sin(now/pulseSpeed)*0.2+0.8;
 
-  // ── AURA EXTERNA (aumenta com cada fase) ──────────────
-  const rings = phase + 2;
-  for (let ring=rings; ring>=0; ring--) {
-    const aura = ctx.createRadialGradient(e.x, e.y, t*0.5, e.x, e.y, t*(2.5+ring*0.8));
-    aura.addColorStop(0, `rgba(${pr},${pg},${pb},${(0.2+fastPulse*0.15)*(1-ring*0.12)})`);
-    aura.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle=aura;
-    ctx.beginPath(); ctx.arc(e.x,e.y,t*(2.5+ring*0.8),0,Math.PI*2); ctx.fill();
-  }
+  // Phase colour scheme: 1=purple/cyan, 2=magenta/red, 3=blood-red/orange
+  const pC = phase===1 ? {r:120,g:0,b:220,a:180,ga:0,gb:200,gc:255}
+            : phase===2 ? {r:200,g:0,b:100,a:220,ga:200,gb:0,gc:160}
+                        : {r:220,g:40,b:0,a:255,ga:255,gb:80,gc:0};
+  const spd = phase===1 ? 1 : phase===2 ? 1.6 : 2.5;
+  const fastPulse = Math.sin(now/(300/spd))*0.2+0.8;
+  const slowPulse = Math.sin(now/600)*0.12+0.88;
 
-  // ── ANÉIS ORBITAIS (velocidade aumenta por fase) ──────
-  const ringSpeed = [1200, 700, 400][phase-1];
-  for (let r=0;r<4;r++) {
-    const ang = now/ringSpeed*(r%2===0?1:-1) + r*Math.PI/4;
-    const alpha = 0.4+fastPulse*0.3;
-    ctx.strokeStyle = phase===3
-      ? `rgba(255,${60+r*20},0,${alpha})`
-      : `rgba(${pr+r*20},${pg},${pb+r*20},${alpha})`;
-    ctx.lineWidth = 2+r*0.7;
+  ctx.save();
+
+  // ── 1. DEEP SPACE GLOW — outermost soft nebula ────────────
+  const nebulaR = t * 5.5;
+  const nebula = ctx.createRadialGradient(e.x, e.y, t*0.8, e.x, e.y, nebulaR);
+  nebula.addColorStop(0, `rgba(${pC.r},${pC.g},${pC.b},0.18)`);
+  nebula.addColorStop(0.4, `rgba(${pC.r>>1},0,${pC.b>>1},0.07)`);
+  nebula.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = nebula;
+  ctx.beginPath(); ctx.arc(e.x, e.y, nebulaR, 0, Math.PI*2); ctx.fill();
+
+  // ── 2. ACCRETION DISC — swirling energy bands ─────────────
+  // disc is a tilted ellipse, rotates over time
+  const discAngle = now/4000 * spd;
+  const discRx = t * 2.8;
+  const discRy = t * 0.65;
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.rotate(discAngle);
+  for (let d = 3; d >= 0; d--) {
+    const sc = 1 - d * 0.07;
+    const alpha = (0.55 - d*0.1) * fastPulse;
+    const discGrad = ctx.createLinearGradient(-discRx*sc, 0, discRx*sc, 0);
+    if (e.hitFlash > 0) {
+      discGrad.addColorStop(0,   `rgba(255,255,255,0)`);
+      discGrad.addColorStop(0.3, `rgba(255,255,255,${alpha})`);
+      discGrad.addColorStop(0.5, `rgba(255,255,255,0)`);
+      discGrad.addColorStop(0.7, `rgba(255,255,255,${alpha})`);
+      discGrad.addColorStop(1,   `rgba(255,255,255,0)`);
+    } else {
+      discGrad.addColorStop(0,   `rgba(${pC.ga},${pC.gb},${pC.gc},0)`);
+      discGrad.addColorStop(0.25,`rgba(${pC.r+30},${pC.g+10},${pC.b+40},${alpha})`);
+      discGrad.addColorStop(0.5, `rgba(255,${180+pC.g},255,${alpha*0.6})`);
+      discGrad.addColorStop(0.75,`rgba(${pC.r+30},${pC.g+10},${pC.b+40},${alpha})`);
+      discGrad.addColorStop(1,   `rgba(${pC.ga},${pC.gb},${pC.gc},0)`);
+    }
+    ctx.strokeStyle = discGrad;
+    ctx.lineWidth = 5 - d*0.8;
     ctx.beginPath();
-    ctx.ellipse(e.x,e.y, t*(1.1+r*0.35), t*(0.7+r*0.2), ang, 0, Math.PI*2);
+    ctx.ellipse(0, 0, discRx*sc, discRy*sc*(0.9+d*0.05), 0, 0, Math.PI*2);
     ctx.stroke();
   }
+  ctx.restore();
 
-  // ── TENTÁCULOS (mais e mais rápidos por fase) ──────────
-  const tentCount = 6 + phase * 2;
-  const tentSpeed = [800, 500, 300][phase-1];
-  for (let i=0; i<tentCount; i++) {
-    const ta = now/tentSpeed + i*(Math.PI*2/tentCount);
-    const len = t*(1.3 + Math.sin(now/400+i)*.5 + (phase-1)*0.3);
-    const alpha = 0.35+fastPulse*0.2;
-    ctx.strokeStyle = phase===3
-      ? `rgba(255,${80+i*10},0,${alpha})`
-      : `rgba(${pr+i*8},${pg},${pb+i*10},${alpha})`;
-    ctx.lineWidth = 3+(phase-1);
-    ctx.beginPath();
-    ctx.moveTo(e.x+Math.cos(ta)*t*.7, e.y+Math.sin(ta)*t*.7);
-    ctx.quadraticCurveTo(
-      e.x+Math.cos(ta+0.5)*len*.75, e.y+Math.sin(ta+0.5)*len*.75,
-      e.x+Math.cos(ta+1.0)*len,     e.y+Math.sin(ta+1.0)*len
-    );
-    ctx.stroke();
-  }
-
-  // ── CORPO PRINCIPAL ───────────────────────────────────
-  const bodyGrad = ctx.createRadialGradient(e.x,e.y,t*0.2,e.x,e.y,t*1.1);
-  if (e.hitFlash>0) {
-    bodyGrad.addColorStop(0, '#ffffff');
-    bodyGrad.addColorStop(0.5, '#cccccc');
-    bodyGrad.addColorStop(1, '#888888');
-  } else if (phase===3) {
-    bodyGrad.addColorStop(0, '#600000');
-    bodyGrad.addColorStop(0.4, '#300000');
-    bodyGrad.addColorStop(1, '#000000');
-  } else if (phase===2) {
-    bodyGrad.addColorStop(0, '#3a0040');
-    bodyGrad.addColorStop(0.4, '#1a0020');
-    bodyGrad.addColorStop(1, '#000000');
-  } else {
-    bodyGrad.addColorStop(0, '#2a0060');
-    bodyGrad.addColorStop(0.5, '#0a0020');
-    bodyGrad.addColorStop(1, '#000000');
-  }
-  ctx.fillStyle=bodyGrad;
-  ctx.beginPath(); ctx.arc(e.x,e.y,t,0,Math.PI*2); ctx.fill();
-
-  // ── CRÂNIO (face no corpo) ────────────────────────────
-  // testa
-  ctx.fillStyle = `rgba(${pr},${pg},${pb},0.5)`;
-  ctx.beginPath(); ctx.arc(e.x, e.y-t*0.12, t*0.65, Math.PI, Math.PI*2); ctx.fill();
-
-  // olhos — cor muda por fase
-  const eyeColor = phase===3 ? '#ff2000' : phase===2 ? '#ff6000' : '#ffc828';
-  const eyeGlow  = 0.7+fastPulse*0.3;
-  ctx.fillStyle=eyeColor;
-  ctx.shadowColor=eyeColor; ctx.shadowBlur=20*fastPulse;
-  ctx.beginPath(); ctx.ellipse(e.x-t*.3, e.y-t*.18, t*.15, t*.2, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(e.x+t*.3, e.y-t*.18, t*.15, t*.2, 0, 0, Math.PI*2); ctx.fill();
-  ctx.shadowBlur=0;
-  ctx.fillStyle='#000';
-  ctx.beginPath(); ctx.ellipse(e.x-t*.3, e.y-t*.18, t*.06, t*.09, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(e.x+t*.3, e.y-t*.18, t*.06, t*.09, 0, 0, Math.PI*2); ctx.fill();
-
-  // boca (sorriso maligno com dentes)
-  ctx.strokeStyle=`rgba(${pr+60},${pg},${pb+40},0.8)`;
-  ctx.lineWidth=3; ctx.lineCap='round';
+  // ── 3. RUNE RING — pixel-art style rune circle ────────────
+  const runeR = t * 2.35;
+  const runeRot = now / (5000/spd);
+  const runeColor = e.hitFlash>0 ? 'rgba(255,255,255,0.85)'
+                  : `rgba(${pC.ga},${pC.gb+160},${pC.gc},${0.55+fastPulse*0.2})`;
+  ctx.strokeStyle = runeColor;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(e.x-t*.35, e.y+t*.1);
-  ctx.bezierCurveTo(e.x-t*.1, e.y+t*.3, e.x+t*.1, e.y+t*.3, e.x+t*.35, e.y+t*.1);
+  ctx.arc(e.x, e.y, runeR, 0, Math.PI*2);
   ctx.stroke();
-  // dentes
-  ctx.fillStyle = `rgba(255,200,200,0.7)`;
-  for(let i=0;i<5;i++){
-    const tx2 = e.x - t*0.3 + i*t*0.15;
-    ctx.beginPath(); ctx.moveTo(tx2, e.y+t*0.14); ctx.lineTo(tx2+t*0.05, e.y+t*0.24); ctx.lineTo(tx2+t*0.10, e.y+t*0.14); ctx.fill();
+  // inner rune ring
+  ctx.strokeStyle = runeColor.replace(/[\d.]+\)$/, `${(0.3+fastPulse*0.15).toFixed(2)})`);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(e.x, e.y, runeR * 0.88, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Rune glyphs evenly placed around the ring (12 positions)
+  const glyphs = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ'];
+  ctx.font = `bold ${Math.round(t*0.28)}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let g = 0; g < 12; g++) {
+    const ga = runeRot + g * (Math.PI*2/12);
+    const gx = e.x + Math.cos(ga) * runeR;
+    const gy = e.y + Math.sin(ga) * runeR;
+    ctx.fillStyle = runeColor;
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.rotate(ga + Math.PI/2);
+    ctx.fillText(glyphs[g], 0, 0);
+    ctx.restore();
   }
 
-  // ── INDICADOR DE FASE ─────────────────────────────────
+  // Corner rune markers (4 cardinal points — bigger glyph)
+  const markers = ['ᛉ','ᛊ','ᛏ','ᛒ'];
+  ctx.font = `bold ${Math.round(t*0.38)}px serif`;
+  for (let m = 0; m < 4; m++) {
+    const ma = runeRot * 0.5 + m * (Math.PI/2);
+    const mx = e.x + Math.cos(ma) * runeR;
+    const my = e.y + Math.sin(ma) * runeR;
+    ctx.fillStyle = e.hitFlash>0 ? '#ffffff' : `rgba(${pC.ga},${pC.gb+200},${pC.gc},0.85)`;
+    ctx.shadowColor = e.hitFlash>0 ? '#fff' : `rgb(${pC.ga},${pC.gb+200},${pC.gc})`;
+    ctx.shadowBlur = 8;
+    ctx.save();
+    ctx.translate(mx, my);
+    ctx.rotate(ma + Math.PI/2);
+    ctx.fillText(markers[m], 0, 0);
+    ctx.restore();
+  }
+  ctx.shadowBlur = 0;
+
+  // ── 4. ASTEROID RING — pixel rocks orbiting the rune ring ─
+  const asteroidCount = 18;
+  const asteroidR = t * 2.48;
+  const asteroidSpeed = now / (7000/spd);
+  // Seed random sizes per asteroid (stable across frames)
+  if (!e._astSeeds) {
+    e._astSeeds = [];
+    for (let i = 0; i < asteroidCount; i++) {
+      e._astSeeds.push({ sz: 3 + Math.floor(i*7%5), ox: (i*3%7)-3, oy: (i*5%9)-4 });
+    }
+  }
+  for (let i = 0; i < asteroidCount; i++) {
+    const aa = asteroidSpeed + i * (Math.PI*2/asteroidCount);
+    const ax = e.x + Math.cos(aa) * asteroidR;
+    const ay = e.y + Math.sin(aa) * asteroidR;
+    const sz = e._astSeeds[i].sz;
+    const ox = e._astSeeds[i].ox;
+    const oy = e._astSeeds[i].oy;
+    // rock body — pixel chunky square-ish
+    ctx.fillStyle = e.hitFlash>0 ? '#cccccc' : '#6a6070';
+    ctx.fillRect(ax-sz+ox, ay-sz+oy, sz*2, sz*2);
+    // highlight top-left
+    ctx.fillStyle = '#8a8090';
+    ctx.fillRect(ax-sz+ox, ay-sz+oy, sz, 2);
+    ctx.fillRect(ax-sz+ox, ay-sz+oy, 2, sz);
+    // shadow bottom-right
+    ctx.fillStyle = '#3a3040';
+    ctx.fillRect(ax+ox, ay+oy, sz, sz);
+  }
+
+  // ── 5. ENERGY LANCE — diagonal spike of light ─────────────
+  // Two crossing lances spin slowly (like the image's diagonal energy lines)
+  const lanceAngle = now / (2200/spd);
+  for (let l = 0; l < 2; l++) {
+    const la = lanceAngle + l * Math.PI/2;
+    const lLen = t * 3.6;
+    const lAlpha = (0.5 + fastPulse*0.3) * (e.hitFlash>0 ? 1 : 1);
+    const lColor = e.hitFlash>0 ? `rgba(255,255,255,${lAlpha})`
+                 : `rgba(${pC.r+80},${pC.g+40},${pC.b+20},${lAlpha})`;
+    // thick centre glow
+    ctx.strokeStyle = lColor;
+    ctx.lineWidth = 4 + phase;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(e.x - Math.cos(la)*lLen, e.y - Math.sin(la)*lLen);
+    ctx.lineTo(e.x + Math.cos(la)*lLen, e.y + Math.sin(la)*lLen);
+    ctx.stroke();
+    // thin bright core
+    const lCore = e.hitFlash>0 ? 'rgba(255,255,255,0.9)'
+                : `rgba(255,220,255,${0.7*fastPulse})`;
+    ctx.strokeStyle = lCore;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(e.x - Math.cos(la)*lLen*0.9, e.y - Math.sin(la)*lLen*0.9);
+    ctx.lineTo(e.x + Math.cos(la)*lLen*0.9, e.y + Math.sin(la)*lLen*0.9);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+
+  // ── 6. EVENT HORIZON — deep swirl behind the black hole ───
+  const swirlGrad = ctx.createRadialGradient(e.x, e.y, t*0.35, e.x, e.y, t*1.3);
+  swirlGrad.addColorStop(0,   'rgba(0,0,0,0)');
+  swirlGrad.addColorStop(0.35,`rgba(${pC.r>>1},0,${pC.b>>1},0.35)`);
+  swirlGrad.addColorStop(0.65,`rgba(${pC.r},${pC.g},${pC.b},0.22)`);
+  swirlGrad.addColorStop(1,   `rgba(${pC.r+40},${pC.g+20},${pC.b+40},0)`);
+  ctx.fillStyle = swirlGrad;
+  ctx.beginPath(); ctx.arc(e.x, e.y, t*1.3, 0, Math.PI*2); ctx.fill();
+
+  // ── 7. BLACK HOLE CORE ────────────────────────────────────
+  const coreR = t * 0.82;
+  // Bright singularity ring
+  const ringAlpha = 0.75 + fastPulse*0.2;
+  const ringGlow = e.hitFlash>0 ? '#ffffff' : `rgb(${pC.r+100},${pC.g+60},${pC.b+60})`;
+  ctx.shadowColor = ringGlow;
+  ctx.shadowBlur  = 18*fastPulse;
+  ctx.strokeStyle = e.hitFlash>0 ? 'rgba(255,255,255,0.95)'
+                  : `rgba(255,${170+pC.g},255,${ringAlpha})`;
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(e.x, e.y, coreR, 0, Math.PI*2); ctx.stroke();
+  ctx.shadowBlur = 0;
+  // The void itself — absolute black
+  ctx.fillStyle = '#000000';
+  ctx.beginPath(); ctx.arc(e.x, e.y, coreR - 2, 0, Math.PI*2); ctx.fill();
+
+  // ── 8. PHASE INDICATOR ────────────────────────────────────
   if (phase > 1) {
-    const phaseLabel = phase===2 ? '💢 RAGE' : '🔥 FRENZY';
-    const phaseClr   = phase===2 ? '#ff6000' : '#ff2000';
-    ctx.font = `bold ${Math.round(t*0.28)}px Cinzel,serif`;
-    ctx.textAlign='center';
-    ctx.fillStyle=phaseClr;
-    ctx.shadowColor=phaseClr; ctx.shadowBlur=12;
-    ctx.fillText(phaseLabel, e.x, e.y - t*1.6);
-    ctx.shadowBlur=0;
+    const phaseLabel = phase===2 ? '⚡ RUPTURA' : '☠ COLAPSO';
+    const phaseClr   = phase===2 ? '#ff4080' : '#ff2000';
+    ctx.font = `bold ${Math.round(t*0.3)}px Cinzel,serif`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = phaseClr;
+    ctx.shadowColor = phaseClr; ctx.shadowBlur = 14;
+    ctx.fillText(phaseLabel, e.x, e.y - t*2.9);
+    ctx.shadowBlur = 0;
   }
 
-  // ── HP BAR (vermelho intenso) ─────────────────────────
-  const barW = t*3.5, barH=10, bx=e.x-barW/2, by=e.y-t*2.2;
-  ctx.fillStyle='#200010'; ctx.fillRect(bx-1,by-1,barW+2,barH+2);
-  const barColor = phase===3?'#ff2000':phase===2?'#ff6000':'#cc00ff';
-  ctx.fillStyle=barColor;
-  ctx.fillRect(bx,by,barW*Math.max(0,hpPct),barH);
-  ctx.strokeStyle='#400020'; ctx.lineWidth=1; ctx.strokeRect(bx,by,barW,barH);
-  ctx.font=`bold ${Math.round(t*0.22)}px Cinzel,serif`;
-  ctx.textAlign='center'; ctx.fillStyle='#fff';
-  ctx.fillText(`☯ ABISMO ETERNO  ${Math.ceil(e.hp).toLocaleString()} HP`, e.x, by-6);
+  // ── 9. HP BAR ─────────────────────────────────────────────
+  const barW = t*4.2, barH=9, bx=e.x-barW/2, by=e.y-t*3.4;
+  ctx.fillStyle='rgba(10,0,20,0.85)'; ctx.fillRect(bx-2,by-2,barW+4,barH+4);
+  const barClr = phase===3
+    ? 'linear-gradient' // fallback below
+    : phase===2 ? '#cc0060' : '#8800dd';
+  // gradient fill
+  const barFill = ctx.createLinearGradient(bx,by,bx+barW*Math.max(0,hpPct),by);
+  if (phase===3) { barFill.addColorStop(0,'#600000'); barFill.addColorStop(1,'#ff2000'); }
+  else if (phase===2) { barFill.addColorStop(0,'#600030'); barFill.addColorStop(1,'#ff0070'); }
+  else { barFill.addColorStop(0,'#200060'); barFill.addColorStop(1,'#cc00ff'); }
+  ctx.fillStyle = barFill;
+  ctx.fillRect(bx, by, barW*Math.max(0,hpPct), barH);
+  ctx.strokeStyle = `rgba(${pC.r+60},${pC.g},${pC.b+60},0.6)`;
+  ctx.lineWidth = 1; ctx.strokeRect(bx, by, barW, barH);
+  ctx.font = `bold ${Math.round(t*0.24)}px Cinzel,serif`;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = `rgb(${pC.r},${pC.g},${pC.b})`;
+  ctx.shadowBlur = 8;
+  ctx.fillText(`☯ ABISMO ETERNO — ${Math.ceil(e.hp).toLocaleString()} HP`, e.x, by-5);
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
 }
 
 // ── Set bonus toast & checks ──────────────────────────────
