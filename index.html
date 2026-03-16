@@ -3131,6 +3131,21 @@ function startGame(classId){
   window.addEventListener('resize',resizeCanvas);
   generateMap();
   player=createPlayer(classId);
+  // ── 🛠 DEBUG: começa no nível 30 com recursos para testar boss final ──
+  player.level = 30;
+  player.xp = 0;
+  player.xpNext = 9999999;
+  player.gold = 99999;
+  player.rubies = 500;
+  // Atualiza stats para refletir o nível 30
+  const _dbgLvlScale = 1 + (player.level - 1) * 0.06;
+  player.maxHp  = Math.floor(player.maxHp  * _dbgLvlScale);
+  player.hp     = player.maxHp;
+  player.maxMp  = Math.floor(player.maxMp  * _dbgLvlScale);
+  player.mp     = player.maxMp;
+  player.atk    = Math.floor(player.baseAtk * _dbgLvlScale);
+  player.def    = Math.floor(player.baseDef * _dbgLvlScale);
+  // ── fim do bloco de debug ──────────────────────────────────────
   equippedArtifacts = [];
   pet = null; // Pet deve ser comprado na loja
   spawnInitialEnemies();
