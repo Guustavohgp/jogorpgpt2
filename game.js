@@ -1778,7 +1778,7 @@ function startGame(classId){
   // ── 🛠 DEBUG: começa no nível 30 com recursos para testar boss final ──
   player.level = 1;
   player.xp = 0;
-  player.xpNext = 0;
+  player.xpNext = 60;
   player.gold = 0;
   player.rubies = 0;
   // Atualiza stats para refletir o nível 30
